@@ -13,7 +13,7 @@ def magnetic_x(x, y, Lx, Ly):
     return 0.0
 
 def magnetic_y(x, y, Lx, Ly):
-    if x >= x1 and x <= x2:
+    if x1 <= x and x <= x2:
         return - B0
     else:
         return + B0

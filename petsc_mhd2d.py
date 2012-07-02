@@ -48,7 +48,7 @@ class petscMHD2D(object):
         self.hy = Ly / ny                           # gridstep size in y
         
         
-        self.time = PETSc.Vec().createMPI(1, 1, comm=PETSc.COMM_WORLD)
+        self.time = PETSc.Vec().createMPI(1, PETSc.DECIDE, comm=PETSc.COMM_WORLD)
         self.time.setName('t')
         
         if PETSc.COMM_WORLD.getRank() == 0:
@@ -69,8 +69,8 @@ class petscMHD2D(object):
         # create DA with single dof
         self.da1 = PETSc.DA().create(dim=2, dof=1,
                                     sizes=[nx, ny],
-#                                    proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
-                                    proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
+                                    proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+#                                    proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
                                     boundary_type=('periodic', 'periodic'),
                                     stencil_width=1,
                                     stencil_type='box')
@@ -79,8 +79,8 @@ class petscMHD2D(object):
         # create DA (dof = 4 for Bx, By, Vx, Vy)
         self.da4 = PETSc.DA().create(dim=2, dof=4,
                                      sizes=[nx, ny],
-#                                     proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
-                                     proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
+                                     proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+#                                     proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
                                      boundary_type=('periodic', 'periodic'),
                                      stencil_width=1,
                                      stencil_type='box')
@@ -89,13 +89,15 @@ class petscMHD2D(object):
         # create DA for x grid
         self.dax = PETSc.DA().create(dim=1, dof=1,
                                     sizes=[nx],
-                                    proc_sizes=[PETSc.COMM_WORLD.getSize()],
+                                    proc_sizes=[PETSc.DECIDE],
+#                                    proc_sizes=[PETSc.COMM_WORLD.getSize()],
                                     boundary_type=('none'))
         
         # create DA for y grid
         self.day = PETSc.DA().create(dim=1, dof=1,
                                     sizes=[ny],
-                                    proc_sizes=[PETSc.COMM_WORLD.getSize()],
+                                    proc_sizes=[PETSc.DECIDE],
+#                                    proc_sizes=[PETSc.COMM_WORLD.getSize()],
                                     boundary_type=('none'))
         
         
@@ -161,9 +163,7 @@ class petscMHD2D(object):
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        coords_vec = self.da1.getCoordinates()
-#        coords = self.da1.getVecArray(coords_vec)
-        coords = coords_vec
+        coords = self.da1.getCoordinateDA().getVecArray(self.da1.getCoordinates())
         
         x_arr  = self.da4.getVecArray(self.x)
         Bx_arr = self.da1.getVecArray(self.Bx)
