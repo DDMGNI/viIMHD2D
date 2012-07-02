@@ -29,11 +29,13 @@ cdef class PETScSolver(object):
     
     cdef DA da
     
-    cdef Vec Xh
+    cdef Vec Xh1
+    cdef Vec Xh2
     
     cdef Vec localB
     cdef Vec localX
-    cdef Vec localXh
+    cdef Vec localXh1
+    cdef Vec localXh2
     
     cdef np.ndarray ty
     

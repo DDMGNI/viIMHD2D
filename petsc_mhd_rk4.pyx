@@ -11,11 +11,11 @@ cimport numpy as np
 
 from petsc4py.PETSc cimport DA, Vec
 
-import  PETSc_MHD_Derivatives
-cimport PETSc_MHD_Derivatives
+from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
+from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
-cdef class PETSc_MHD_RK4(object):
+cdef class PETScRK4(object):
     '''
     PETSc/Cython Implementation of Explicit RK4 MHD Solver
     '''
@@ -53,7 +53,7 @@ cdef class PETSc_MHD_RK4(object):
         self.localX4 = da.createLocalVec()
         
         # create derivative object
-        self.derivatives = PETSc_MHD_Derivatives(da, nx, ny, hx, hy)
+        self.derivatives = PETSc_MHD_Derivatives(da, nx, ny, ht, hx, hy)
         
      
     def rk4(self, Vec X):

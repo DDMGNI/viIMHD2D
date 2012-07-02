@@ -21,6 +21,10 @@ cdef class PETSc_MHD_Derivatives(object):
     cdef np.float64_t hx
     cdef np.float64_t hy
     
+    cdef np.float64_t ht_inv
+    cdef np.float64_t hx_inv
+    cdef np.float64_t hy_inv
+    
     cdef DA da
     
     

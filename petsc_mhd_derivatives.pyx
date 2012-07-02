@@ -20,7 +20,7 @@ cdef class PETSc_MHD_Derivatives(object):
     
     def __cinit__(self, DA da,
                   np.uint64_t  nx, np.uint64_t  ny,
-                  np.float64_t hx, np.float64_t hy):
+                  np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''
         Constructor
         '''
@@ -29,9 +29,15 @@ cdef class PETSc_MHD_Derivatives(object):
         self.nx = nx
         self.ny = ny
         
+        self.ht = ht
         self.hx = hx
         self.hy = hy
-
+        
+        self.ht_inv = 1. / ht
+        self.hx_inv = 1. / hx
+        self.hy_inv = 1. / hy
+        
+        
         # distributed array
         self.da = da
         
@@ -47,6 +53,23 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + 2. * B[i-1, j  ] * V[i-1, j  ] \
+                     - 2. * B[i+1, j  ] * V[i+1, j  ] \
+                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     + 1. * B[i-1, j-1] * V[i-1, j  ] \
+                     + 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     + 1. * B[i-1, j+1] * V[i-1, j  ] \
+                     + 1. * B[i-1, j  ] * V[i-1, j-1] \
+                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
+                     - 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     - 1. * B[i+1, j-1] * V[i+1, j  ] \
+                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     - 1. * B[i+1, j+1] * V[i+1, j  ] \
+                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
+                     - 1. * B[i+1, j  ] * V[i+1, j+1] \
+                 ) * self.hx_inv / 64.
+ 
         return result
     
     
@@ -60,6 +83,51 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + 2. * B[i-1, j  ] * V[i-1, j  ] \
+                     - 2. * B[i-1, j  ] * V[i,   j  ] \
+                     - 2. * B[i+1, j  ] * V[i+1, j  ] \
+                     + 2. * B[i+1, j  ] * V[i,   j  ] \
+                     + 2. * B[i,   j  ] * V[i-1, j  ] \
+                     - 2. * B[i,   j  ] * V[i+1, j  ] \
+                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     + 1. * B[i-1, j-1] * V[i-1, j  ] \
+                     - 1. * B[i-1, j-1] * V[i,   j-1] \
+                     - 1. * B[i-1, j-1] * V[i,   j  ] \
+                     + 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     + 1. * B[i-1, j+1] * V[i-1, j  ] \
+                     - 1. * B[i-1, j+1] * V[i,   j+1] \
+                     - 1. * B[i-1, j+1] * V[i,   j  ] \
+                     + 1. * B[i-1, j  ] * V[i-1, j-1] \
+                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
+                     - 1. * B[i-1, j  ] * V[i,   j-1] \
+                     - 1. * B[i-1, j  ] * V[i,   j+1] \
+                     - 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     - 1. * B[i+1, j-1] * V[i+1, j  ] \
+                     + 1. * B[i+1, j-1] * V[i,   j-1] \
+                     + 1. * B[i+1, j-1] * V[i,   j  ] \
+                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     - 1. * B[i+1, j+1] * V[i+1, j  ] \
+                     + 1. * B[i+1, j+1] * V[i,   j+1] \
+                     + 1. * B[i+1, j+1] * V[i,   j  ] \
+                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
+                     - 1. * B[i+1, j  ] * V[i+1, j+1] \
+                     + 1. * B[i+1, j  ] * V[i,   j-1] \
+                     + 1. * B[i+1, j  ] * V[i,   j+1] \
+                     + 1. * B[i,   j-1] * V[i-1, j-1] \
+                     + 1. * B[i,   j-1] * V[i-1, j  ] \
+                     - 1. * B[i,   j-1] * V[i+1, j-1] \
+                     - 1. * B[i,   j-1] * V[i+1, j  ] \
+                     + 1. * B[i,   j+1] * V[i-1, j+1] \
+                     + 1. * B[i,   j+1] * V[i-1, j  ] \
+                     - 1. * B[i,   j+1] * V[i+1, j+1] \
+                     - 1. * B[i,   j+1] * V[i+1, j  ] \
+                     + 1. * B[i,   j  ] * V[i-1, j-1] \
+                     + 1. * B[i,   j  ] * V[i-1, j+1] \
+                     - 1. * B[i,   j  ] * V[i+1, j-1] \
+                     - 1. * B[i,   j  ] * V[i+1, j+1] \
+                 ) * self.hx_inv / 128.
+         
         return result
     
     
@@ -73,6 +141,19 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + 2. * B[i+1, j  ] * V[i+1, j  ] \
+                     - 2. * B[i-1, j  ] * V[i-1, j  ] \
+                     + 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     - 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     + 1. * B[i+1, j-1] * V[i+1, j  ] \
+                     - 1. * B[i-1, j-1] * V[i-1, j  ] \
+                     + 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     - 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     + 1. * B[i+1, j+1] * V[i+1, j  ] \
+                     - 1. * B[i-1, j+1] * V[i-1, j  ] \
+                 ) * self.hx_inv / 64.
+        
         return result
     
     
@@ -85,6 +166,13 @@ cdef class PETSc_MHD_Derivatives(object):
         '''
         
         cdef np.float64_t result
+        
+        result = ( \
+                     + B[i+1, j-1] * V[i+1, j  ] \
+                     - B[i-1, j-1] * V[i-1, j  ] \
+                     + B[i+1, j+1] * V[i+1, j  ] \
+                     - B[i-1, j+1] * V[i-1, j  ] \
+                 ) * self.hx_inv / 64.
         
         return result
     
@@ -100,6 +188,23 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + 2. * B[i,   j-1] * V[i,   j-1] \
+                     - 2. * B[i,   j+1] * V[i,   j+1] \
+                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     + 1. * B[i-1, j-1] * V[i,   j-1] \
+                     - 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     - 1. * B[i-1, j+1] * V[i,   j+1] \
+                     + 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     + 1. * B[i+1, j-1] * V[i,   j-1] \
+                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     - 1. * B[i+1, j+1] * V[i,   j+1] \
+                     + 1. * B[i,   j-1] * V[i-1, j-1] \
+                     + 1. * B[i,   j-1] * V[i+1, j-1] \
+                     - 1. * B[i,   j+1] * V[i-1, j+1] \
+                     - 1. * B[i,   j+1] * V[i+1, j+1] \
+                 ) * self.hy_inv / 64.
+                 
         return result
     
     
@@ -112,6 +217,51 @@ cdef class PETSc_MHD_Derivatives(object):
         '''
         
         cdef np.float64_t result
+        
+        result = ( \
+                     + 2. * B[i,   j-1] * V[i,   j-1] \
+                     + 2. * B[i,   j-1] * V[i,   j  ] \
+                     - 2. * B[i,   j+1] * V[i,   j+1] \
+                     - 2. * B[i,   j+1] * V[i,   j  ] \
+                     - 2. * B[i,   j  ] * V[i,   j-1] \
+                     + 2. * B[i,   j  ] * V[i,   j+1] \
+                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     + 1. * B[i-1, j-1] * V[i-1, j  ] \
+                     + 1. * B[i-1, j-1] * V[i,   j-1] \
+                     + 1. * B[i-1, j-1] * V[i,   j  ] \
+                     - 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     - 1. * B[i-1, j+1] * V[i-1, j  ] \
+                     - 1. * B[i-1, j+1] * V[i,   j+1] \
+                     - 1. * B[i-1, j+1] * V[i,   j  ] \
+                     - 1. * B[i-1, j  ] * V[i-1, j-1] \
+                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
+                     - 1. * B[i-1, j  ] * V[i,   j-1] \
+                     + 1. * B[i-1, j  ] * V[i,   j+1] \
+                     + 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     + 1. * B[i+1, j-1] * V[i+1, j  ] \
+                     + 1. * B[i+1, j-1] * V[i,   j-1] \
+                     + 1. * B[i+1, j-1] * V[i,   j  ] \
+                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     - 1. * B[i+1, j+1] * V[i+1, j  ] \
+                     - 1. * B[i+1, j+1] * V[i,   j+1] \
+                     - 1. * B[i+1, j+1] * V[i,   j  ] \
+                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
+                     + 1. * B[i+1, j  ] * V[i+1, j+1] \
+                     - 1. * B[i+1, j  ] * V[i,   j-1] \
+                     + 1. * B[i+1, j  ] * V[i,   j+1] \
+                     + 1. * B[i,   j-1] * V[i-1, j-1] \
+                     + 1. * B[i,   j-1] * V[i-1, j  ] \
+                     + 1. * B[i,   j-1] * V[i+1, j-1] \
+                     + 1. * B[i,   j-1] * V[i+1, j  ] \
+                     - 1. * B[i,   j+1] * V[i-1, j+1] \
+                     - 1. * B[i,   j+1] * V[i-1, j  ] \
+                     - 1. * B[i,   j+1] * V[i+1, j+1] \
+                     - 1. * B[i,   j+1] * V[i+1, j  ] \
+                     - 1. * B[i,   j  ] * V[i-1, j-1] \
+                     + 1. * B[i,   j  ] * V[i-1, j+1] \
+                     - 1. * B[i,   j  ] * V[i+1, j-1] \
+                     + 1. * B[i,   j  ] * V[i+1, j+1] \
+                 ) * self.hy_inv / 128.
         
         return result
     
@@ -126,6 +276,19 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + 2. * B[i,   j+1] * V[i,   j+1] \
+                     - 2. * B[i,   j-1] * V[i,   j-1] \
+                     - 1. * B[i-1, j-1] * V[i-1, j-1] \
+                     - 1. * B[i-1, j-1] * V[i,   j-1] \
+                     + 1. * B[i-1, j+1] * V[i-1, j+1] \
+                     + 1. * B[i-1, j+1] * V[i,   j+1] \
+                     - 1. * B[i+1, j-1] * V[i+1, j-1] \
+                     - 1. * B[i+1, j-1] * V[i,   j-1] \
+                     + 1. * B[i+1, j+1] * V[i+1, j+1] \
+                     + 1. * B[i+1, j+1] * V[i,   j+1] \
+                 ) * self.hy_inv / 64.
+        
         return result
     
     
@@ -139,6 +302,13 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
+        result = ( \
+                     + B[i-1, j+1] * V[i,   j+1] \
+                     - B[i-1, j-1] * V[i,   j-1] \
+                     + B[i+1, j+1] * V[i,   j+1] \
+                     - B[i+1, j-1] * V[i,   j-1] \
+                 ) * self.hy_inv / 64.
+
         return result
     
     
@@ -156,7 +326,7 @@ cdef class PETSc_MHD_Derivatives(object):
                      + 2. * ( x[i+1, j  ] - x[i-1, j  ] ) \
                      + 1. * ( x[i+1, j-1] - x[i-1, j-1] ) \
                      + 1. * ( x[i+1, j+1] - x[i-1, j+1] ) \
-                 ) / (32. * self.hx)
+                 ) * self.hx_inv / 32.
  
         return result
     
@@ -175,7 +345,7 @@ cdef class PETSc_MHD_Derivatives(object):
                      + 2. * ( x[i,   j+1] - x[i,   j-1] ) \
                      + 1. * ( x[i+1, j+1] - x[i+1, j-1] ) \
                      + 1. * ( x[i-1, j+1] - x[i-1, j-1] ) \
-                 ) / (32. * self.hx)
+                 ) * self.hy_inv / 32.
 
         return result
     

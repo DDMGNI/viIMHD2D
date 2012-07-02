@@ -12,7 +12,7 @@ from petsc4py import PETSc
 import argparse
 import time
 
-import Config
+from config import Config
 
 from PETSc_MHD_VI  import PETScSolver
 from PETSc_MHD_RK4 import PETScRK4
@@ -69,22 +69,24 @@ class petscMHD2D(object):
         # create DA with single dof
         self.da1 = PETSc.DA().create(dim=2, dof=1,
                                     sizes=[nx, ny],
-                                    proc_sizes=[PETSc.PETSC_DECIDE, PETSc.PETSC_DECIDE],
+#                                    proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+                                    proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
                                     boundary_type=('periodic', 'periodic'),
                                     stencil_width=1,
                                     stencil_type='box')
         
         
-        # create DA (dof = number of species + 1 for the potential)
-        self.da6 = PETSc.DA().create(dim=2, dof=6,
+        # create DA (dof = 4 for Bx, By, Vx, Vy)
+        self.da4 = PETSc.DA().create(dim=2, dof=4,
                                      sizes=[nx, ny],
-                                     proc_sizes=[PETSc.PETSC_DECIDE, PETSc.PETSC_DECIDE],
+#                                     proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+                                     proc_sizes=[PETSc.COMM_WORLD.getSize(), 1],
                                      boundary_type=('periodic', 'periodic'),
                                      stencil_width=1,
                                      stencil_type='box')
         
         
-        # create DA for Poisson guess
+        # create DA for x grid
         self.dax = PETSc.DA().create(dim=1, dof=1,
                                     sizes=[nx],
                                     proc_sizes=[PETSc.COMM_WORLD.getSize()],
@@ -101,7 +103,7 @@ class petscMHD2D(object):
         self.da1.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx, 
                                        ymin=0.0, ymax=Ly*(ny-1.)/ny)
         
-        self.da6.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx, 
+        self.da4.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx, 
                                        ymin=0.0, ymax=Ly*(ny-1.)/ny)
         
         self.dax.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx) 
@@ -110,8 +112,8 @@ class petscMHD2D(object):
         
         
         # create solution and RHS vector
-        self.x  = self.da6.createGlobalVec()
-        self.b  = self.da6.createGlobalVec()
+        self.x  = self.da4.createGlobalVec()
+        self.b  = self.da4.createGlobalVec()
         
         # create vectors for magnetic and velocity field
         self.Bx = self.da1.createGlobalVec()
@@ -134,9 +136,7 @@ class petscMHD2D(object):
 #        self.vp = _solver.Solver(self.grid, cfg['solver']['solver_method'])
         
 #        self.petsc_mat = _solver.PETScSolver(self.da, self.x, self.b,
-        self.petsc_mat = PETScSolver(self.da1, self.da6,
-                                     self.x, self.b, 
-                                     nx, ny, self.ht, self.hx, self.hy)
+        self.petsc_mat = PETScSolver(self.da4, nx, ny, self.ht, self.hx, self.hy)
         
         # create sparse matrix
         self.A = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
@@ -148,22 +148,24 @@ class petscMHD2D(object):
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
         self.ksp.setType(cfg['solver']['petsc_ksp_type'])
-        self.ksp.setInitialGuessNonzero(True)
+#        self.ksp.setInitialGuessNonzero(True)
         
         self.pc = self.ksp.getPC()
         self.pc.setType(cfg['solver']['petsc_pc_type'])
         
         
         # create Arakawa solver object
-        self.mhd_rk4 = PETSc_MHD_RK4(self.da1, self.da6, nx, ny, self.ht, self.hx, self.hy)
+        self.mhd_rk4 = PETScRK4(self.da4, nx, ny, self.ht, self.hx, self.hy)
         
         
         # set initial data
-        (xs, xe), (ys, ye) = self.da6.getRanges()
+        (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        coords  = self.da6.getVecArray(self.da6.getCoordinates())
+        coords_vec = self.da1.getCoordinates()
+#        coords = self.da1.getVecArray(coords_vec)
+        coords = coords_vec
         
-        x_arr  = self.da6.getVecArray(self.x)
+        x_arr  = self.da4.getVecArray(self.x)
         Bx_arr = self.da1.getVecArray(self.Bx)
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
@@ -171,12 +173,12 @@ class petscMHD2D(object):
         
         
         if cfg['initial_data']['magnetic_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic'], 0)
+            init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Bx_arr[i,j] = init_data.velocity_x(coords[i,j][0], coords[i,j][1], Lx, Ly) 
-                    By_arr[i,j] = init_data.velocity_y(coords[i,j][0], coords[i,j][1], Lx, Ly) 
+                    Bx_arr[i,j] = init_data.magnetic_x(coords[i,j][0], coords[i,j][1], Lx, Ly) 
+                    By_arr[i,j] = init_data.magnetic_y(coords[i,j][0], coords[i,j][1], Lx, Ly) 
         
         else:
             Bx_arr[xs:xe] = cfg['initial_data']['magnetic']            
@@ -184,7 +186,7 @@ class petscMHD2D(object):
             
             
         if cfg['initial_data']['velocity_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity'], 0)
+            init_data = __import__("runs." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity_x', 'velocity_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
@@ -204,6 +206,7 @@ class petscMHD2D(object):
         
         
         # update solution history
+        self.petsc_mat.update_history(self.x)
         self.petsc_mat.update_history(self.x)
         
         
@@ -241,13 +244,15 @@ class petscMHD2D(object):
         
     
     def __del__(self):
-        del self.hdf5_viewer
+#        if self.hdf5_viewer != None:
+#            del self.hdf5_viewer
+        pass
         
     
     
     def run(self):
         
-        (xs, xe), (ys, ye) = self.da6.getRanges()
+        (xs, xe), (ys, ye) = self.da4.getRanges()
             
         for itime in range(1, self.nt+1):
             if PETSc.COMM_WORLD.getRank() == 0:
@@ -257,7 +262,7 @@ class petscMHD2D(object):
             
             
             # calculate initial guess for distribution function
-            self.mhd_rk4.rk4(self.x)
+#            self.mhd_rk4.rk4(self.x)
             
             
             # build RHS and solve
@@ -266,7 +271,7 @@ class petscMHD2D(object):
             
             
             # copy solution to B and V vectors
-            x_arr  = self.da6.getVecArray(self.x)
+            x_arr  = self.da4.getVecArray(self.x)
             Bx_arr = self.da1.getVecArray(self.Bx)
             By_arr = self.da1.getVecArray(self.By)
             Vx_arr = self.da1.getVecArray(self.Vx)
