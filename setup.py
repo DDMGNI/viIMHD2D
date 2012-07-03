@@ -42,7 +42,7 @@ INCLUDE_DIRS += ['/opt/local/include/openmpi']
 
 ext_modules = [
         Extension("PETSc_MHD_Derivatives",
-                  sources=["petsc_mhd_derivatives.pyx"],
+                  sources=["PETSc_MHD_Derivatives.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
