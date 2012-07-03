@@ -49,7 +49,7 @@ ext_modules = [
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
         Extension("PETSc_MHD_RK4",
-                  sources=["petsc_mhd_rk4.pyx"],
+                  sources=["PETSc_MHD_RK4.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
@@ -63,7 +63,7 @@ ext_modules = [
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
         Extension("PETSc_MHD_VI_Simple",
-                  sources=["petsc_mhd_vi_simple.pyx"],
+                  sources=["PETSc_MHD_VI_Simple.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
