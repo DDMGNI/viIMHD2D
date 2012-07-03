@@ -122,23 +122,21 @@ cdef class PETScSolver(object):
                 
                 # V_x
                 ty[iy, jy, 2] = self.derivatives.dt(Vx, ix, jx) \
-                              + self.derivatives.dy2(Bx,  Byh, ix, jx) \
-                              - self.derivatives.dy2(Vx,  Vyh, ix, jx) \
-                              + self.derivatives.dy2(Bxh, By,  ix, jx) \
-                              - self.derivatives.dy2(Vxh, Vy,  ix, jx) \
+                              + self.derivatives.dy1(Bx,  Byh, ix, jx) \
+                              + self.derivatives.dy1(Bxh, By,  ix, jx) \
+                              - self.derivatives.dy1(Vx,  Vyh, ix, jx) \
+                              - self.derivatives.dy1(Vxh, Vy,  ix, jx) \
                               - self.derivatives.dx1(By,  Byh, ix, jx) \
-                              - self.derivatives.dx1(Vx,  Vxh, ix, jx)
-#                              - self.derivatives.gradx(P, ix, jx) \
+                              - self.derivatives.dx1(Vx,  Vxh, ix, jx) * 2.
                     
                 # V_y
                 ty[iy, jy, 3] = self.derivatives.dt(Vy, ix, jx) \
-                              + self.derivatives.dx2(Bx,  Byh, ix, jx) \
-                              - self.derivatives.dx2(Vx,  Vyh, ix, jx) \
-                              + self.derivatives.dx2(Bxh, By,  ix, jx) \
-                              - self.derivatives.dx2(Vxh, Vy,  ix, jx) \
+                              + self.derivatives.dx1(Bx,  Byh, ix, jx) \
+                              + self.derivatives.dx1(Bxh, By,  ix, jx) \
+                              - self.derivatives.dx1(Vx,  Vyh, ix, jx) \
+                              - self.derivatives.dx1(Vxh, Vy,  ix, jx) \
                               - self.derivatives.dy1(Bx,  Bxh, ix, jx) \
-                              - self.derivatives.dy1(Vy,  Vyh, ix, jx)
-#                              - self.derivatives.grady(P, ix, jx) \
+                              - self.derivatives.dy1(Vy,  Vyh, ix, jx) * 2.
                     
         
         y[xs:xe, ys:ye, :] = ty[:,:,:]

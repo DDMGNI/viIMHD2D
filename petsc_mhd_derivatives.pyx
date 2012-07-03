@@ -408,21 +408,17 @@ cdef class PETSc_MHD_Derivatives(object):
                               - self.dx1(Bx, Vy, ix, jx)
                 
                 # V_x
-                ty[iy, jy, 2] = self.dy2(Vx, Vy, ix, jx) \
-                              - self.dy2(Bx, By, ix, jx) \
-                              - self.dx3(By, By, ix, jx) \
-                              - self.dx3(Vx, Vx, ix, jx) \
-                              - self.dx4(By, By, ix, jx) \
-                              - self.dx4(Vx, Vx, ix, jx)
+                ty[iy, jy, 2] = self.dy1(Vx, Vy, ix, jx) \
+                              - self.dy1(Bx, By, ix, jx) \
+                              - self.dx1(By, By, ix, jx) \
+                              - self.dx1(Vx, Vx, ix, jx) * 2.
 #                              - self.gradx(P, ix, jx)
                     
                 # V_y
-                ty[iy, jy, 3] = self.dx2(Vx, Vy, ix, jx) \
-                              - self.dx2(Bx, By, ix, jx) \
-                              - self.dy3(Bx, Bx, ix, jx) \
-                              - self.dy3(Vy, Vy, ix, jx) \
-                              - self.dy4(Bx, Bx, ix, jx) \
-                              - self.dy4(Vy, Vy, ix, jx)
+                ty[iy, jy, 3] = self.dx1(Vx, Vy, ix, jx) \
+                              - self.dx1(Bx, By, ix, jx) \
+                              - self.dy1(Bx, Bx, ix, jx) \
+                              - self.dy1(Vy, Vy, ix, jx) * 2.
 #                              - self.grady(P, ix, jx)
     
 

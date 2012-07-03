@@ -110,10 +110,10 @@ class Diagnostics(object):
         
         
     def read_from_hdf5(self, iTime):
-        self.Bx = self.hdf5['Bx'][iTime,:,:]
-        self.By = self.hdf5['By'][iTime,:,:]
-        self.Vx = self.hdf5['Vx'][iTime,:,:]
-        self.Vy = self.hdf5['Vy'][iTime,:,:]
+        self.Bx = self.hdf5['Bx'][iTime,:,:].T
+        self.By = self.hdf5['By'][iTime,:,:].T
+        self.Vx = self.hdf5['Vx'][iTime,:,:].T
+        self.Vy = self.hdf5['Vy'][iTime,:,:].T
         
         self.B = np.sqrt( self.Bx**2 + self.By**2 )
         self.V = np.sqrt( self.Vx**2 + self.Vy**2 )

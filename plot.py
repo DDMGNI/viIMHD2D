@@ -55,10 +55,10 @@ class PlotMHD2D(object):
         self.y = np.zeros(diagnostics.ny+1)
         
         self.x[0:-1] = self.diagnostics.xGrid
-        self.x[  -1] = self.diagnostics.Lx
+        self.x[  -1] = self.x[-2] + self.diagnostics.hx
         
         self.y[0:-1] = self.diagnostics.yGrid
-        self.y[  -1] = self.diagnostics.Ly
+        self.y[  -1] = self.y[-2] + self.diagnostics.hy
         
         self.Bx      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.By      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
@@ -253,34 +253,34 @@ class PlotMHD2D(object):
         self.Vy[   :,   -1] = self.Vy[:,0]
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx, 20, norm=self.Bnorm)
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By, 20, norm=self.Bnorm)
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx, 20, norm=self.Vnorm)
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy, 20, norm=self.Vnorm)
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, 20, norm=self.Bnorm)
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, 20, norm=self.Bnorm)
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, 20, norm=self.Vnorm)
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, 20, norm=self.Vnorm)
         
 #        if len(self.B[self.B == self.B[0,0]]) == len(self.B.ravel()):
 #            self.conts["Babs"] = self.axes["Babs"].contourf(, 10)
 #        else:
-#            self.conts["Babs"] = self.axes["Babs"].contour(self.x, self.y, self.B, 10)
+#            self.conts["Babs"] = self.axes["Babs"].contour(self.x, self.y, self.B.T, 10)
 #        
-#        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.V, 20)
+#        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.V.T, 20)
         
         
         self.axes["Babs"].clear()
         plt.subplot(self.gs[0:2,1:3])
-        streamplot(self.x, self.y, self.Bx, self.By, density=1.5, arrowsize=.5, color='b')
+        streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.5, arrowsize=.5, color='b')
         
 #        self.axes["Babs"].clear()
-#        st_B = Streamlines(self.x, self.y, self.Bx, self.By, spacing=1)#, res=.25)
+#        st_B = Streamlines(self.x, self.y, self.Bx.T, self.By.T, spacing=1)#, res=.25)
 #        st_B.plot(ax=self.axes["Babs"])
         
 #        self.axes["Vabs"].clear()
 #        plt.subplot(self.gs[2:4,1:3])
-#        streamplot(self.x, self.y, self.Vx, self.Vy, density=1, arrowsize=1, color='b')
+#        streamplot(self.x, self.y, self.Vx.T, self.Vy.T, density=1, arrowsize=1, color='b')
         
         
         self.axes["Vabs"].clear()
-        self.axes["Vabs"].quiver(self.x, self.y, self.Bx, self.By)
+        self.axes["Vabs"].quiver(self.x, self.y, self.Bx.T, self.By.T)
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()

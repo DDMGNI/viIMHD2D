@@ -14,8 +14,9 @@ import time
 
 from config import Config
 
-#from PETSc_MHD_VI  import PETScSolver
-from PETSc_MHD_VI_Simple import PETScSolver
+from PETSc_MHD_VI  import PETScSolver
+#from PETSc_MHD_VI_Simple import PETScSolver
+#from PETSc_MHD_VI_DF_Simple import PETScSolver
 from PETSc_MHD_RK4 import PETScRK4
 
 
@@ -170,7 +171,7 @@ class petscMHD2D(object):
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
         self.ksp.setType(cfg['solver']['petsc_ksp_type'])
-#        self.ksp.setInitialGuessNonzero(True)
+        self.ksp.setInitialGuessNonzero(True)
         
         self.pc = self.ksp.getPC()
         self.pc.setType(cfg['solver']['petsc_pc_type'])
