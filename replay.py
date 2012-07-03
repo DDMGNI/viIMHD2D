@@ -46,8 +46,7 @@ class replay(object):
     
     def run(self):
         for itime in range(1, self.diagnostics.nt+1):
-            if itime % self.nPlot == 0 or itime == self.diagnostics.nt:
-                self.update(itime, final=(itime == self.diagnostics.nt))
+            self.update(itime, final=(itime == self.diagnostics.nt))
         
     
     def movie(self, outfile, fps=1):

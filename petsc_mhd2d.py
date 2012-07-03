@@ -14,7 +14,8 @@ import time
 
 from config import Config
 
-from PETSc_MHD_VI  import PETScSolver
+#from PETSc_MHD_VI  import PETScSolver
+from PETSc_MHD_VI_Simple import PETScSolver
 from PETSc_MHD_RK4 import PETScRK4
 
 
@@ -59,7 +60,8 @@ class petscMHD2D(object):
         OptDB = PETSc.Options()
         
         OptDB.setValue('ksp_rtol', cfg['solver']['petsc_residual'])
-        OptDB.setValue('ksp_max_it', 100)
+#        OptDB.setValue('ksp_max_it', 100)
+        OptDB.setValue('ksp_max_it', 1000)
 
 #        OptDB.setValue('ksp_monitor', '')
 #        OptDB.setValue('log_info', '')
@@ -150,7 +152,7 @@ class petscMHD2D(object):
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
         self.ksp.setType(cfg['solver']['petsc_ksp_type'])
-#        self.ksp.setInitialGuessNonzero(True)
+        self.ksp.setInitialGuessNonzero(True)
         
         self.pc = self.ksp.getPC()
         self.pc.setType(cfg['solver']['petsc_pc_type'])

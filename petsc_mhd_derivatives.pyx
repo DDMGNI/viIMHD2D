@@ -370,7 +370,7 @@ cdef class PETSc_MHD_Derivatives(object):
                    + 1. * x[i+1, j-1] \
                    + 2. * x[i+1, j  ] \
                    + 1. * x[i+1, j+1] \
-                 ) / (32. * self.ht)
+                 ) * self.ht_inv / 32.
         
         return result
     
@@ -385,15 +385,44 @@ cdef class PETSc_MHD_Derivatives(object):
         
         (xs, xe), (ys, ye) = self.da.getRanges()
         
+        cdef np.ndarray[np.float64_t, ndim=2] Bx = tx[:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] By = tx[:,:,1]
+        cdef np.ndarray[np.float64_t, ndim=2] Vx = tx[:,:,2]
+        cdef np.ndarray[np.float64_t, ndim=2] Vy = tx[:,:,3]
+         
         
         for j in np.arange(ys, ye):
-            jx = iy-ys+1
-            jy = iy-ys
+            jx = j-ys+1
+            jy = j-ys
             
             for i in np.arange(xs, xe):
-                ix = ix-xs+1
-                iy = ix-xs
+                ix = i-xs+1
+                iy = i-xs
                 
-                ty[i, j, :] = 0.0
+                # B_x
+                ty[iy, jy, 0] = self.dy1(Bx, Vy, ix, jx) \
+                              - self.dy1(By, Vx, ix, jx)
+                    
+                # B_y
+                ty[iy, jy, 1] = self.dx1(By, Vx, ix, jx) \
+                              - self.dx1(Bx, Vy, ix, jx)
+                
+                # V_x
+                ty[iy, jy, 2] = self.dy2(Vx, Vy, ix, jx) \
+                              - self.dy2(Bx, By, ix, jx) \
+                              - self.dx3(By, By, ix, jx) \
+                              - self.dx3(Vx, Vx, ix, jx) \
+                              - self.dx4(By, By, ix, jx) \
+                              - self.dx4(Vx, Vx, ix, jx)
+#                              - self.gradx(P, ix, jx)
+                    
+                # V_y
+                ty[iy, jy, 3] = self.dx2(Vx, Vy, ix, jx) \
+                              - self.dx2(Bx, By, ix, jx) \
+                              - self.dy3(Bx, Bx, ix, jx) \
+                              - self.dy3(Vy, Vy, ix, jx) \
+                              - self.dy4(Bx, Bx, ix, jx) \
+                              - self.dy4(Vy, Vy, ix, jx)
+#                              - self.grady(P, ix, jx)
     
-    
+

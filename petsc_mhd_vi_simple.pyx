@@ -46,14 +46,12 @@ cdef class PETScSolver(object):
         
         
         # create history vector
-        self.Xh1 = self.da.createGlobalVec()
-        self.Xh2 = self.da.createGlobalVec()
+        self.Xh = self.da.createGlobalVec()
         
         # create local vectors
-        self.localB   = da.createLocalVec()
-        self.localX   = da.createLocalVec()
-        self.localXh1 = da.createLocalVec()
-        self.localXh2 = da.createLocalVec()
+        self.localB  = da.createLocalVec()
+        self.localX  = da.createLocalVec()
+        self.localXh = da.createLocalVec()
         
         # create temporary numpy array
         (xs, xe), (ys, ye) = self.da.getRanges()
@@ -64,14 +62,12 @@ cdef class PETScSolver(object):
         
     
     def update_history(self, Vec X):
-        x   = self.da.getVecArray(X)
-        xh1 = self.da.getVecArray(self.Xh1)
-        xh2 = self.da.getVecArray(self.Xh2)
+        x  = self.da.getVecArray(X)
+        xh = self.da.getVecArray(self.Xh)
         
         (xs, xe), (ys, ye) = self.da.getRanges()
         
-        xh2[xs:xe, ys:ye, :] = xh1[xs:xe, ys:ye, :]
-        xh1[xs:xe, ys:ye, :] = x  [xs:xe, ys:ye, :]
+        xh[xs:xe, ys:ye, :] = x[xs:xe, ys:ye, :]
         
     
 #    @cython.boundscheck(False)
@@ -82,12 +78,12 @@ cdef class PETScSolver(object):
         
         (xs, xe), (ys, ye) = self.da.getRanges()
         
-        self.da.globalToLocal(X,        self.localX)
-        self.da.globalToLocal(self.Xh1, self.localXh1)
+        self.da.globalToLocal(X,       self.localX)
+        self.da.globalToLocal(self.Xh, self.localXh)
         
         y  = self.da.getVecArray(Y)
         x  = self.da.getVecArray(self.localX)
-        xh = self.da.getVecArray(self.localXh1)
+        xh = self.da.getVecArray(self.localXh)
         
         cdef np.ndarray[np.float64_t, ndim=3] ty  = self.ty
 
@@ -120,8 +116,8 @@ cdef class PETScSolver(object):
                 # B_y
                 ty[iy, jy, 1] = self.derivatives.dt(By, ix, jx) \
                               + self.derivatives.dx1(Bx,  Vyh, ix, jx) \
-                              - self.derivatives.dx1(By,  Vxh, ix, jx) \
                               + self.derivatives.dx1(Bxh, Vy,  ix, jx) \
+                              - self.derivatives.dx1(By,  Vxh, ix, jx) \
                               - self.derivatives.dx1(Byh, Vx,  ix, jx)
                 
                 # V_x
@@ -159,24 +155,17 @@ cdef class PETScSolver(object):
         
         (xs, xe), (ys, ye) = self.da.getRanges()
         
-        self.da.globalToLocal(self.Xh1, self.localXh1)
-        self.da.globalToLocal(self.Xh2, self.localXh2)
+        self.da.globalToLocal(self.Xh, self.localXh)
         
         b  = self.da.getVecArray(B)
-        xh1 = self.da.getVecArray(self.localXh1)
-        xh2 = self.da.getVecArray(self.localXh2)
+        xh = self.da.getVecArray(self.localXh)
         
         cdef np.ndarray[np.float64_t, ndim=3] tb  = self.ty
         
-        cdef np.ndarray[np.float64_t, ndim=2] Bxh1 = xh1[...][:,:,0]
-        cdef np.ndarray[np.float64_t, ndim=2] Byh1 = xh1[...][:,:,1]
-        cdef np.ndarray[np.float64_t, ndim=2] Vxh1 = xh1[...][:,:,2]
-        cdef np.ndarray[np.float64_t, ndim=2] Vyh1 = xh1[...][:,:,3]
-        
-        cdef np.ndarray[np.float64_t, ndim=2] Bxh2 = xh2[...][:,:,0]
-        cdef np.ndarray[np.float64_t, ndim=2] Byh2 = xh2[...][:,:,1]
-        cdef np.ndarray[np.float64_t, ndim=2] Vxh2 = xh2[...][:,:,2]
-        cdef np.ndarray[np.float64_t, ndim=2] Vyh2 = xh2[...][:,:,3]
+        cdef np.ndarray[np.float64_t, ndim=2] Bxh = xh[...][:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] Byh = xh[...][:,:,1]
+        cdef np.ndarray[np.float64_t, ndim=2] Vxh = xh[...][:,:,2]
+        cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
         
         
         for i in np.arange(xs, xe):
@@ -186,42 +175,11 @@ cdef class PETScSolver(object):
             for j in np.arange(ys, ye):
                 jx = j-ys+1
                 jy = j-ys
-            
-                # B_x
-                tb[iy, jy, 0] = self.derivatives.dt(Bxh2, ix, jx) \
-                              + self.derivatives.dy1(Bxh1, Vyh2, ix, jx) \
-                              - self.derivatives.dy1(Byh1, Vxh2, ix, jx) \
-                              + self.derivatives.dy1(Bxh2, Vyh1, ix, jx) \
-                              - self.derivatives.dy1(Byh2, Vxh1, ix, jx)
-                    
-                # B_y
-                tb[iy, jy, 1] = self.derivatives.dt(Byh2, ix, jx) \
-                              - self.derivatives.dx1(Bxh1, Vyh2, ix, jx) \
-                              + self.derivatives.dx1(Byh1, Vxh2, ix, jx) \
-                              - self.derivatives.dx1(Bxh2, Vyh1, ix, jx) \
-                              + self.derivatives.dx1(Byh2, Vxh1, ix, jx)
-                    
-                # V_x
-                tb[iy, jy, 2] = self.derivatives.dt(Vxh2, ix, jx) \
-                              - self.derivatives.dy2(Bxh1, Byh2, ix, jx) \
-                              + self.derivatives.dy2(Vxh1, Vyh2, ix, jx) \
-                              - self.derivatives.dy2(Bxh2, Byh1, ix, jx) \
-                              + self.derivatives.dy2(Vxh2, Vyh1, ix, jx) \
-                              - self.derivatives.dx3(Byh2, Byh1, ix, jx) \
-                              - self.derivatives.dx3(Vxh2, Vxh1, ix, jx) \
-                              - self.derivatives.dx4(Byh1, Byh2, ix, jx) \
-                              - self.derivatives.dx4(Vxh1, Vxh2, ix, jx)
                 
-                # V_y
-                tb[iy, jy, 3] = self.derivatives.dt(Vyh2, ix, jx) \
-                              - self.derivatives.dx2(Bxh1, Byh2, ix, jx) \
-                              + self.derivatives.dx2(Vxh1, Vyh2, ix, jx) \
-                              - self.derivatives.dx2(Bxh2, Byh1, ix, jx) \
-                              + self.derivatives.dx2(Vxh2, Vyh1, ix, jx) \
-                              - self.derivatives.dy3(Bxh2, Bxh1, ix, jx) \
-                              - self.derivatives.dy3(Vyh2, Vyh1, ix, jx) \
-                              - self.derivatives.dy4(Bxh1, Bxh2, ix, jx) \
-                              - self.derivatives.dy4(Vyh1, Vyh2, ix, jx)
+                tb[iy, jy, 0] = self.derivatives.dt(Bxh, ix, jx)
+                tb[iy, jy, 1] = self.derivatives.dt(Byh, ix, jx)
+                tb[iy, jy, 2] = self.derivatives.dt(Vxh, ix, jx)
+                tb[iy, jy, 3] = self.derivatives.dt(Vyh, ix, jx)
                   
           
         b[xs:xe, ys:ye, :] = tb[:,:,:]

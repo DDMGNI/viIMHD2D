@@ -77,19 +77,19 @@ cdef class PETScRK4(object):
         cdef np.ndarray[np.float64_t, ndim=3] tx4 = x4[...]
         
         
-        self.derivatives.mhd_timestep(tx, tx1)
+        self.derivatives.timestep(tx, tx1)
         self.da.localToGlobal(self.localX1, self.X1)
         
         self.da.globalToLocal(self.X1, self.localX1); tx1 = x1[...]
-        self.derivatives.mhd_timestep(tx + 0.5 * self.ht * tx1, tx2)
+        self.derivatives.timestep(tx + 0.5 * self.ht * tx1, tx2)
         self.da.localToGlobal(self.localX2, self.X2)
         
         self.da.globalToLocal(self.X2, self.localX2); tx2 = x2[...]
-        self.derivatives.mhd_timestep(tx + 0.5 * self.ht * tx2, tx3)
+        self.derivatives.timestep(tx + 0.5 * self.ht * tx2, tx3)
         self.da.localToGlobal(self.localX3, self.X3)
         
         self.da.globalToLocal(self.X3, self.localX3); tx3 = x3[...]
-        self.derivatives.mhd_timestep(tx + 1.0 * self.ht * tx3, tx4)
+        self.derivatives.timestep(tx + 1.0 * self.ht * tx3, tx4)
         self.da.localToGlobal(self.localX4, self.X4)
         
         tx  = self.da.getVecArray(X)[...]
