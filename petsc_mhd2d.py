@@ -43,7 +43,25 @@ class petscMHD2D(object):
         nx   = cfg['grid']['nx']                    # number of points in x
         ny   = cfg['grid']['ny']                    # number of points in y
         Lx   = cfg['grid']['Lx']                    # spatial domain in x
+        x1   = cfg['grid']['x1']                    # 
+        x2   = cfg['grid']['x2']                    # 
+        
         Ly   = cfg['grid']['Ly']                    # spatial domain in y
+        y1   = cfg['grid']['y1']                    # 
+        y2   = cfg['grid']['y2']                    # 
+        
+        if x1 != x2:
+            Lx = x2-x1
+        else:
+            x1 = 0.0
+            x2 = Lx
+        
+        if y1 != y2:
+            Ly = y2-y1
+        else:
+            y1 = 0.0
+            y2 = Ly
+        
         
         self.hx = Lx / nx                           # gridstep size in x
         self.hy = Ly / ny                           # gridstep size in y
@@ -104,15 +122,15 @@ class petscMHD2D(object):
         
         
         # initialise grid
-        self.da1.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx, 
-                                       ymin=0.0, ymax=Ly*(ny-1.)/ny)
+        self.da1.setUniformCoordinates(xmin=x1, xmax=x2-self.hx, 
+                                       ymin=y1, ymax=y2-self.hy)
         
-        self.da4.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx, 
-                                       ymin=0.0, ymax=Ly*(ny-1.)/ny)
+        self.da4.setUniformCoordinates(xmin=x1, xmax=x2-self.hx, 
+                                       ymin=y1, ymax=y2-self.hy)
         
-        self.dax.setUniformCoordinates(xmin=0.0, xmax=Lx*(nx-1.)/nx) 
+        self.dax.setUniformCoordinates(xmin=x1, xmax=x2-self.hx) 
         
-        self.day.setUniformCoordinates(xmin=0.0, xmax=Ly*(ny-1.)/ny)
+        self.day.setUniformCoordinates(xmin=y1, xmax=y2-self.hy)
         
         
         # create solution and RHS vector
@@ -152,7 +170,7 @@ class petscMHD2D(object):
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
         self.ksp.setType(cfg['solver']['petsc_ksp_type'])
-        self.ksp.setInitialGuessNonzero(True)
+#        self.ksp.setInitialGuessNonzero(True)
         
         self.pc = self.ksp.getPC()
         self.pc.setType(cfg['solver']['petsc_pc_type'])
