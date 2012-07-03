@@ -56,7 +56,7 @@ ext_modules = [
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
         Extension("PETSc_MHD_VI",
-                  sources=["petsc_mhd_vi.pyx"],
+                  sources=["PETSc_MHD_VI.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
