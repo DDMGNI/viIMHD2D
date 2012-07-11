@@ -103,7 +103,7 @@ class petscMHD2D(object):
         
         
         # create DA (dof = 5 for Bx, By, Vx, Vy, P)
-        self.da4 = PETSc.DA().create(dim=2, dof=7,
+        self.da4 = PETSc.DA().create(dim=2, dof=5,
                                      sizes=[nx, ny],
                                      proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
                                      boundary_type=('periodic', 'periodic'),
@@ -139,7 +139,7 @@ class petscMHD2D(object):
         # create solution and RHS vector
         self.x  = self.da4.createGlobalVec()
         self.b  = self.da4.createGlobalVec()
-#        self.U  = self.da4.createGlobalVec()
+        self.Pb = self.da1.createGlobalVec()
         
         # create vectors for magnetic and velocity field
         self.Bx = self.da1.createGlobalVec()
@@ -147,9 +147,6 @@ class petscMHD2D(object):
         self.Vx = self.da1.createGlobalVec()
         self.Vy = self.da1.createGlobalVec()
         self.P  = self.da1.createGlobalVec()
-        self.Ux = self.da1.createGlobalVec()
-        self.Uy = self.da1.createGlobalVec()
-        self.Pb = self.da1.createGlobalVec()
         
         # set variable names
         self.x.setName('solver_x')
@@ -160,8 +157,6 @@ class petscMHD2D(object):
         self.Vx.setName('Vx')
         self.Vy.setName('Vy')
         self.P.setName('P')
-        self.Ux.setName('Ux')
-        self.Uy.setName('Uy')
         
         
         # create Matrix object
@@ -220,8 +215,6 @@ class petscMHD2D(object):
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
         P_arr  = self.da1.getVecArray(self.P)
-        Ux_arr = self.da1.getVecArray(self.Ux)
-        Uy_arr = self.da1.getVecArray(self.Uy)
         
         
         if cfg['initial_data']['magnetic_python'] != None:
@@ -249,9 +242,6 @@ class petscMHD2D(object):
             Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             
-        Ux_arr[xs:xe, ys:ye] = Vx_arr[xs:xe, ys:ye]
-        Uy_arr[xs:xe, ys:ye] = Vy_arr[xs:xe, ys:ye]
-        
         
         for i in range(xs, xe):
             for j in range(ys, ye):
@@ -264,8 +254,6 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 2] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = Vy_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 5] = Ux_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 6] = Uy_arr[xs:xe, ys:ye]
         
         
         # update solution history
@@ -304,8 +292,6 @@ class petscMHD2D(object):
         self.hdf5_viewer(self.Vx)
         self.hdf5_viewer(self.Vy)
         self.hdf5_viewer(self.P)
-        self.hdf5_viewer(self.Ux)
-        self.hdf5_viewer(self.Uy)
         
         
     
@@ -330,8 +316,8 @@ class petscMHD2D(object):
             self.calculate_initial_guess()
             
             # build RHS and solve
-#            self.petsc_mat.formRHS(self.b)
-#            self.ksp.solve(self.b, self.x)
+            self.petsc_mat.formRHS(self.b)
+            self.ksp.solve(self.b, self.x)
             
             # update history
             self.petsc_mat.update_history(self.x)
@@ -343,16 +329,12 @@ class petscMHD2D(object):
             Vx_arr = self.da1.getVecArray(self.Vx)
             Vy_arr = self.da1.getVecArray(self.Vy)
             P_arr  = self.da1.getVecArray(self.P)
-            Ux_arr = self.da1.getVecArray(self.Ux)
-            Uy_arr = self.da1.getVecArray(self.Uy)
 
             Bx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 0]
             By_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 1]
             Vx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 2]
             Vy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
             P_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
-            Ux_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 5]
-            Uy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 6]
             
             
             # save to hdf5 file
@@ -368,8 +350,6 @@ class petscMHD2D(object):
             self.hdf5_viewer(self.Vx)
             self.hdf5_viewer(self.Vy)
             self.hdf5_viewer(self.P)
-            self.hdf5_viewer(self.Ux)
-            self.hdf5_viewer(self.Uy)
             
             
             if PETSc.COMM_WORLD.getRank() == 0:
@@ -393,26 +373,7 @@ class petscMHD2D(object):
         
         x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
         
-
-#        # solve for Ux, Uy
-#        x_arr = self.da4.getVecArray(self.x)
-#        x_arr[xs:xe, ys:ye, 5] = x_arr[xs:xe, ys:ye, 2]
-#        x_arr[xs:xe, ys:ye, 6] = x_arr[xs:xe, ys:ye, 3]
-#        
-#        self.petsc_mat.rk4(self.x, solveU=True)
-#        
-#        # calculate initial guess for total pressure
-#        self.poisson_mat.formRHS(self.Pb)
-#        self.pksp.solve(self.Pb, self.P)
-#        
-#        P_arr = self.da1.getVecArray(self.P)
-#        x_arr = self.da4.getVecArray(self.x)
-#        
-#        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
-#        
-#        # solve for Bx, By, Vx, Vy
-#        self.petsc_mat.rk4(self.x)
-            
+        
         if PETSc.COMM_WORLD.getRank() == 0:
             print("   Poisson: %5i iterations,   residual = %24.16E " % (self.pksp.getIterationNumber(), self.pksp.getResidualNorm()) )
         

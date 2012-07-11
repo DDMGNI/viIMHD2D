@@ -41,11 +41,21 @@ class replay(object):
         if itime > 0:
             self.plot.add_timepoint()
         
+        if (itime == 1 or (itime-1) % self.nPlot == 0 or itime-1 == self.plot.nTime):
+            self.diagnostics.calculate_divergence()
+            print("   min(Bx)    = %20.12E,     max(Bx)    = %20.12E" % (self.diagnostics.Bx.min(), self.diagnostics.Bx.max()))
+            print("   min(By)    = %20.12E,     max(By)    = %20.12E" % (self.diagnostics.By.min(), self.diagnostics.By.max()))
+            print("   min(Vx)    = %20.12E,     max(Vx)    = %20.12E" % (self.diagnostics.Vx.min(), self.diagnostics.Vx.max()))
+            print("   min(Vy)    = %20.12E,     max(Vy)    = %20.12E" % (self.diagnostics.Vy.min(), self.diagnostics.Vy.max()))
+            print("   min(div V) = %20.12E,     max(div V) = %20.12E" % (self.diagnostics.divV.min(), self.diagnostics.divV.max()))
+            print
+        
         return self.plot.update(final=final)
     
     
     def run(self):
         for itime in range(1, self.diagnostics.nt+1):
+            print("it = %4i" % (itime))
             self.update(itime, final=(itime == self.diagnostics.nt))
         
     

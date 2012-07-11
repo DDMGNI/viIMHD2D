@@ -28,7 +28,11 @@ class Diagnostics(object):
         self.xGrid = self.hdf5['x'][:]
         self.yGrid = self.hdf5['y'][:]
         
-        self.ht = self.tGrid[2] - self.tGrid[1]
+        if len(self.tGrid) > 1:
+            self.ht = self.tGrid[1] - self.tGrid[0]
+        else:
+            self.ht = 0
+        
         self.nt = len(self.tGrid)-1
         
         self.Lx = (self.xGrid[-1] - self.xGrid[0]) + (self.xGrid[1] - self.xGrid[0])
@@ -76,6 +80,9 @@ class Diagnostics(object):
         self.B  = np.zeros((self.nx, self.ny))
         self.V  = np.zeros((self.nx, self.ny))
         
+        self.divB = np.zeros((self.nx, self.ny))
+        self.divV = np.zeros((self.nx, self.ny))
+        
         self.E_magnetic  = 0.0
         self.E_velocity  = 0.0
         
@@ -121,26 +128,26 @@ class Diagnostics(object):
     
     def update_invariants(self, iTime):
         
-        self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
-        self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
+#        self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
+#        self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
         
-#        self.E_magnetic = 0.0
-#        self.E_velocity = 0.0
-#        
-#        for ix in range(0, self.nx):
-#            ixp = (ix+1) % self.nx
-#            
-#            for iy in range(0, self.ny):
-#                iyp = (iy+1) % self.ny
-#                
-#                self.E_magnetic = (self.Bx[ix,iy] + self.Bx[ixp,iy] + self.Bx[ixp,iyp] + self.Bx[ix,iyp])**2 \
-#                                + (self.By[ix,iy] + self.By[ixp,iy] + self.By[ixp,iyp] + self.By[ix,iyp])**2
-#                                
-#                self.E_velocity = (self.Vx[ix,iy] + self.Vx[ixp,iy] + self.Vx[ixp,iyp] + self.Vx[ix,iyp])**2 \
-#                                + (self.Vy[ix,iy] + self.Vy[ixp,iy] + self.Vy[ixp,iyp] + self.Vy[ix,iyp])**2
-#
-#        self.E_magnetic *= 0.5 * self.hx * self.hy / 16.
-#        self.E_velocity *= 0.5 * self.hx * self.hy / 16.
+        self.E_magnetic = 0.0
+        self.E_velocity = 0.0
+        
+        for ix in range(0, self.nx):
+            ixp = (ix+1) % self.nx
+            
+            for iy in range(0, self.ny):
+                iyp = (iy+1) % self.ny
+                
+                self.E_magnetic = (self.Bx[ix,iy] + self.Bx[ixp,iy] + self.Bx[ixp,iyp] + self.Bx[ix,iyp])**2 \
+                                + (self.By[ix,iy] + self.By[ixp,iy] + self.By[ixp,iyp] + self.By[ix,iyp])**2
+                                
+                self.E_velocity = (self.Vx[ix,iy] + self.Vx[ixp,iy] + self.Vx[ixp,iyp] + self.Vx[ix,iyp])**2 \
+                                + (self.Vy[ix,iy] + self.Vy[ixp,iy] + self.Vy[ixp,iyp] + self.Vy[ix,iyp])**2
+
+        self.E_magnetic *= 0.5 * self.hx * self.hy / 16.
+        self.E_velocity *= 0.5 * self.hx * self.hy / 16.
         
         
         self.L1_magnetic = self.B.sum() * self.hx * self.hy
@@ -188,3 +195,16 @@ class Diagnostics(object):
             self.L2_velocity_error = (self.L2_velocity - self.L2_velocity_0) #/ self.L2_velocity_0
         
     
+    def calculate_divergence(self):
+        for ix in range(0, self.nx):
+            ixp = (ix+1) % self.nx
+            
+            for iy in range(0, self.ny):
+                iyp = (iy+1) % self.ny
+                
+                self.divB[ix,iy] = (self.Bx[ixp,iy] - self.Bx[ix,iy]) / self.hx \
+                                 + (self.By[ix,iyp] - self.By[ix,iy]) / self.hy
+                
+                self.divV[ix,iy] = (self.Vx[ixp,iy] - self.Vx[ix,iy]) / self.hx \
+                                 + (self.Vy[ix,iyp] - self.Vy[ix,iy]) / self.hy
+                

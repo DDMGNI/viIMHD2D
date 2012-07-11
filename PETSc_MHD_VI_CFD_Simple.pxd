@@ -53,9 +53,6 @@ cdef class PETScSolver(object):
     cdef timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
                         np.ndarray[np.float64_t, ndim=3] ty)
     
-    cdef timestepU(self, np.ndarray[np.float64_t, ndim=3] tx,
-                         np.ndarray[np.float64_t, ndim=3] ty)
-    
     cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
                                np.uint64_t i, np.uint64_t j)

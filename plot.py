@@ -68,6 +68,9 @@ class PlotMHD2D(object):
         self.B       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.V       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
+        self.divB    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.divV    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        
         # set up figure/window size
         self.figure = plt.figure(num=None, figsize=(16,9))
         
@@ -121,8 +124,24 @@ class PlotMHD2D(object):
         self.axes["By"].set_title('$B_{y} (x,y)$')
         self.axes["Vx"].set_title('$V_{x} (x,y)$')
         self.axes["Vy"].set_title('$V_{y} (x,y)$')
-        self.axes["Babs"].set_title('$B (x,y)$')
-        self.axes["Vabs"].set_title('$V (x,y)$')
+        self.axes["Babs"].set_title('$div \, V  (x,y)$')
+        self.axes["Vabs"].set_title('$B (x,y)$')
+        
+        
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
+        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
+       
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
+        self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
+        
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
+        self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
+        
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
+        self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
+        
+        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
+        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -185,35 +204,59 @@ class PlotMHD2D(object):
         
     
     def update_boundaries(self):
-        self.Bmin = +1e40
-        self.Bmax = -1e40
         
-        self.Bmin = min(self.Bmin, self.diagnostics.B.min() )
-        self.Bmin = min(self.Bmin, self.diagnostics.Bx.min() )
-        self.Bmin = min(self.Bmin, self.diagnostics.By.min() )
+        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
+        Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
         
-        self.Bmax = max(self.Bmax, self.diagnostics.B.max() )
-        self.Bmax = max(self.Bmax, self.diagnostics.Bx.max() )
-        self.Bmax = max(self.Bmax, self.diagnostics.By.max() )
+#        Bxmin = self.diagnostics.Bx.min()
+#        Bxmax = self.diagnostics.Bx.max()
+#        
+#        Bymin = self.diagnostics.By.min()
+#        Bymax = self.diagnostics.By.max()
+#
+#        if Bxmin == Bxmax:
+#            Bxmin -= 1.
+#            Bxmax += 1.
+#        
+#        if Bymin == Bymax:
+#            Bymin -= 1.
+#            Bymax += 1.
+        
+        self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
+        self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
 
-        dB = 0.1 * (self.Bmax - self.Bmin)
-        self.Bnorm = colors.Normalize(vmin=self.Bmin-dB, vmax=self.Bmax+dB)
-
-
-        self.Vmin = +1e40
-        self.Vmax = -1e40
+#        self.BxNorm = colors.Normalize(vmin=Bxmin, vmax=Bxmax)
+#        self.ByNorm = colors.Normalize(vmin=Bymin, vmax=Bymax)
         
-        self.Vmin = min(self.Vmin, self.diagnostics.V.min() )
-        self.Vmin = min(self.Vmin, self.diagnostics.Vx.min() )
-        self.Vmin = min(self.Vmin, self.diagnostics.Vy.min() )
         
-        self.Vmax = max(self.Vmax, self.diagnostics.V.max() )
-        self.Vmax = max(self.Vmax, self.diagnostics.Vx.max() )
-        self.Vmax = max(self.Vmax, self.diagnostics.Vy.max() )
+        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
+        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
+        
+#        Vxmin = self.diagnostics.Vx.min()
+#        Vxmax = self.diagnostics.Vx.max()
+#        
+#        Vymin = self.diagnostics.Vy.min()
+#        Vymax = self.diagnostics.Vy.max()
 
-        dV = 0.1 * (self.Vmax - self.Vmin)
-        self.Vnorm = colors.Normalize(vmin=self.Vmin-dV, vmax=self.Vmax+dV)
+        divVmin = self.diagnostics.divV.min()
+        divVmax = self.diagnostics.divV.max()
         
+#        if Vxmin == Vxmax:
+#            Vxmin -= 1.
+#            Vxmax += 1.
+#        
+#        if Vymin == Vymax:
+#            Vymin -= 1.
+#            Vymax += 1.
+        
+        if divVmin == divVmax:
+            divVmin -= 1.
+            divVmax += 1.
+        
+        self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
+        self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
+        
+        self.divVTicks = np.linspace(divVmin, divVmax, 11, endpoint=True)
         
     
     def update(self, final=False):
@@ -240,6 +283,10 @@ class PlotMHD2D(object):
         self.By[  -1, 0:-1] = self.diagnostics.By[0,:]
         self.By[   :,   -1] = self.By[:,0]
         
+        self.divB[0:-1, 0:-1] = self.diagnostics.divB[:,:]
+        self.divB[  -1, 0:-1] = self.diagnostics.divB[0,:]
+        self.divB[   :,   -1] = self.divB[:,0]
+        
         self.V [0:-1, 0:-1] = self.diagnostics.V [:,:]
         self.V [  -1, 0:-1] = self.diagnostics.V [0,:]
         self.V [   :,   -1] = self.V[:,0]
@@ -252,11 +299,51 @@ class PlotMHD2D(object):
         self.Vy[  -1, 0:-1] = self.diagnostics.Vy[0,:]
         self.Vy[   :,   -1] = self.Vy[:,0]
         
+        self.divV[0:-1, 0:-1] = self.diagnostics.divV[:,:]
+        self.divV[  -1, 0:-1] = self.diagnostics.divV[0,:]
+        self.divV[   :,   -1] = self.divV[:,0]
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, 20, norm=self.Bnorm)
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, 20, norm=self.Bnorm)
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, 20, norm=self.Vnorm)
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, 20, norm=self.Vnorm)
+        
+        
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
+#        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
+       
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
+#        self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
+        
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
+#        self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
+        
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
+#        self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
+        
+        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
+#        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
+        
+        
+#        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
+#        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
+#        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
+#        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
+        
+#        self.cbars["By"].set_clim(self.ByTicks[0], self.ByTicks[-1])
+#        self.cbars["By"].draw_all()
+        
+#        self.cbars["Bx"].set_ticks(self.BxTicks)
+#        self.cbars["By"].set_ticks(self.ByTicks)
+#        self.cbars["Vx"].set_ticks(self.VxTicks)
+#        self.cbars["Vy"].set_ticks(self.VyTicks)
+        
+#        self.cbars["Bx"].set_clim(vmin=self.BxTicks[0], vmax=self.BxTicks[-1]) 
+#        self.cbars["Bx"].draw_all()
+#        
+#        self.cbars["By"].set_clim(vmin=self.ByTicks[0], vmax=self.ByTicks[-1]) 
+#        self.cbars["By"].draw_all()
+        
+#        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
+#        self.cbars["Babs"].set_ticks(self.divVTicks)
+        
+#        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.divV.T, 10)        
         
 #        if len(self.B[self.B == self.B[0,0]]) == len(self.B.ravel()):
 #            self.conts["Babs"] = self.axes["Babs"].contourf(, 10)

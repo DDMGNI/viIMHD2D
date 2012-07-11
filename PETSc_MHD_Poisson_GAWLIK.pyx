@@ -49,6 +49,7 @@ cdef class PETScPoissonSolver(object):
         
         # create local vectors
         self.localP = da1.createLocalVec()
+#        self.localU = da4.createLocalVec()
         self.localV = da4.createLocalVec()
         self.localX = da4.createLocalVec()
         
@@ -68,11 +69,11 @@ cdef class PETScPoissonSolver(object):
         
         
         for i in np.arange(xs, xe):
-            ix = i-xs+1
+            ix = i-xs+2
             iy = i-xs
             
             for j in np.arange(ys, ye):
-                jx = j-ys+1
+                jx = j-ys+2
                 jy = j-ys
                 
                 y[iy, jy] = self.laplace(x, ix, jx)
@@ -104,22 +105,18 @@ cdef class PETScPoissonSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
         
         for i in np.arange(xs, xe):
-            ix = i-xs+1
+            ix = i-xs+2
             iy = i-xs
             
             for j in np.arange(ys, ye):
-                jx = j-ys+1
+                jx = j-ys+2
                 jy = j-ys
                 
-                tVx[iy, jy] = + self.dx(Vx, Vx, ix, jx) \
-                              + self.dy(Vx, Vy, ix, jx) \
-                              - self.dx(Bx, Bx, ix, jx) \
-                              - self.dy(Bx, By, ix, jx)
+                tVx[iy, jy] = self.psi_x(Vx,  Vy, ix, jx) \
+                            - self.psi_x(Bx,  By, ix, jx)
                 
-                tVy[iy, jy] = + self.dx(Vx, Vy, ix, jx) \
-                              + self.dy(Vy, Vy, ix, jx) \
-                              - self.dx(Bx, By, ix, jx) \
-                              - self.dy(By, By, ix, jx)
+                tVy[iy, jy] = self.psi_y(Vx,  Vy, ix, jx) \
+                            - self.psi_y(Bx,  By, ix, jx)
                 
         self.da4.globalToLocal(self.V, self.localV)
         
@@ -130,16 +127,15 @@ cdef class PETScPoissonSolver(object):
         
         
         for i in np.arange(xs, xe):
-            ix = i-xs+1
+            ix = i-xs+2
             iy = i-xs
             
             for j in np.arange(ys, ye):
-                jx = j-ys+1
+                jx = j-ys+2
                 jy = j-ys
                 
-                b[iy, jy] = \
-                          - self.dx1(tVx, ix, jx) \
-                          - self.dy1(tVy, ix, jx)
+                b[iy, jy] = - self.dx1(tVx, ix, jx) \
+                            - self.dy1(tVy, ix, jx)
 
             
         
@@ -265,3 +261,76 @@ cdef class PETScPoissonSolver(object):
         return result
     
   
+    cdef np.float64_t psi_x(self, np.ndarray[np.float64_t, ndim=2] Vx,
+                                  np.ndarray[np.float64_t, ndim=2] Vy,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        cdef np.float64_t result
+        
+        result = 1. * self.omega(Vx, Vy, i, j-1) * self.ave_x(Vy, i, j-1) \
+               + 2. * self.omega(Vx, Vy, i, j  ) * self.ave_x(Vy, i, j  ) \
+               + 1. * self.omega(Vx, Vy, i, j+1) * self.ave_x(Vy, i, j+1)
+        
+        return - 0.25 * result
+        
+        
+    cdef np.float64_t psi_y(self, np.ndarray[np.float64_t, ndim=2] Vx,
+                                  np.ndarray[np.float64_t, ndim=2] Vy,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        cdef np.float64_t result
+        
+        result = 1. * self.omega(Vx, Vy, i-1, j) * self.ave_y(Vx, i-1, j) \
+               + 2. * self.omega(Vx, Vy, i,   j) * self.ave_y(Vx, i,   j) \
+               + 1. * self.omega(Vx, Vy, i+1, j) * self.ave_y(Vx, i+1, j)
+        
+        return + 0.25 * result
+        
+        
+    cdef np.float64_t phi_x(self, np.ndarray[np.float64_t, ndim=2] Vx,
+                                  np.ndarray[np.float64_t, ndim=2] Vy,
+                                  np.ndarray[np.float64_t, ndim=2] Bx,
+                                  np.ndarray[np.float64_t, ndim=2] By,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        cdef np.float64_t result
+        
+        result = Vx[i,j+1] * By[i,j+1] - Vx[i,j-1] * By[i,j-1] \
+               - Vy[i,j+1] * Bx[i,j+1] + Vy[i,j-1] * Bx[i,j-1]
+        
+        return - 0.5 * result * self.hy
+        
+        
+    cdef np.float64_t phi_y(self, np.ndarray[np.float64_t, ndim=2] Vx,
+                                  np.ndarray[np.float64_t, ndim=2] Vy,
+                                  np.ndarray[np.float64_t, ndim=2] Bx,
+                                  np.ndarray[np.float64_t, ndim=2] By,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        cdef np.float64_t result
+        
+        result = Vx[i+1,j] * By[i+1,j] - Vx[i-1,j] * By[i-1,j] \
+               - Vy[i+1,j] * Bx[i+1,j] + Vy[i-1,j] * Bx[i-1,j]
+        
+        return + 0.5 * result * self.hx
+        
+        
+    cdef np.float64_t omega(self, np.ndarray[np.float64_t, ndim=2] Vx,
+                                  np.ndarray[np.float64_t, ndim=2] Vy,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        return (Vy[i+1,j] - Vy[i-1,j] ) / (2.*self.hx) \
+             - (Vx[i,j+1] - Vx[i,j-1] ) / (2.*self.hy) 
+    
+    
+    cdef np.float64_t ave_x(self, np.ndarray[np.float64_t, ndim=2] x,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        return 0.25 * ( x[i-1,j] + 2.*x[i,j] + x[i+1,j] )
+    
+    
+    cdef np.float64_t ave_y(self, np.ndarray[np.float64_t, ndim=2] x,
+                                  np.uint64_t i, np.uint64_t j):
+        
+        return 0.25 * ( x[i,j-1] + 2.*x[i,j] + x[i,j+1] )
+        

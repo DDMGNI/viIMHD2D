@@ -62,6 +62,13 @@ ext_modules = [
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
+        Extension("PETSc_MHD_Poisson_GAWLIK",
+                  sources=["PETSc_MHD_Poisson_GAWLIK.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
         Extension("PETSc_MHD_RK4",
                   sources=["PETSc_MHD_RK4.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
