@@ -106,38 +106,87 @@ cdef class PETScSolver(object):
                 jx = j-ys+1
                 jy = j-ys
                 
+#                # B_x
+#                ty[iy, jy, 0] = self.derivatives.dt(Bx, ix, jx) \
+#                              + 0.5 * self.derivatives.dy(Bx,  Vyh, ix, jx) \
+#                              + 0.5 * self.derivatives.dy(Bxh, Vy,  ix, jx) \
+#                              - 0.5 * self.derivatives.dy(By,  Vxh, ix, jx) \
+#                              - 0.5 * self.derivatives.dy(Byh, Vx,  ix, jx)
+#                    
+#                # B_y
+#                ty[iy, jy, 1] = self.derivatives.dt(By, ix, jx) \
+#                              - 0.5 * self.derivatives.dx(Bx,  Vyh, ix, jx) \
+#                              - 0.5 * self.derivatives.dx(Bxh, Vy,  ix, jx) \
+#                              + 0.5 * self.derivatives.dx(By,  Vxh, ix, jx) \
+#                              + 0.5 * self.derivatives.dx(Byh, Vx,  ix, jx)
+#                
+#                # V_x
+#                ty[iy, jy, 2] = self.derivatives.dt(Vx, ix, jx) \
+#                              - 0.5  * self.derivatives.dy(Bx,  Byh, ix, jx) \
+#                              - 0.5  * self.derivatives.dy(Bxh, By,  ix, jx) \
+#                              + 0.5  * self.derivatives.dy(Vx,  Vyh, ix, jx) \
+#                              + 0.5  * self.derivatives.dy(Vxh, Vy,  ix, jx) \
+#                              - 0.25 * self.derivatives.dx(Bx,  Bxh, ix, jx) \
+#                              - 0.25 * self.derivatives.dx(Bxh, Bx,  ix, jx) \
+#                              + 0.25 * self.derivatives.dx(By,  Byh, ix, jx) \
+#                              + 0.25 * self.derivatives.dx(Byh, By,  ix, jx) \
+#                              + 0.5  * self.derivatives.dx(Vx,  Vxh, ix, jx) \
+#                              + 0.5  * self.derivatives.dx(Vxh, Vx,  ix, jx)
+#                    
+#                # V_y
+#                ty[iy, jy, 3] = self.derivatives.dt(Vy, ix, jx) \
+#                              - 0.5  * self.derivatives.dx(Bx,  Byh, ix, jx) \
+#                              - 0.5  * self.derivatives.dx(Bxh, By,  ix, jx) \
+#                              + 0.5  * self.derivatives.dx(Vx,  Vyh, ix, jx) \
+#                              + 0.5  * self.derivatives.dx(Vxh, Vy,  ix, jx) \
+#                              + 0.25 * self.derivatives.dy(Bx,  Bxh, ix, jx) \
+#                              + 0.25 * self.derivatives.dy(Bxh, Bx,  ix, jx) \
+#                              - 0.25 * self.derivatives.dy(By,  Byh, ix, jx) \
+#                              - 0.25 * self.derivatives.dy(Byh, By,  ix, jx) \
+#                              + 0.5  * self.derivatives.dy(Vy,  Vyh, ix, jx) \
+#                              + 0.5  * self.derivatives.dy(Vyh, Vy,  ix, jx)
+                    
+                    
                 # B_x
                 ty[iy, jy, 0] = self.derivatives.dt(Bx, ix, jx) \
-                              - self.derivatives.dy1(Bx,  Vyh, ix, jx) \
-                              + self.derivatives.dy1(By,  Vxh, ix, jx) \
-                              - self.derivatives.dy1(Bxh, Vy,  ix, jx) \
-                              + self.derivatives.dy1(Byh, Vx,  ix, jx)
+                              + 0.5 * self.derivatives.dy1(Bx,  Vyh, ix, jx) \
+                              + 0.5 * self.derivatives.dy1(Bxh, Vy,  ix, jx) \
+                              - 0.5 * self.derivatives.dy1(By,  Vxh, ix, jx) \
+                              - 0.5 * self.derivatives.dy1(Byh, Vx,  ix, jx)
                     
                 # B_y
                 ty[iy, jy, 1] = self.derivatives.dt(By, ix, jx) \
-                              + self.derivatives.dx1(Bx,  Vyh, ix, jx) \
-                              + self.derivatives.dx1(Bxh, Vy,  ix, jx) \
-                              - self.derivatives.dx1(By,  Vxh, ix, jx) \
-                              - self.derivatives.dx1(Byh, Vx,  ix, jx)
+                              - 0.5 * self.derivatives.dx1(Bx,  Vyh, ix, jx) \
+                              - 0.5 * self.derivatives.dx1(Bxh, Vy,  ix, jx) \
+                              + 0.5 * self.derivatives.dx1(By,  Vxh, ix, jx) \
+                              + 0.5 * self.derivatives.dx1(Byh, Vx,  ix, jx)
                 
                 # V_x
                 ty[iy, jy, 2] = self.derivatives.dt(Vx, ix, jx) \
-                              + self.derivatives.dy1(Bx,  Byh, ix, jx) \
-                              + self.derivatives.dy1(Bxh, By,  ix, jx) \
-                              - self.derivatives.dy1(Vx,  Vyh, ix, jx) \
-                              - self.derivatives.dy1(Vxh, Vy,  ix, jx) \
-                              - self.derivatives.dx1(By,  Byh, ix, jx) \
-                              - self.derivatives.dx1(Vx,  Vxh, ix, jx) * 2.
+                              - 0.5  * self.derivatives.dy1(Bx,  Byh, ix, jx) \
+                              - 0.5  * self.derivatives.dy1(Bxh, By,  ix, jx) \
+                              + 0.5  * self.derivatives.dy1(Vx,  Vyh, ix, jx) \
+                              + 0.5  * self.derivatives.dy1(Vxh, Vy,  ix, jx) \
+                              - 0.25 * self.derivatives.dx1(Bx,  Bxh, ix, jx) \
+                              - 0.25 * self.derivatives.dx1(Bxh, Bx,  ix, jx) \
+                              + 0.25 * self.derivatives.dx1(By,  Byh, ix, jx) \
+                              + 0.25 * self.derivatives.dx1(Byh, By,  ix, jx) \
+                              + 0.5  * self.derivatives.dx1(Vx,  Vxh, ix, jx) \
+                              + 0.5  * self.derivatives.dx1(Vxh, Vx,  ix, jx)
                     
                 # V_y
                 ty[iy, jy, 3] = self.derivatives.dt(Vy, ix, jx) \
-                              + self.derivatives.dx1(Bx,  Byh, ix, jx) \
-                              + self.derivatives.dx1(Bxh, By,  ix, jx) \
-                              - self.derivatives.dx1(Vx,  Vyh, ix, jx) \
-                              - self.derivatives.dx1(Vxh, Vy,  ix, jx) \
-                              - self.derivatives.dy1(Bx,  Bxh, ix, jx) \
-                              - self.derivatives.dy1(Vy,  Vyh, ix, jx) * 2.
-                    
+                              - 0.5  * self.derivatives.dx1(Bx,  Byh, ix, jx) \
+                              - 0.5  * self.derivatives.dx1(Bxh, By,  ix, jx) \
+                              + 0.5  * self.derivatives.dx1(Vx,  Vyh, ix, jx) \
+                              + 0.5  * self.derivatives.dx1(Vxh, Vy,  ix, jx) \
+                              + 0.25 * self.derivatives.dy1(Bx,  Bxh, ix, jx) \
+                              + 0.25 * self.derivatives.dy1(Bxh, Bx,  ix, jx) \
+                              - 0.25 * self.derivatives.dy1(By,  Byh, ix, jx) \
+                              - 0.25 * self.derivatives.dy1(Byh, By,  ix, jx) \
+                              + 0.5  * self.derivatives.dy1(Vy,  Vyh, ix, jx) \
+                              + 0.5  * self.derivatives.dy1(Vyh, Vy,  ix, jx)
+        
         
         y[xs:xe, ys:ye, :] = ty[:,:,:]
         

@@ -39,3 +39,7 @@ cdef class PETScRK4(object):
     cdef PETSc_MHD_Derivatives derivatives
     
         
+
+    cdef timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
+                        np.ndarray[np.float64_t, ndim=3] ty)
+

@@ -41,6 +41,13 @@ INCLUDE_DIRS += ['/opt/local/include/openmpi']
 
 
 ext_modules = [
+        Extension("pyMHD2D_RK4",
+                  sources=["py_mhd2d_rk4.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
         Extension("PETSc_MHD_Derivatives",
                   sources=["PETSc_MHD_Derivatives.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
@@ -48,8 +55,22 @@ ext_modules = [
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
+        Extension("PETSc_MHD_Poisson_CFD",
+                  sources=["PETSc_MHD_Poisson_CFD.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
         Extension("PETSc_MHD_RK4",
                   sources=["PETSc_MHD_RK4.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
+        Extension("PETSc_MHD_GAWLIK",
+                  sources=["PETSc_MHD_GAWLIK.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
@@ -69,8 +90,22 @@ ext_modules = [
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
+        Extension("PETSc_MHD_VI_CFD_Simple",
+                  sources=["PETSc_MHD_VI_CFD_Simple.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
         Extension("PETSc_MHD_VI_DF_Simple",
                   sources=["PETSc_MHD_VI_DF_Simple.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
+        Extension("PETSc_MHD_VI_NL_Simple",
+                  sources=["PETSc_MHD_VI_NL_Simple.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,

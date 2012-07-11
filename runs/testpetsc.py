@@ -6,12 +6,36 @@ x1 = 0.5
 x2 = 1.5
 B0 = 1.0
 p0 = 0.1
+c  = 5.
+
+k = 2.
 
 #u0 = np.sqrt(5.)
 #A0 = 1.E-3
 #R0 = 0.3
 #p0 = 1.0
 #th = np.arctan(0.5)
+
+
+## Wave
+#
+#def magnetic_x(x, y, Lx, Ly):
+#    return 0.0
+#
+#def magnetic_y(x, y, Lx, Ly):
+#    return B0 * np.sin(k*np.pi*x)
+##    return B0
+##    return 0.0
+#
+#def velocity_x(x, y, Lx, Ly):
+#    return u0 * np.sin(np.pi * y)
+##    return u0 * np.sin(np.pi * x)
+##    return u0
+##    return 0.0
+#
+#def velocity_y(x, y, Lx, Ly):
+##    return u0 * np.sin(np.pi * x)
+#    return 0.0
 
 
 # Current Sheet in x
@@ -24,13 +48,13 @@ def magnetic_y(x, y, Lx, Ly):
         return - B0
     else:
         return + B0
+#    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
 
 def velocity_x(x, y, Lx, Ly):
     return u0 * np.sin(np.pi * y)
 
 def velocity_y(x, y, Lx, Ly):
     return 0.0
-
 
 # Current Sheet in y
 

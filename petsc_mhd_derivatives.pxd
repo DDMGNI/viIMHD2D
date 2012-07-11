@@ -29,6 +29,10 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
         
+    cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
+                               np.ndarray[np.float64_t, ndim=2] V,
+                               np.uint64_t i, np.uint64_t j)
+    
     cdef np.float64_t dx1(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j)
@@ -41,11 +45,11 @@ cdef class PETSc_MHD_Derivatives(object):
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j)
 
-    cdef np.float64_t dx4(self, np.ndarray[np.float64_t, ndim=2] B,
-                                np.ndarray[np.float64_t, ndim=2] V,
-                                np.uint64_t i, np.uint64_t j)
     
-    
+    cdef np.float64_t dy(self, np.ndarray[np.float64_t, ndim=2] B,
+                               np.ndarray[np.float64_t, ndim=2] V,
+                               np.uint64_t i, np.uint64_t j)
+
     cdef np.float64_t dy1(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j)
@@ -58,10 +62,6 @@ cdef class PETSc_MHD_Derivatives(object):
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j)
     
-    cdef np.float64_t dy4(self, np.ndarray[np.float64_t, ndim=2] B,
-                                np.ndarray[np.float64_t, ndim=2] V,
-                                np.uint64_t i, np.uint64_t j)
-
 
     cdef np.float64_t gradx(self, np.ndarray[np.float64_t, ndim=2] x,
                                   np.uint64_t i, np.uint64_t j)
@@ -72,8 +72,3 @@ cdef class PETSc_MHD_Derivatives(object):
 
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
                                np.uint64_t i, np.uint64_t j)
-
-
-    cdef timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
-                        np.ndarray[np.float64_t, ndim=3] ty)
-

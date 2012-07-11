@@ -266,9 +266,9 @@ class PlotMHD2D(object):
 #        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.V.T, 20)
         
         
-        self.axes["Babs"].clear()
-        plt.subplot(self.gs[0:2,1:3])
-        streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.5, arrowsize=.5, color='b')
+#        self.axes["Babs"].clear()
+#        plt.subplot(self.gs[0:2,1:3])
+#        streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.5, arrowsize=.5, color='b')
         
 #        self.axes["Babs"].clear()
 #        st_B = Streamlines(self.x, self.y, self.Bx.T, self.By.T, spacing=1)#, res=.25)
