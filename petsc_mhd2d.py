@@ -21,6 +21,7 @@ from config import Config
 #from PETSc_MHD_VI_CFD        import PETScSolver
 #from PETSc_MHD_VI_CFD_NL     import PETScSolver
 from PETSc_MHD_VI_DF         import PETScSolver
+#from PETSc_MHD_VI_DF_NL      import PETScSolver
 #from PETSc_MHD_VI_GAWLIK     import PETScSolver
 #from PETSc_MHD_VI_GAWLIK_NL  import PETScSolver
 
