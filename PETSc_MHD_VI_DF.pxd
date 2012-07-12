@@ -31,6 +31,7 @@ cdef class PETScSolver(object):
     cdef DA da4
     
     cdef Vec V
+    cdef Vec divV
     cdef Vec Xh
     
     cdef Vec localV

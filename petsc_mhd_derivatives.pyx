@@ -177,58 +177,58 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
 #    @cython.boundscheck(False)
-    cdef np.float64_t dx2(self, np.ndarray[np.float64_t, ndim=2] B,
-                                np.ndarray[np.float64_t, ndim=2] V,
+    cdef np.float64_t dx2(self, np.ndarray[np.float64_t, ndim=2] F,
+                                np.ndarray[np.float64_t, ndim=2] D,
                                 np.uint64_t i, np.uint64_t j):
         '''
-        MHD Derivative: dx2
+        MHD Derivative: full single derivative F d_x D
         '''
         
         cdef np.float64_t result
         
         result = ( \
-                     + 2. * B[i-1, j  ] * V[i-1, j  ] \
-                     - 2. * B[i-1, j  ] * V[i,   j  ] \
-                     - 2. * B[i+1, j  ] * V[i+1, j  ] \
-                     + 2. * B[i+1, j  ] * V[i,   j  ] \
-                     + 2. * B[i,   j  ] * V[i-1, j  ] \
-                     - 2. * B[i,   j  ] * V[i+1, j  ] \
-                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
-                     + 1. * B[i-1, j-1] * V[i-1, j  ] \
-                     - 1. * B[i-1, j-1] * V[i,   j-1] \
-                     - 1. * B[i-1, j-1] * V[i,   j  ] \
-                     + 1. * B[i-1, j+1] * V[i-1, j+1] \
-                     + 1. * B[i-1, j+1] * V[i-1, j  ] \
-                     - 1. * B[i-1, j+1] * V[i,   j+1] \
-                     - 1. * B[i-1, j+1] * V[i,   j  ] \
-                     + 1. * B[i-1, j  ] * V[i-1, j-1] \
-                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
-                     - 1. * B[i-1, j  ] * V[i,   j-1] \
-                     - 1. * B[i-1, j  ] * V[i,   j+1] \
-                     - 1. * B[i+1, j-1] * V[i+1, j-1] \
-                     - 1. * B[i+1, j-1] * V[i+1, j  ] \
-                     + 1. * B[i+1, j-1] * V[i,   j-1] \
-                     + 1. * B[i+1, j-1] * V[i,   j  ] \
-                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
-                     - 1. * B[i+1, j+1] * V[i+1, j  ] \
-                     + 1. * B[i+1, j+1] * V[i,   j+1] \
-                     + 1. * B[i+1, j+1] * V[i,   j  ] \
-                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
-                     - 1. * B[i+1, j  ] * V[i+1, j+1] \
-                     + 1. * B[i+1, j  ] * V[i,   j-1] \
-                     + 1. * B[i+1, j  ] * V[i,   j+1] \
-                     + 1. * B[i,   j-1] * V[i-1, j-1] \
-                     + 1. * B[i,   j-1] * V[i-1, j  ] \
-                     - 1. * B[i,   j-1] * V[i+1, j-1] \
-                     - 1. * B[i,   j-1] * V[i+1, j  ] \
-                     + 1. * B[i,   j+1] * V[i-1, j+1] \
-                     + 1. * B[i,   j+1] * V[i-1, j  ] \
-                     - 1. * B[i,   j+1] * V[i+1, j+1] \
-                     - 1. * B[i,   j+1] * V[i+1, j  ] \
-                     + 1. * B[i,   j  ] * V[i-1, j-1] \
-                     + 1. * B[i,   j  ] * V[i-1, j+1] \
-                     - 1. * B[i,   j  ] * V[i+1, j-1] \
-                     - 1. * B[i,   j  ] * V[i+1, j+1] \
+                     - 1 * F[i-1, j-1] * D[i-1, j-1] \
+                     - 1 * F[i-1, j-1] * D[i-1, j  ] \
+                     + 1 * F[i-1, j-1] * D[i,   j-1] \
+                     + 1 * F[i-1, j-1] * D[i,   j  ] \
+                     - 1 * F[i-1, j+1] * D[i-1, j+1] \
+                     - 1 * F[i-1, j+1] * D[i-1, j  ] \
+                     + 1 * F[i-1, j+1] * D[i,   j+1] \
+                     + 1 * F[i-1, j+1] * D[i,   j  ] \
+                     - 1 * F[i-1, j  ] * D[i-1, j-1] \
+                     - 1 * F[i-1, j  ] * D[i-1, j+1] \
+                     - 2 * F[i-1, j  ] * D[i-1, j  ] \
+                     + 1 * F[i-1, j  ] * D[i,   j-1] \
+                     + 1 * F[i-1, j  ] * D[i,   j+1] \
+                     + 2 * F[i-1, j  ] * D[i,   j  ] \
+                     + 1 * F[i+1, j-1] * D[i+1, j-1] \
+                     + 1 * F[i+1, j-1] * D[i+1, j  ] \
+                     - 1 * F[i+1, j-1] * D[i,   j-1] \
+                     - 1 * F[i+1, j-1] * D[i,   j  ] \
+                     + 1 * F[i+1, j+1] * D[i+1, j+1] \
+                     + 1 * F[i+1, j+1] * D[i+1, j  ] \
+                     - 1 * F[i+1, j+1] * D[i,   j+1] \
+                     - 1 * F[i+1, j+1] * D[i,   j  ] \
+                     + 1 * F[i+1, j  ] * D[i+1, j-1] \
+                     + 1 * F[i+1, j  ] * D[i+1, j+1] \
+                     + 2 * F[i+1, j  ] * D[i+1, j  ] \
+                     - 1 * F[i+1, j  ] * D[i,   j-1] \
+                     - 1 * F[i+1, j  ] * D[i,   j+1] \
+                     - 2 * F[i+1, j  ] * D[i,   j  ] \
+                     - 1 * F[i,   j-1] * D[i-1, j-1] \
+                     - 1 * F[i,   j-1] * D[i-1, j  ] \
+                     + 1 * F[i,   j-1] * D[i+1, j-1] \
+                     + 1 * F[i,   j-1] * D[i+1, j  ] \
+                     - 1 * F[i,   j+1] * D[i-1, j+1] \
+                     - 1 * F[i,   j+1] * D[i-1, j  ] \
+                     + 1 * F[i,   j+1] * D[i+1, j+1] \
+                     + 1 * F[i,   j+1] * D[i+1, j  ] \
+                     - 1 * F[i,   j  ] * D[i-1, j-1] \
+                     - 1 * F[i,   j  ] * D[i-1, j+1] \
+                     - 2 * F[i,   j  ] * D[i-1, j  ] \
+                     + 1 * F[i,   j  ] * D[i+1, j-1] \
+                     + 1 * F[i,   j  ] * D[i+1, j+1] \
+                     + 2 * F[i,   j  ] * D[i+1, j  ] \
                  ) * self.hx_inv / 32.
          
         return result
@@ -412,58 +412,58 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
 #    @cython.boundscheck(False)
-    cdef np.float64_t dy2(self, np.ndarray[np.float64_t, ndim=2] B,
-                                np.ndarray[np.float64_t, ndim=2] V,
+    cdef np.float64_t dy2(self, np.ndarray[np.float64_t, ndim=2] F,
+                                np.ndarray[np.float64_t, ndim=2] D,
                                 np.uint64_t i, np.uint64_t j):
         '''
-        MHD Derivative: dy2
+        MHD Derivative: full single derivative F d_y D
         '''
         
         cdef np.float64_t result
         
         result = ( \
-                     + 2. * B[i,   j-1] * V[i,   j-1] \
-                     + 2. * B[i,   j-1] * V[i,   j  ] \
-                     - 2. * B[i,   j+1] * V[i,   j+1] \
-                     - 2. * B[i,   j+1] * V[i,   j  ] \
-                     - 2. * B[i,   j  ] * V[i,   j-1] \
-                     + 2. * B[i,   j  ] * V[i,   j+1] \
-                     + 1. * B[i-1, j-1] * V[i-1, j-1] \
-                     + 1. * B[i-1, j-1] * V[i-1, j  ] \
-                     + 1. * B[i-1, j-1] * V[i,   j-1] \
-                     + 1. * B[i-1, j-1] * V[i,   j  ] \
-                     - 1. * B[i-1, j+1] * V[i-1, j+1] \
-                     - 1. * B[i-1, j+1] * V[i-1, j  ] \
-                     - 1. * B[i-1, j+1] * V[i,   j+1] \
-                     - 1. * B[i-1, j+1] * V[i,   j  ] \
-                     - 1. * B[i-1, j  ] * V[i-1, j-1] \
-                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
-                     - 1. * B[i-1, j  ] * V[i,   j-1] \
-                     + 1. * B[i-1, j  ] * V[i,   j+1] \
-                     + 1. * B[i+1, j-1] * V[i+1, j-1] \
-                     + 1. * B[i+1, j-1] * V[i+1, j  ] \
-                     + 1. * B[i+1, j-1] * V[i,   j-1] \
-                     + 1. * B[i+1, j-1] * V[i,   j  ] \
-                     - 1. * B[i+1, j+1] * V[i+1, j+1] \
-                     - 1. * B[i+1, j+1] * V[i+1, j  ] \
-                     - 1. * B[i+1, j+1] * V[i,   j+1] \
-                     - 1. * B[i+1, j+1] * V[i,   j  ] \
-                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
-                     + 1. * B[i+1, j  ] * V[i+1, j+1] \
-                     - 1. * B[i+1, j  ] * V[i,   j-1] \
-                     + 1. * B[i+1, j  ] * V[i,   j+1] \
-                     + 1. * B[i,   j-1] * V[i-1, j-1] \
-                     + 1. * B[i,   j-1] * V[i-1, j  ] \
-                     + 1. * B[i,   j-1] * V[i+1, j-1] \
-                     + 1. * B[i,   j-1] * V[i+1, j  ] \
-                     - 1. * B[i,   j+1] * V[i-1, j+1] \
-                     - 1. * B[i,   j+1] * V[i-1, j  ] \
-                     - 1. * B[i,   j+1] * V[i+1, j+1] \
-                     - 1. * B[i,   j+1] * V[i+1, j  ] \
-                     - 1. * B[i,   j  ] * V[i-1, j-1] \
-                     + 1. * B[i,   j  ] * V[i-1, j+1] \
-                     - 1. * B[i,   j  ] * V[i+1, j-1] \
-                     + 1. * B[i,   j  ] * V[i+1, j+1] \
+                     - 1 * F[i-1, j-1] * D[i-1, j-1] \
+                     + 1 * F[i-1, j-1] * D[i-1, j  ] \
+                     - 1 * F[i-1, j-1] * D[i,   j-1] \
+                     + 1 * F[i-1, j-1] * D[i,   j  ] \
+                     + 1 * F[i-1, j+1] * D[i-1, j+1] \
+                     - 1 * F[i-1, j+1] * D[i-1, j  ] \
+                     + 1 * F[i-1, j+1] * D[i,   j+1] \
+                     - 1 * F[i-1, j+1] * D[i,   j  ] \
+                     - 1 * F[i-1, j  ] * D[i-1, j-1] \
+                     + 1 * F[i-1, j  ] * D[i-1, j+1] \
+                     - 1 * F[i-1, j  ] * D[i,   j-1] \
+                     + 1 * F[i-1, j  ] * D[i,   j+1] \
+                     - 1 * F[i+1, j-1] * D[i+1, j-1] \
+                     + 1 * F[i+1, j-1] * D[i+1, j  ] \
+                     - 1 * F[i+1, j-1] * D[i,   j-1] \
+                     + 1 * F[i+1, j-1] * D[i,   j  ] \
+                     + 1 * F[i+1, j+1] * D[i+1, j+1] \
+                     - 1 * F[i+1, j+1] * D[i+1, j  ] \
+                     + 1 * F[i+1, j+1] * D[i,   j+1] \
+                     - 1 * F[i+1, j+1] * D[i,   j  ] \
+                     - 1 * F[i+1, j  ] * D[i+1, j-1] \
+                     + 1 * F[i+1, j  ] * D[i+1, j+1] \
+                     - 1 * F[i+1, j  ] * D[i,   j-1] \
+                     + 1 * F[i+1, j  ] * D[i,   j+1] \
+                     - 1 * F[i,   j-1] * D[i-1, j-1] \
+                     + 1 * F[i,   j-1] * D[i-1, j  ] \
+                     - 1 * F[i,   j-1] * D[i+1, j-1] \
+                     + 1 * F[i,   j-1] * D[i+1, j  ] \
+                     - 2 * F[i,   j-1] * D[i,   j-1] \
+                     + 2 * F[i,   j-1] * D[i,   j  ] \
+                     + 1 * F[i,   j+1] * D[i-1, j+1] \
+                     - 1 * F[i,   j+1] * D[i-1, j  ] \
+                     + 1 * F[i,   j+1] * D[i+1, j+1] \
+                     - 1 * F[i,   j+1] * D[i+1, j  ] \
+                     + 2 * F[i,   j+1] * D[i,   j+1] \
+                     - 2 * F[i,   j+1] * D[i,   j  ] \
+                     - 1 * F[i,   j  ] * D[i-1, j-1] \
+                     + 1 * F[i,   j  ] * D[i-1, j+1] \
+                     - 1 * F[i,   j  ] * D[i+1, j-1] \
+                     + 1 * F[i,   j  ] * D[i+1, j+1] \
+                     - 2 * F[i,   j  ] * D[i,   j-1] \
+                     + 2 * F[i,   j  ] * D[i,   j+1] \
                  ) * self.hy_inv / 32.
         
         return result

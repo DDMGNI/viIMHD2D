@@ -18,8 +18,11 @@ from config import Config
 #from PETSc_MHD_VI_Simple import PETScSolver
 #from PETSc_MHD_VI_NL_Simple import PETScSolver
 
-from PETSc_MHD_VI_CFD_Simple import PETScSolver
-#from PETSc_MHD_VI_DF_Simple import PETScSolver
+#from PETSc_MHD_VI_CFD        import PETScSolver
+#from PETSc_MHD_VI_CFD_NL     import PETScSolver
+from PETSc_MHD_VI_DF         import PETScSolver
+#from PETSc_MHD_VI_GAWLIK     import PETScSolver
+#from PETSc_MHD_VI_GAWLIK_NL  import PETScSolver
 
 from PETSc_MHD_Poisson import PETScPoissonSolver
 
@@ -83,8 +86,8 @@ class petscMHD2D(object):
         OptDB = PETSc.Options()
         
         OptDB.setValue('ksp_rtol', cfg['solver']['petsc_residual'])
-#        OptDB.setValue('ksp_max_it', 100)
-        OptDB.setValue('ksp_max_it', 200)
+        OptDB.setValue('ksp_max_it', 100)
+#        OptDB.setValue('ksp_max_it', 200)
 #        OptDB.setValue('ksp_max_it', 1000)
 #        OptDB.setValue('ksp_max_it', 2000)
 
@@ -207,7 +210,7 @@ class petscMHD2D(object):
         self.pksp.setFromOptions()
         self.pksp.setOperators(self.pA)
         self.pksp.setType(cfg['solver']['petsc_ksp_type'])
-        self.pksp.setInitialGuessNonzero(True)
+#        self.pksp.setInitialGuessNonzero(True)
         
         self.ppc = self.pksp.getPC()
         self.ppc.setType('none')
@@ -227,7 +230,7 @@ class petscMHD2D(object):
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
-        P_arr  = self.da1.getVecArray(self.P)
+#        P_arr  = self.da1.getVecArray(self.P)
         
         
         if cfg['initial_data']['magnetic_python'] != None:
@@ -256,12 +259,12 @@ class petscMHD2D(object):
             Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             
         
-        if cfg['initial_data']['pressure_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
-            
-        for i in range(xs, xe):
-            for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) + 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
+#        if cfg['initial_data']['pressure_python'] != None:
+#            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+#            
+#        for i in range(xs, xe):
+#            for j in range(ys, ye):
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) #+ 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
         
         
         # copy distribution function to solution vector
@@ -269,6 +272,14 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 1] = By_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 2] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = Vy_arr[xs:xe, ys:ye]
+        
+        
+        self.petsc_mat.formRHSPoisson(self.Pb, self.x)
+        self.pksp.solve(self.Pb, self.P)
+        
+        x_arr = self.da4.getVecArray(self.x)
+        P_arr = self.da1.getVecArray(self.P)
+
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         
@@ -352,24 +363,25 @@ class petscMHD2D(object):
             Vy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
             P_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
             
-            
             # save to hdf5 file
-#            if itime % self.nsave == 0 or itime == self.grid.nt + 1:
-            self.hdf5_viewer.HDF5SetTimestep(itime)
-            self.hdf5_viewer(self.time)
+            if itime % self.nsave == 0 or itime == self.nt + 1:
+                self.hdf5_viewer.HDF5SetTimestep(self.hdf5_viewer.HDF5GetTimestep() + 1)
+                self.hdf5_viewer(self.time)
+                
+#                self.hdf5_viewer(self.x)
+#                self.hdf5_viewer(self.b)
+                
+                self.hdf5_viewer(self.Bx)
+                self.hdf5_viewer(self.By)
+                self.hdf5_viewer(self.Vx)
+                self.hdf5_viewer(self.Vy)
+                self.hdf5_viewer(self.P)
             
-#            self.hdf5_viewer(self.x)
-#            self.hdf5_viewer(self.b)
             
-            self.hdf5_viewer(self.Bx)
-            self.hdf5_viewer(self.By)
-            self.hdf5_viewer(self.Vx)
-            self.hdf5_viewer(self.Vy)
-            self.hdf5_viewer(self.P)
-            
-            
+            Psum = self.P.sum()
             if PETSc.COMM_WORLD.getRank() == 0:
                 print("   Solver:  %5i iterations,   residual = %24.16E " % (self.ksp.getIterationNumber(), self.ksp.getResidualNorm()) )
+                print("   sum(P) = %20.12E" % (Psum))
            
            
            

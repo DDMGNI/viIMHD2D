@@ -24,17 +24,19 @@ cdef class PETScSolver(object):
     
     '''
     
-    def __init__(self, DA da,
+    def __init__(self, DA da1, DA da4,
                  np.uint64_t nx, np.uint64_t ny,
                  np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''
         Constructor
         '''
         
-        assert da.getDim() == 2
+        assert da1.getDim() == 2
+        assert da4.getDim() == 2
         
         # distributed array
-        self.da = da
+        self.da1 = da1
+        self.da4 = da4
         
         # grid
         self.nx = nx
@@ -44,42 +46,28 @@ cdef class PETScSolver(object):
         self.hx = hx
         self.hy = hy
         
-        
-        self.V = self.da.createGlobalVec()
+        # create temporary vector
+        self.V = self.da4.createGlobalVec()
         
         # create history vector
-        self.Xh = self.da.createGlobalVec()
+        self.Xh = self.da4.createGlobalVec()
         
         # create local vectors
-        self.localV  = da.createLocalVec()
-        self.localB  = da.createLocalVec()
-        self.localX  = da.createLocalVec()
-        self.localXh = da.createLocalVec()
-        
-        
-        # create global RK4 vectors
-        self.X1 = self.da.createGlobalVec()
-        self.X2 = self.da.createGlobalVec()
-        self.X3 = self.da.createGlobalVec()
-        self.X4 = self.da.createGlobalVec()
-        
-        # create local RK4 vectors
-        self.localX1 = da.createLocalVec()
-        self.localX2 = da.createLocalVec()
-        self.localX3 = da.createLocalVec()
-        self.localX4 = da.createLocalVec()
-        
+        self.localV  = da4.createLocalVec()
+        self.localB  = da4.createLocalVec()
+        self.localX  = da4.createLocalVec()
+        self.localXh = da4.createLocalVec()
         
         # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(da, nx, ny, ht, hx, hy)
+        self.derivatives = PETSc_MHD_Derivatives(da4, nx, ny, ht, hx, hy)
         
         
     
     def update_history(self, Vec X):
-        x  = self.da.getVecArray(X)
-        xh = self.da.getVecArray(self.Xh)
+        x  = self.da4.getVecArray(X)
+        xh = self.da4.getVecArray(self.Xh)
         
-        (xs, xe), (ys, ye) = self.da.getRanges()
+        (xs, xe), (ys, ye) = self.da4.getRanges()
         
         xh[xs:xe, ys:ye, :] = x[xs:xe, ys:ye, :]
         
@@ -90,15 +78,15 @@ cdef class PETScSolver(object):
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xe, xs, ye, ys
         
-        (xs, xe), (ys, ye) = self.da.getRanges()
+        (xs, xe), (ys, ye) = self.da4.getRanges()
         
-        self.da.globalToLocal(X,       self.localX)
-        self.da.globalToLocal(self.Xh, self.localXh)
+        self.da4.globalToLocal(X,       self.localX)
+        self.da4.globalToLocal(self.Xh, self.localXh)
         
-        x  = self.da.getVecArray(self.localX)
-        xh = self.da.getVecArray(self.localXh)
+        x  = self.da4.getVecArray(self.localX)
+        xh = self.da4.getVecArray(self.localXh)
         
-        cdef np.ndarray[np.float64_t, ndim=3] ty  = self.da.getVecArray(Y)[...]
+        cdef np.ndarray[np.float64_t, ndim=3] ty  = self.da4.getVecArray(Y)[...]
 
         cdef np.ndarray[np.float64_t, ndim=2] Bx  = x [...][:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] By  = x [...][:,:,1]
@@ -112,7 +100,7 @@ cdef class PETScSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
         
         
-        v = self.da.getVecArray(self.V)[...]
+        v = self.da4.getVecArray(self.V)[...]
         
         cdef np.ndarray[np.float64_t, ndim=2] tVx = v[:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
@@ -125,19 +113,35 @@ cdef class PETScSolver(object):
                 jx = j-ys+1
                 jy = j-ys
                 
-                tVx[iy, jy] = + self.dx(Vx, Vx, ix, jx) \
-                              + self.dy(Vx, Vy, ix, jx) \
-                              - self.dx(Bx, Bx, ix, jx) \
-                              - self.dy(Bx, By, ix, jx)
+                tVx[iy, jy] = + 0.25 * self.dx(Vx,  Vx,  ix, jx) \
+                              + 0.25 * self.dx(Vx,  Vxh, ix, jx) \
+                              + 0.25 * self.dx(Vxh, Vx,  ix, jx) \
+                              + 0.25 * self.dy(Vx,  Vy,  ix, jx) \
+                              + 0.25 * self.dy(Vx,  Vyh, ix, jx) \
+                              + 0.25 * self.dy(Vxh, Vy,  ix, jx) \
+                              - 0.25 * self.dx(Bx,  Bx,  ix, jx) \
+                              - 0.25 * self.dx(Bx,  Bxh, ix, jx) \
+                              - 0.25 * self.dx(Bxh, Bx,  ix, jx) \
+                              - 0.25 * self.dy(Bx,  By,  ix, jx) \
+                              - 0.25 * self.dy(Bx,  Byh, ix, jx) \
+                              - 0.25 * self.dy(Bxh, By,  ix, jx)
                 
-                tVy[iy, jy] = + self.dx(Vx, Vy, ix, jx) \
-                              + self.dy(Vy, Vy, ix, jx) \
-                              - self.dx(Bx, By, ix, jx) \
-                              - self.dy(By, By, ix, jx)
+                tVy[iy, jy] = + 0.25 * self.dx(Vx,  Vy,  ix, jx) \
+                              + 0.25 * self.dx(Vx,  Vyh, ix, jx) \
+                              + 0.25 * self.dx(Vxh, Vy,  ix, jx) \
+                              + 0.25 * self.dy(Vy,  Vy,  ix, jx) \
+                              + 0.25 * self.dy(Vy,  Vyh, ix, jx) \
+                              + 0.25 * self.dy(Vyh, Vy,  ix, jx) \
+                              - 0.25 * self.dx(Bx,  By,  ix, jx) \
+                              - 0.25 * self.dx(Bx,  Byh, ix, jx) \
+                              - 0.25 * self.dx(Bxh, By,  ix, jx) \
+                              - 0.25 * self.dy(By,  By,  ix, jx) \
+                              - 0.25 * self.dy(By,  Byh, ix, jx) \
+                              - 0.25 * self.dy(Byh, By,  ix, jx)
                 
-        self.da.globalToLocal(self.V, self.localV)
+        self.da4.globalToLocal(self.V, self.localV)
         
-        v = self.da.getVecArray(self.localV)[...]
+        v = self.da4.getVecArray(self.localV)[...]
         
         tVx = v[:,:,0]
         tVy = v[:,:,1]
@@ -172,40 +176,18 @@ cdef class PETScSolver(object):
                 
                 # V_x
                 ty[iy, jy, 2] = self.derivatives.dt(Vx, ix, jx) \
-                              + 0.25 * self.dx(Vx,  Vx,  ix, jx) \
-                              + 0.25 * self.dx(Vxh, Vx,  ix, jx) \
-                              + 0.25 * self.dx(Vx,  Vxh, ix, jx) \
-                              + 0.25 * self.dy(Vx,  Vy,  ix, jx) \
-                              + 0.25 * self.dy(Vxh, Vy,  ix, jx) \
-                              + 0.25 * self.dy(Vx,  Vyh, ix, jx) \
-                              - 0.25 * self.dx(Bx,  Bx,  ix, jx) \
-                              - 0.25 * self.dx(Bxh, Bx,  ix, jx) \
-                              - 0.25 * self.dx(Bx,  Bxh, ix, jx) \
-                              - 0.25 * self.dy(Bx,  By,  ix, jx) \
-                              - 0.25 * self.dy(Bxh, By,  ix, jx) \
-                              - 0.25 * self.dy(Bx,  Byh, ix, jx) \
-                              + 0.5  * self.dx1(P,  ix,  jx)
+                              + tVx[iy, jy] \
+                              + 0.5 * self.derivatives.gradx(P, ix, jx)
                     
                 # V_y
                 ty[iy, jy, 3] = self.derivatives.dt(Vy, ix, jx) \
-                              + 0.25 * self.dx(Vx,  Vy,  ix, jx) \
-                              + 0.25 * self.dx(Vxh, Vy,  ix, jx) \
-                              + 0.25 * self.dx(Vx,  Vyh, ix, jx) \
-                              + 0.25 * self.dy(Vy,  Vy,  ix, jx) \
-                              + 0.25 * self.dy(Vyh, Vy,  ix, jx) \
-                              + 0.25 * self.dy(Vy,  Vyh, ix, jx) \
-                              - 0.25 * self.dx(Bx,  By,  ix, jx) \
-                              - 0.25 * self.dx(Bxh, By,  ix, jx) \
-                              - 0.25 * self.dx(Bx,  Byh, ix, jx) \
-                              - 0.25 * self.dy(By,  By,  ix, jx) \
-                              - 0.25 * self.dy(Byh, By,  ix, jx) \
-                              - 0.25 * self.dy(By,  Byh, ix, jx) \
-                              + 0.5  * self.dy1(P, ix, jx)
+                              + tVy[iy, jy] \
+                              + 0.5 * self.derivatives.grady(P, ix, jx)
                 
                 # P
-                ty[iy, jy, 4] = self.laplace(P, ix, jx) \
-                              + 0.5 * self.dx1(tVx, ix, jx) \
-                              + 0.5 * self.dy1(tVy, ix, jx)
+                ty[iy, jy, 4] = 0.5 * self.derivatives.laplace(P, ix, jx) \
+                              + 0.5 * self.derivatives.gradx(tVx, ix, jx) \
+                              + 0.5 * self.derivatives.grady(tVy, ix, jx)
                 
     
 #    @cython.boundscheck(False)
@@ -213,13 +195,13 @@ cdef class PETScSolver(object):
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xs, xe, ys, ye
         
-        (xs, xe), (ys, ye) = self.da.getRanges()
+        (xs, xe), (ys, ye) = self.da4.getRanges()
         
-        self.da.globalToLocal(self.Xh, self.localXh)
+        self.da4.globalToLocal(self.Xh, self.localXh)
         
-        xh = self.da.getVecArray(self.localXh)
+        xh = self.da4.getVecArray(self.localXh)
         
-        cdef np.ndarray[np.float64_t, ndim=3] tb  = self.da.getVecArray(B)[...]
+        cdef np.ndarray[np.float64_t, ndim=3] tb  = self.da4.getVecArray(B)[...]
         
         cdef np.ndarray[np.float64_t, ndim=2] Bxh = xh[...][:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] Byh = xh[...][:,:,1]
@@ -228,7 +210,7 @@ cdef class PETScSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] Ph  = xh[...][:,:,4]
         
         
-        v = self.da.getVecArray(self.V)[...]
+        v = self.da4.getVecArray(self.V)[...]
         
         cdef np.ndarray[np.float64_t, ndim=2] tVx = v[:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
@@ -251,13 +233,14 @@ cdef class PETScSolver(object):
                               - self.dx(Bxh, Byh, ix, jx) \
                               - self.dy(Byh, Byh, ix, jx)
                 
-        self.da.globalToLocal(self.V, self.localV)
+        self.da4.globalToLocal(self.V, self.localV)
         
-        v = self.da.getVecArray(self.localV)[...]
+        v = self.da4.getVecArray(self.localV)[...]
         
         tVx = v[:,:,0]
         tVy = v[:,:,1]        
-                
+        
+        
         for i in np.arange(xs, xe):
             ix = i-xs+1
             iy = i-xs
@@ -279,69 +262,96 @@ cdef class PETScSolver(object):
                               - 0.25 * self.dy(Vxh, Vyh, ix, jx) \
                               + 0.25 * self.dx(Bxh, Bxh, ix, jx) \
                               + 0.25 * self.dy(Bxh, Byh, ix, jx) \
-                              - 0.5 * self.dx1(Ph, ix, jx)
+                              - 0.5 * self.derivatives.gradx(Ph, ix, jx)
                 
                 tb[iy, jy, 3] = self.derivatives.dt(Vyh, ix, jx) \
                               - 0.25 * self.dx(Vxh, Vyh, ix, jx) \
                               - 0.25 * self.dy(Vyh, Vyh, ix, jx) \
                               + 0.25 * self.dx(Bxh, Byh, ix, jx) \
                               + 0.25 * self.dy(Byh, Byh, ix, jx) \
-                              - 0.5 * self.dy1(Ph, ix, jx)
+                              - 0.5 * self.derivatives.grady(Ph, ix, jx)
                 
+                tb[iy, jy, 4] = 0.0
+#                                0.5 * self.derivatives.laplace(Ph, ix, jx) \
+#                              - 0.5 * self.derivatives.gradx(tVx, ix, jx) \
+#                              - 0.5 * self.derivatives.grady(tVy, ix, jx)
+
                 
-                tb[iy, jy, 4] = \
-                              - 0.5 * self.dx1(tVx, ix, jx) \
-                              - 0.5 * self.dy1(tVy, ix, jx) #\
-#                              - 0.5 * self.laplace(Ph, ix, jx)
-
-
-    def rk4(self, Vec X):
         
-        cdef np.ndarray[np.float64_t, ndim=3] tx
-        cdef np.ndarray[np.float64_t, ndim=3] tx1
-        cdef np.ndarray[np.float64_t, ndim=3] tx2
-        cdef np.ndarray[np.float64_t, ndim=3] tx3
-        cdef np.ndarray[np.float64_t, ndim=3] tx4
-        
-        
-        self.da.globalToLocal(X, self.localX)
-        tx  = self.da.getVecArray(self.localX)[...]
-        tx1 = self.da.getVecArray(self.X1)[...]
-        self.timestep(tx, tx1)
-        
-        self.da.globalToLocal(self.X1, self.localX1)
-        tx1 = self.da.getVecArray(self.localX1)[...]
-        tx2 = self.da.getVecArray(self.X2)[...]
-        self.timestep(tx + 0.5 * self.ht * tx1, tx2)
-        
-        self.da.globalToLocal(self.X2, self.localX2)
-        tx2 = self.da.getVecArray(self.localX2)[...]
-        tx3 = self.da.getVecArray(self.X3)[...]
-        self.timestep(tx + 0.5 * self.ht * tx2, tx3)
-        
-        self.da.globalToLocal(self.X3, self.localX3)
-        tx3 = self.da.getVecArray(self.localX3)[...]
-        tx4 = self.da.getVecArray(self.X4)[...]
-        self.timestep(tx + 1.0 * self.ht * tx3, tx4)
-        
-        tx  = self.da.getVecArray(X)[...]
-        tx1 = self.da.getVecArray(self.X1)[...]
-        tx2 = self.da.getVecArray(self.X2)[...]
-        tx3 = self.da.getVecArray(self.X3)[...]
-        tx4 = self.da.getVecArray(self.X4)[...]
-        
-        tx[:,:,:] = tx + self.ht * (tx1 + 2.*tx2 + 2.*tx3 + tx4) / 6.
-
-    
-    
 #    @cython.boundscheck(False)
-    cdef timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
-                        np.ndarray[np.float64_t, ndim=3] ty):
+    def formRHSPoisson(self, Vec B, Vec X):
+        cdef np.uint64_t ix, iy, jx, jy
+        cdef np.uint64_t xs, xe, ys, ye
+        
+        (xs, xe), (ys, ye) = self.da1.getRanges()
+        
+        self.da4.globalToLocal(X, self.localX)
+        
+        x = self.da4.getVecArray(self.localX)
+        
+        cdef np.ndarray[np.float64_t, ndim=2] b = self.da1.getVecArray(B)[...]
+        
+        cdef np.ndarray[np.float64_t, ndim=2] Bx = x[...][:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] By = x[...][:,:,1]
+        cdef np.ndarray[np.float64_t, ndim=2] Vx = x[...][:,:,2]
+        cdef np.ndarray[np.float64_t, ndim=2] Vy = x[...][:,:,3]
+        
+        
+        v = self.da4.getVecArray(self.V)[...]
+        
+        cdef np.ndarray[np.float64_t, ndim=2] tVx = v[:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
+        
+        for i in np.arange(xs, xe):
+            ix = i-xs+1
+            iy = i-xs
+            
+            for j in np.arange(ys, ye):
+                jx = j-ys+1
+                jy = j-ys
+                
+                tVx[iy, jy] = \
+                              - self.dx(Vx, Vx, ix, jx) \
+                              - self.dy(Vx, Vy, ix, jx) \
+                              + self.dx(Bx, Bx, ix, jx) \
+                              + self.dy(Bx, By, ix, jx)
+                
+                tVy[iy, jy] = \
+                              - self.dx(Vx, Vy, ix, jx) \
+                              - self.dy(Vy, Vy, ix, jx) \
+                              + self.dx(Bx, By, ix, jx) \
+                              + self.dy(By, By, ix, jx)
+                
+        self.da4.globalToLocal(self.V, self.localV)
+        
+        v = self.da4.getVecArray(self.localV)[...]
+        
+        tVx = v[:,:,0]
+        tVy = v[:,:,1]
+        
+        
+        for i in np.arange(xs, xe):
+            ix = i-xs+1
+            iy = i-xs
+            
+            for j in np.arange(ys, ye):
+                jx = j-ys+1
+                jy = j-ys
+                
+                b[iy, jy] = \
+                          + self.derivatives.gradx(tVx, ix, jx) \
+                          + self.derivatives.grady(tVy, ix, jx)
+
+
+
+#    @cython.boundscheck(False)
+    def timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
+                       np.ndarray[np.float64_t, ndim=3] ty):
         
         cdef np.uint64_t ix, iy, i, j
         cdef np.uint64_t xs, xe, ys, ye
         
-        (xs, xe), (ys, ye) = self.da.getRanges()
+        (xs, xe), (ys, ye) = self.da4.getRanges()
         
         cdef np.ndarray[np.float64_t, ndim=2] Bx = tx[:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] By = tx[:,:,1]
@@ -371,55 +381,19 @@ cdef class PETScSolver(object):
                               - self.dy(Vx, Vy, ix, jx) \
                               + self.dx(Bx, Bx, ix, jx) \
                               + self.dy(Bx, By, ix, jx) \
-                              - self.dx1(P, ix, jx)
+                              - self.derivatives.gradx(P, ix, jx)
                 
                 ty[iy, jy, 3] = \
                               - self.dx(Vx, Vy, ix, jx) \
                               - self.dy(Vy, Vy, ix, jx) \
                               + self.dx(Bx, By, ix, jx) \
                               + self.dy(By, By, ix, jx) \
-                              - self.dy1(P, ix, jx)
+                              - self.derivatives.grady(P, ix, jx)
 
                 ty[iy, jy, 4] = 0.0
           
     
 
-#    @cython.boundscheck(False)
-    cdef np.float64_t dx1(self, np.ndarray[np.float64_t, ndim=2] x,
-                                np.uint64_t i, np.uint64_t j):
-        '''
-        MHD Derivative: dx centred finite differences
-        '''
-        
-        cdef np.float64_t result
-        
-        result = 0.25 * ( \
-                     + 1 * ( x[i+1, j-1] - x[i-1, j-1] ) \
-                     + 2 * ( x[i+1, j  ] - x[i-1, j  ] ) \
-                     + 1 * ( x[i+1, j+1] - x[i-1, j+1] ) \
-                 ) / self.hx
- 
-        return result
-    
-    
-#    @cython.boundscheck(False)
-    cdef np.float64_t dy1(self, np.ndarray[np.float64_t, ndim=2] x,
-                                np.uint64_t i, np.uint64_t j):
-        '''
-        MHD Derivative: dy centred finite differences
-        '''
-        
-        cdef np.float64_t result
-        
-        result = 0.25 * ( \
-                     + 1 * ( x[i-1, j+1] - x[i-1, j-1] ) \
-                     + 2 * ( x[i,   j+1] - x[i,   j-1] ) \
-                     + 1 * ( x[i+1, j+1] - x[i+1, j-1] ) \
-                 ) / self.hy
- 
-        return result
-    
-    
 #    @cython.boundscheck(False)
     cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
@@ -454,54 +428,6 @@ cdef class PETScSolver(object):
                      + 2 * ( V[i,   j+1] * B[i,   j+1] - V[i,   j-1] * B[i,   j-1] ) \
                      + 1 * ( V[i+1, j+1] * B[i+1, j+1] - V[i+1, j-1] * B[i+1, j-1] ) \
                  ) / self.hy
- 
-        return result
-    
-    
-#    @cython.boundscheck(False)
-    cdef np.float64_t laplace(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j):
-        '''
-        MHD Derivative: Laplace operator (averaged)
-        '''
-        
-        cdef np.float64_t result
-        
-#        result = ( \
-#                   + 1. * x[i-1, j  ] \
-#                   - 2. * x[i,   j  ] \
-#                   + 1. * x[i+1, j  ] \
-#                 ) / self.hx**2 \
-#               + ( \
-#                   + 1. * x[i,   j-1] \
-#                   - 2. * x[i,   j  ] \
-#                   + 1. * x[i,   j+1] \
-#                 ) / self.hy**2
-        
-        result = 0.25 * ( \
-                 ( \
-                   + 1. * x[i-1, j-1] \
-                   - 2. * x[i,   j-1] \
-                   + 1. * x[i+1, j-1] \
-                   + 2. * x[i-1, j  ] \
-                   - 4. * x[i,   j  ] \
-                   + 2. * x[i+1, j  ] \
-                   + 1. * x[i-1, j+1] \
-                   - 2. * x[i,   j+1] \
-                   + 1. * x[i+1, j+1] \
-                 ) / self.hx**2 \
-               + ( \
-                   + 1. * x[i-1, j-1] \
-                   - 2. * x[i-1, j  ] \
-                   + 1. * x[i-1, j+1] \
-                   + 2. * x[i,   j-1] \
-                   - 4. * x[i,   j  ] \
-                   + 2. * x[i,   j+1] \
-                   + 1. * x[i+1, j-1] \
-                   - 2. * x[i+1, j  ] \
-                   + 1. * x[i+1, j+1] \
-                 ) / self.hy**2 \
-               )
  
         return result
     

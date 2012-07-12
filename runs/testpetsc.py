@@ -21,38 +21,38 @@ k = 2.
 #th = np.arctan(0.5)
 
 
-# Wave
-
-def magnetic_x(x, y, Lx, Ly):
-    return Bx0
-
-def magnetic_y(x, y, Lx, Ly):
-    return By0 * np.cos(np.pi*x)
-
-def velocity_x(x, y, Lx, Ly):
-    return 0.0
-
-def velocity_y(x, y, Lx, Ly):
-    return va * np.cos(np.pi * x)
-
-
-## Current Sheet in x
+## Wave
 #
 #def magnetic_x(x, y, Lx, Ly):
-#    return 0.0
+#    return Bx0
 #
 #def magnetic_y(x, y, Lx, Ly):
-#    if x1 <= x and x <= x2:
-#        return - B0
-#    else:
-#        return + B0
-##    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
+#    return By0 * np.cos(np.pi*x)
 #
 #def velocity_x(x, y, Lx, Ly):
-#    return u0 * np.sin(np.pi * y)
+#    return 0.0
 #
 #def velocity_y(x, y, Lx, Ly):
-#    return 0.0
+#    return va * np.cos(np.pi * x)
+
+
+# Current Sheet in x
+
+def magnetic_x(x, y, Lx, Ly):
+    return 0.0
+
+def magnetic_y(x, y, Lx, Ly):
+    if x1 <= x and x <= x2:
+        return - B0
+    else:
+        return + B0
+#    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
+
+def velocity_x(x, y, Lx, Ly):
+    return u0 * np.sin(np.pi * y)
+
+def velocity_y(x, y, Lx, Ly):
+    return 0.0
 
 
 # Current Sheet in y
