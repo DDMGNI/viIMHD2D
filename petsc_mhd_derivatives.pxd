@@ -69,6 +69,9 @@ cdef class PETSc_MHD_Derivatives(object):
     cdef np.float64_t grady(self, np.ndarray[np.float64_t, ndim=2] x,
                                   np.uint64_t i, np.uint64_t j)
 
+    cdef np.float64_t laplace(self, np.ndarray[np.float64_t, ndim=2] x,
+                                    np.uint64_t i, np.uint64_t j)
+
 
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
                                np.uint64_t i, np.uint64_t j)

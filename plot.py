@@ -250,8 +250,8 @@ class PlotMHD2D(object):
 #            Vymax += 1.
         
         if divVmin == divVmax:
-            divVmin -= 1.
-            divVmax += 1.
+            divVmin -= 0.1
+            divVmax += 0.1
         
         self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
         self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)

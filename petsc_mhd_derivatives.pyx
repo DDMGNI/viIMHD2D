@@ -552,6 +552,55 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
 #    @cython.boundscheck(False)
+    cdef np.float64_t laplace(self, np.ndarray[np.float64_t, ndim=2] x,
+                                    np.uint64_t i, np.uint64_t j):
+        '''
+        MHD Derivative: Laplace operator (averaged)
+        '''
+        
+        cdef np.float64_t result
+        
+#        result = ( \
+#                   + 1. * x[i-1, j  ] \
+#                   - 2. * x[i,   j  ] \
+#                   + 1. * x[i+1, j  ] \
+#                 ) / self.hx**2 \
+#               + ( \
+#                   + 1. * x[i,   j-1] \
+#                   - 2. * x[i,   j  ] \
+#                   + 1. * x[i,   j+1] \
+#                 ) / self.hy**2
+        
+        result = 0.25 * ( \
+                 ( \
+                   + 1. * x[i-1, j-1] \
+                   - 2. * x[i,   j-1] \
+                   + 1. * x[i+1, j-1] \
+                   + 2. * x[i-1, j  ] \
+                   - 4. * x[i,   j  ] \
+                   + 2. * x[i+1, j  ] \
+                   + 1. * x[i-1, j+1] \
+                   - 2. * x[i,   j+1] \
+                   + 1. * x[i+1, j+1] \
+                 ) / self.hx**2 \
+               + ( \
+                   + 1. * x[i-1, j-1] \
+                   - 2. * x[i-1, j  ] \
+                   + 1. * x[i-1, j+1] \
+                   + 2. * x[i,   j-1] \
+                   - 4. * x[i,   j  ] \
+                   + 2. * x[i,   j+1] \
+                   + 1. * x[i+1, j-1] \
+                   - 2. * x[i+1, j  ] \
+                   + 1. * x[i+1, j+1] \
+                 ) / self.hy**2 \
+               )
+ 
+        return result
+    
+    
+    
+#    @cython.boundscheck(False)
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
                                np.uint64_t i, np.uint64_t j):
         '''
@@ -561,15 +610,15 @@ cdef class PETSc_MHD_Derivatives(object):
         cdef np.float64_t result
         
         result = ( \
-#                   + 1. * x[i-1, j-1] \
-#                   + 2. * x[i-1, j  ] \
-#                   + 1. * x[i-1, j+1] \
-#                   + 2. * x[i,   j-1] \
+                   + 1. * x[i-1, j-1] \
+                   + 2. * x[i-1, j  ] \
+                   + 1. * x[i-1, j+1] \
+                   + 2. * x[i,   j-1] \
                    + 4. * x[i,   j  ] \
-#                   + 2. * x[i,   j+1] \
-#                   + 1. * x[i+1, j-1] \
-#                   + 2. * x[i+1, j  ] \
-#                   + 1. * x[i+1, j+1] \
+                   + 2. * x[i,   j+1] \
+                   + 1. * x[i+1, j-1] \
+                   + 2. * x[i+1, j  ] \
+                   + 1. * x[i+1, j+1] \
                  ) * self.ht_inv / 16.
         
         return result

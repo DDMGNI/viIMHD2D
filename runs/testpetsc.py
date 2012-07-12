@@ -9,6 +9,9 @@ B0 = 1.0
 p0 = 0.1
 c  = 5.
 
+Bx0 = B0
+By0 = B0 * 0.5
+
 k = 2.
 
 #u0 = np.sqrt(5.)
@@ -18,25 +21,19 @@ k = 2.
 #th = np.arctan(0.5)
 
 
-## Wave
-#
+# Wave
+
 def magnetic_x(x, y, Lx, Ly):
-    return B0
-#    return 0.0
+    return Bx0
 
 def magnetic_y(x, y, Lx, Ly):
-    return 0.1 * B0 * np.cos(np.pi*x)
-#    return B0
-#    return 0.0
+    return By0 * np.cos(np.pi*x)
 
 def velocity_x(x, y, Lx, Ly):
-#    return u0 * np.sin(np.pi * x)
-#    return u0
     return 0.0
 
 def velocity_y(x, y, Lx, Ly):
     return va * np.cos(np.pi * x)
-#    return 0.0
 
 
 ## Current Sheet in x

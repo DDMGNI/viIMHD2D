@@ -27,7 +27,8 @@ cdef class PETScSolver(object):
     cdef np.float64_t hy
     
     
-    cdef DA da
+    cdef DA da1
+    cdef DA da4
     
     cdef Vec V
     cdef Vec Xh
@@ -50,9 +51,6 @@ cdef class PETScSolver(object):
     cdef PETSc_MHD_Derivatives derivatives
 
 
-    cdef timestep(self, np.ndarray[np.float64_t, ndim=3] tx,
-                        np.ndarray[np.float64_t, ndim=3] ty)
-    
     cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
                                np.uint64_t i, np.uint64_t j)
@@ -60,12 +58,3 @@ cdef class PETScSolver(object):
     cdef np.float64_t dy(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
                                np.uint64_t i, np.uint64_t j)
-    
-    cdef np.float64_t dx1(self, np.ndarray[np.float64_t, ndim=2] x,
-                                np.uint64_t i, np.uint64_t j)
-
-    cdef np.float64_t dy1(self, np.ndarray[np.float64_t, ndim=2] x,
-                                np.uint64_t i, np.uint64_t j)
-
-    cdef np.float64_t laplace(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j)

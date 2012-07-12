@@ -131,6 +131,26 @@ class Diagnostics(object):
 #        self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
 #        self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
         
+        
+#        self.E_magnetic = 0.0
+#        self.E_velocity = 0.0
+#        
+#        for ix in range(0, self.nx):
+#            ixp = (ix+1) % self.nx
+#            
+#            for iy in range(0, self.ny):
+#                iyp = (iy+1) % self.ny
+#                
+#                self.E_magnetic += (self.Bx[ix,iy]**2 + self.Bx[ixp,iy]**2 + self.Bx[ixp,iyp]**2 + self.Bx[ix,iyp]**2) \
+#                                +  (self.By[ix,iy]**2 + self.By[ixp,iy]**2 + self.By[ixp,iyp]**2 + self.By[ix,iyp]**2)
+#                                
+#                self.E_velocity += (self.Vx[ix,iy]**2 + self.Vx[ixp,iy]**2 + self.Vx[ixp,iyp]**2 + self.Vx[ix,iyp]**2) \
+#                                +  (self.Vy[ix,iy]**2 + self.Vy[ixp,iy]**2 + self.Vy[ixp,iyp]**2 + self.Vy[ix,iyp]**2)
+#
+#        self.E_magnetic *= 0.5 * self.hx * self.hy / 4.
+#        self.E_velocity *= 0.5 * self.hx * self.hy / 4.
+
+
         self.E_magnetic = 0.0
         self.E_velocity = 0.0
         
@@ -140,11 +160,11 @@ class Diagnostics(object):
             for iy in range(0, self.ny):
                 iyp = (iy+1) % self.ny
                 
-                self.E_magnetic = (self.Bx[ix,iy] + self.Bx[ixp,iy] + self.Bx[ixp,iyp] + self.Bx[ix,iyp])**2 \
-                                + (self.By[ix,iy] + self.By[ixp,iy] + self.By[ixp,iyp] + self.By[ix,iyp])**2
+                self.E_magnetic += (self.Bx[ix,iy] + self.Bx[ixp,iy] + self.Bx[ixp,iyp] + self.Bx[ix,iyp])**2 \
+                                +  (self.By[ix,iy] + self.By[ixp,iy] + self.By[ixp,iyp] + self.By[ix,iyp])**2
                                 
-                self.E_velocity = (self.Vx[ix,iy] + self.Vx[ixp,iy] + self.Vx[ixp,iyp] + self.Vx[ix,iyp])**2 \
-                                + (self.Vy[ix,iy] + self.Vy[ixp,iy] + self.Vy[ixp,iyp] + self.Vy[ix,iyp])**2
+                self.E_velocity += (self.Vx[ix,iy] + self.Vx[ixp,iy] + self.Vx[ixp,iyp] + self.Vx[ix,iyp])**2 \
+                                +  (self.Vy[ix,iy] + self.Vy[ixp,iy] + self.Vy[ixp,iyp] + self.Vy[ix,iyp])**2
 
         self.E_magnetic *= 0.5 * self.hx * self.hy / 16.
         self.E_velocity *= 0.5 * self.hx * self.hy / 16.

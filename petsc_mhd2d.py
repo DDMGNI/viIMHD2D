@@ -16,13 +16,12 @@ from config import Config
 
 #from PETSc_MHD_VI  import PETScSolver
 #from PETSc_MHD_VI_Simple import PETScSolver
-from PETSc_MHD_VI_CFD_Simple import PETScSolver
-#from PETSc_MHD_VI_DF_Simple import PETScSolver
 #from PETSc_MHD_VI_NL_Simple import PETScSolver
 
-from PETSc_MHD_Poisson_CFD import PETScPoissonSolver
+from PETSc_MHD_VI_CFD_Simple import PETScSolver
+#from PETSc_MHD_VI_DF_Simple import PETScSolver
 
-#from PETSc_MHD_RK4 import PETScRK4
+from PETSc_MHD_Poisson import PETScPoissonSolver
 
 
 
@@ -87,6 +86,7 @@ class petscMHD2D(object):
 #        OptDB.setValue('ksp_max_it', 100)
         OptDB.setValue('ksp_max_it', 200)
 #        OptDB.setValue('ksp_max_it', 1000)
+#        OptDB.setValue('ksp_max_it', 2000)
 
 #        OptDB.setValue('ksp_monitor', '')
 #        OptDB.setValue('log_info', '')
@@ -140,6 +140,19 @@ class petscMHD2D(object):
         self.x  = self.da4.createGlobalVec()
         self.b  = self.da4.createGlobalVec()
         self.Pb = self.da1.createGlobalVec()
+        self.localX = self.da4.createLocalVec()
+        
+        # create global RK4 vectors
+        self.X1 = self.da4.createGlobalVec()
+        self.X2 = self.da4.createGlobalVec()
+        self.X3 = self.da4.createGlobalVec()
+        self.X4 = self.da4.createGlobalVec()
+        
+        # create local RK4 vectors
+        self.localX1 = self.da4.createLocalVec()
+        self.localX2 = self.da4.createLocalVec()
+        self.localX3 = self.da4.createLocalVec()
+        self.localX4 = self.da4.createLocalVec()
         
         # create vectors for magnetic and velocity field
         self.Bx = self.da1.createGlobalVec()
@@ -164,7 +177,7 @@ class petscMHD2D(object):
 #        self.vp = _solver.Solver(self.grid, cfg['solver']['solver_method'])
         
 #        self.petsc_mat = _solver.PETScSolver(self.da, self.x, self.b,
-        self.petsc_mat = PETScSolver(self.da4, nx, ny, self.ht, self.hx, self.hy)
+        self.petsc_mat = PETScSolver(self.da1, self.da4, nx, ny, self.ht, self.hx, self.hy)
         
         # create sparse matrix
         self.A = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
@@ -243,9 +256,12 @@ class petscMHD2D(object):
             Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             
         
+        if cfg['initial_data']['pressure_python'] != None:
+            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+            
         for i in range(xs, xe):
             for j in range(ys, ye):
-                P_arr[i,j] = 0.1 + 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
+                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) + 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
         
         
         # copy distribution function to solution vector
@@ -362,10 +378,10 @@ class petscMHD2D(object):
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
         # solve for Bx, By, Vx, Vy
-        self.petsc_mat.rk4(self.x)
+        self.rk4(self.x)
         
         # calculate initial guess for total pressure
-        self.poisson_mat.formRHS(self.Pb)
+        self.petsc_mat.formRHSPoisson(self.Pb, self.x)
         self.pksp.solve(self.Pb, self.P)
         
         P_arr = self.da1.getVecArray(self.P)
@@ -378,6 +394,38 @@ class petscMHD2D(object):
             print("   Poisson: %5i iterations,   residual = %24.16E " % (self.pksp.getIterationNumber(), self.pksp.getResidualNorm()) )
         
             
+            
+    def rk4(self, X):
+        
+        self.da4.globalToLocal(X, self.localX)
+        x  = self.da4.getVecArray(self.localX)[...]
+        x1 = self.da4.getVecArray(self.X1)[...]
+        self.petsc_mat.timestep(x, x1)
+        
+        self.da4.globalToLocal(self.X1, self.localX1)
+        x1 = self.da4.getVecArray(self.localX1)[...]
+        x2 = self.da4.getVecArray(self.X2)[...]
+        self.petsc_mat.timestep(x + 0.5 * self.ht * x1, x2)
+        
+        self.da4.globalToLocal(self.X2, self.localX2)
+        x2 = self.da4.getVecArray(self.localX2)[...]
+        x3 = self.da4.getVecArray(self.X3)[...]
+        self.petsc_mat.timestep(x + 0.5 * self.ht * x2, x3)
+        
+        self.da4.globalToLocal(self.X3, self.localX3)
+        x3 = self.da4.getVecArray(self.localX3)[...]
+        x4 = self.da4.getVecArray(self.X4)[...]
+        self.petsc_mat.timestep(x + 1.0 * self.ht * x3, x4)
+        
+        x  = self.da4.getVecArray(X)[...]
+        x1 = self.da4.getVecArray(self.X1)[...]
+        x2 = self.da4.getVecArray(self.X2)[...]
+        x3 = self.da4.getVecArray(self.X3)[...]
+        x4 = self.da4.getVecArray(self.X4)[...]
+        
+        x[:,:,:] = x + self.ht * (x1 + 2.*x2 + 2.*x3 + x4) / 6.
+
+        
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='PETSc MHD Solver in 2D')

@@ -55,8 +55,8 @@ ext_modules = [
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
-        Extension("PETSc_MHD_Poisson_CFD",
-                  sources=["PETSc_MHD_Poisson_CFD.pyx"],
+        Extension("PETSc_MHD_Poisson",
+                  sources=["PETSc_MHD_Poisson.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
