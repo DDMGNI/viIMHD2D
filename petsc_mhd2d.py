@@ -18,9 +18,9 @@ from config import Config
 #from PETSc_MHD_VI_Simple    import PETScSolver
 #from PETSc_MHD_VI_NL_Simple import PETScSolver
 
-#from PETSc_MHD_DF            import PETScSolver
+from PETSc_MHD_DF            import PETScSolver
 #from PETSc_MHD_DF_NL         import PETScSolver
-from PETSc_MHD_DF_VI         import PETScSolver
+#from PETSc_MHD_DF_VI         import PETScSolver
 
 #from PETSc_MHD_VI_CFD        import PETScSolver
 #from PETSc_MHD_VI_CFD_NL     import PETScSolver
