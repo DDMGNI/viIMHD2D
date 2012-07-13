@@ -64,7 +64,7 @@ cdef class PETScSolver(object):
         self.ty = np.empty((xe-xs, ye-ys, 4))
         
         # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(da4, nx, ny, ht, hx, hy)
+        self.derivatives = PETSc_MHD_Derivatives(nx, ny, ht, hx, hy)
         
     
     def update_history(self, Vec X):

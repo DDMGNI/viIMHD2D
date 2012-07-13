@@ -56,7 +56,7 @@ cdef class PETScPoissonSolver(object):
         self.localX = da4.createLocalVec()
         
         # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(da4, nx, ny, ht, hx, hy)
+        self.derivatives = PETSc_MHD_Derivatives(nx, ny, ht, hx, hy)
         
     
 #    @cython.boundscheck(False)

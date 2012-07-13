@@ -27,20 +27,19 @@ cdef class PETScSolver(object):
     cdef np.float64_t hy
     
     
-    cdef DA da
+    cdef DA da1
+    cdef DA da4
     
-    cdef Vec V
+    cdef Vec S
     cdef Vec divV
     cdef Vec Xh1
     cdef Vec Xh2
     
-    cdef Vec localV
+    cdef Vec localS
     cdef Vec localB
     cdef Vec localX
     cdef Vec localXh1
     cdef Vec localXh2
     
-    cdef np.ndarray ty
-    
     cdef PETSc_MHD_Derivatives derivatives
-  
+    

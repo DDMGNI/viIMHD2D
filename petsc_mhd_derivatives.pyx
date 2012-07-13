@@ -9,8 +9,6 @@ cimport cython
 import  numpy as np
 cimport numpy as np
 
-from petsc4py.PETSc cimport DA, Vec
-
 
 cdef class PETSc_MHD_Derivatives(object):
     '''
@@ -18,7 +16,7 @@ cdef class PETSc_MHD_Derivatives(object):
     '''
     
     
-    def __cinit__(self, DA da,
+    def __cinit__(self,
                   np.uint64_t  nx, np.uint64_t  ny,
                   np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''
@@ -37,12 +35,11 @@ cdef class PETSc_MHD_Derivatives(object):
         self.hx_inv = 1. / hx
         self.hy_inv = 1. / hy
         
+        self.hx_inv2 = self.hx_inv**2
+        self.hy_inv2 = self.hy_inv**2
         
-        # distributed array
-        self.da = da
         
-    
-    
+        
 #    @cython.boundscheck(False)
     cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
@@ -582,7 +579,7 @@ cdef class PETSc_MHD_Derivatives(object):
                    + 1. * x[i-1, j+1] \
                    - 2. * x[i,   j+1] \
                    + 1. * x[i+1, j+1] \
-                 ) / self.hx**2 \
+                 ) * self.hx_inv2 \
                + ( \
                    + 1. * x[i-1, j-1] \
                    - 2. * x[i-1, j  ] \
@@ -593,7 +590,7 @@ cdef class PETSc_MHD_Derivatives(object):
                    + 1. * x[i+1, j-1] \
                    - 2. * x[i+1, j  ] \
                    + 1. * x[i+1, j+1] \
-                 ) / self.hy**2 \
+                 ) * self.hy_inv2 \
                )
  
         return result

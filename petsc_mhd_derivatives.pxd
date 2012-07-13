@@ -6,8 +6,6 @@ Created on May 24, 2012
 
 cimport numpy as np
 
-from petsc4py.PETSc cimport DA
-
 
 cdef class PETSc_MHD_Derivatives(object):
     '''
@@ -25,7 +23,8 @@ cdef class PETSc_MHD_Derivatives(object):
     cdef np.float64_t hx_inv
     cdef np.float64_t hy_inv
     
-    cdef DA da
+    cdef np.float64_t hx_inv2
+    cdef np.float64_t hy_inv2
     
     
         
