@@ -618,6 +618,8 @@ cdef class PETSc_MHD_Derivatives(object):
                    + 1. * x[i+1, j+1] \
                  ) * self.ht_inv / 16.
         
+#        result = x[i,j] * self.ht_inv
+        
         return result
 
 

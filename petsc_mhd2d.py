@@ -89,9 +89,9 @@ class petscMHD2D(object):
         OptDB = PETSc.Options()
         
         OptDB.setValue('ksp_rtol', cfg['solver']['petsc_residual'])
-        OptDB.setValue('ksp_max_it', 100)
+#        OptDB.setValue('ksp_max_it', 100)
 #        OptDB.setValue('ksp_max_it', 200)
-#        OptDB.setValue('ksp_max_it', 1000)
+        OptDB.setValue('ksp_max_it', 1000)
 #        OptDB.setValue('ksp_max_it', 2000)
 
 #        OptDB.setValue('ksp_monitor', '')
