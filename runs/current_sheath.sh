@@ -6,7 +6,7 @@
 #
 #$ -l h_cpu=24:00:00
 #
-#$ -pe mpich2_tok_devel 16
+#$ -pe mpich2_tok_devel 32
 #
 #$ -m e
 #$ -M michael.kraus@ipp.mpg.de
@@ -40,5 +40,5 @@ export PYTHONPATH=$RUN_DIR:$PYTHONPATH
 
 cd $RUN_DIR
 
-mpiexec -np 16 python petsc_mhd2d.py runs/$RUNID.cfg
+mpiexec -np 32 python petsc_mhd2d.py runs/$RUNID.cfg
 
