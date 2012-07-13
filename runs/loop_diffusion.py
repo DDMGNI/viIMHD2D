@@ -3,11 +3,7 @@ import numpy as np
 
 A0 = 1E-3
 R0 = 0.3
-p0 = 1.0
-u0 = np.sqrt(5.)
-
-vx = 2
-vy = 1
+u0 = 0
 
 
 #nx = 128
@@ -66,10 +62,7 @@ def magnetic_y(x, y, Lx, Ly):
 #        return + A0 * x / np.sqrt(x**2 + y**2)
 
 def velocity_x(x, y, Lx, Ly):
-    return vx
+    return u0
 
 def velocity_y(x, y, Lx, Ly):
-    return vy
-
-def pressure(x, y, Lx, Ly):
-    return p0
+    return u0

@@ -13,7 +13,7 @@
 #
 #$ -notify
 #
-#$ -N pyVlasov1D
+#$ -N petscMHD2D
 #
 
 

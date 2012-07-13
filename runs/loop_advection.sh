@@ -17,7 +17,7 @@
 #
 
 
-RUNID=current_sheath
+RUNID=loop_advection
 
 
 module load intel/12.1
