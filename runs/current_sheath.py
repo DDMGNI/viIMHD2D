@@ -5,7 +5,7 @@ u0 = 0.1
 x1 = 0.5
 x2 = 1.5
 B0 = 1.0
-c  = 50.
+c  = 10.
 
 
 def magnetic_x(x, y, Lx, Ly):
