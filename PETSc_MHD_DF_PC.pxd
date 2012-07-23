@@ -14,7 +14,7 @@ from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
 
-cdef class PETScSolver(object):
+cdef class PETScPreconditioner(object):
     '''
     
     '''
@@ -30,10 +30,11 @@ cdef class PETScSolver(object):
     cdef DA da1
     cdef DA da4
     
-    cdef Vec divV
+    cdef Vec P
     cdef Vec V
     cdef Vec Xh
     
+    cdef Vec localP
     cdef Vec localV
     cdef Vec localB
     cdef Vec localX

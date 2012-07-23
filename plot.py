@@ -158,8 +158,8 @@ class PlotMHD2D(object):
         
         self.axes["Emag"].set_title('$E_{B} (t)$')
         self.axes["Evel"].set_title('$E_{V} (t)$')
-        self.axes["E"].set_title('$\Delta E (t)$')
-        self.axes["H"].set_title('$\Delta H (t)$')
+        self.axes["E"].set_title('$(E-E_0) / E_0 (t)$')
+        self.axes["H"].set_title('$H (t)$')
         
 #        self.axes["L1mag"].set_title('$\Delta L_{1}^{B} (t)$')
 #        self.axes["L1vel"].set_title('$\Delta L_{1}^{V} (t)$')
@@ -367,7 +367,7 @@ class PlotMHD2D(object):
         
         
         self.axes["Vabs"].clear()
-        self.axes["Vabs"].quiver(self.x, self.y, self.Bx.T, self.By.T)
+        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -432,7 +432,7 @@ class PlotMHD2D(object):
         self.E_magnetic [self.iTime] = self.diagnostics.E_magnetic
         self.E_velocity [self.iTime] = self.diagnostics.E_velocity
         self.energy     [self.iTime] = self.diagnostics.E_error
-        self.helicity   [self.iTime] = self.diagnostics.H_error
+        self.helicity   [self.iTime] = self.diagnostics.helicity
         
 #        self.L1_magnetic[self.iTime] = self.diagnostics.L1_magnetic_error
 #        self.L1_velocity[self.iTime] = self.diagnostics.L1_velocity_error

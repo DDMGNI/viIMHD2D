@@ -19,6 +19,7 @@ from config import Config
 #from PETSc_MHD_VI_NL_Simple import PETScSolver
 
 from PETSc_MHD_DF            import PETScSolver
+from PETSc_MHD_DF_PC         import PETScPreconditioner
 #from PETSc_MHD_DF_NL         import PETScSolver
 #from PETSc_MHD_DF_VI         import PETScSolver
 
@@ -201,22 +202,41 @@ class petscMHD2D(object):
         self.pc.setType(cfg['solver']['petsc_pc_type'])
         
         
+        # create Preconditioner matrix and solver
+        self.pc_mat = PETScPreconditioner(self.da1, self.da4, self.P, nx, ny, self.ht, self.hx, self.hy)
+        
+        # create sparse matrix
+        self.pc_A = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
+        self.pc_A.setPythonContext(self.pc_mat)
+        self.pc_A.setUp()
+        
+        # create linear solver and preconditioner
+        self.pc_ksp = PETSc.KSP().create()
+        self.pc_ksp.setFromOptions()
+        self.pc_ksp.setOperators(self.pc_A)
+        self.pc_ksp.setType(cfg['solver']['petsc_ksp_type'])
+        self.pc_ksp.setInitialGuessNonzero(True)
+        
+        self.pc_pc = self.pc_ksp.getPC()
+        self.pc_pc.setType('none')
+        
+        
         # create Poisson matrix and solver
         self.poisson_mat = PETScPoissonSolver(self.da1, self.da4, self.x, 
                                               nx, ny, self.ht, self.hx, self.hy)
         
-        self.pA = PETSc.Mat().createPython([self.P.getSizes(), self.Pb.getSizes()], comm=PETSc.COMM_WORLD)
-        self.pA.setPythonContext(self.poisson_mat)
-        self.pA.setUp()
+        self.poisson_A = PETSc.Mat().createPython([self.P.getSizes(), self.Pb.getSizes()], comm=PETSc.COMM_WORLD)
+        self.poisson_A.setPythonContext(self.poisson_mat)
+        self.poisson_A.setUp()
         
-        self.pksp = PETSc.KSP().create()
-        self.pksp.setFromOptions()
-        self.pksp.setOperators(self.pA)
-        self.pksp.setType(cfg['solver']['petsc_ksp_type'])
-#        self.pksp.setInitialGuessNonzero(True)
+        self.poisson_ksp = PETSc.KSP().create()
+        self.poisson_ksp.setFromOptions()
+        self.poisson_ksp.setOperators(self.poisson_A)
+        self.poisson_ksp.setType(cfg['solver']['petsc_ksp_type'])
+#        self.poisson_ksp.setInitialGuessNonzero(True)
         
-        self.ppc = self.pksp.getPC()
-        self.ppc.setType('none')
+        self.poisson_pc = self.poisson_ksp.getPC()
+        self.poisson_pc.setType('none')
         
         
         # create Arakawa solver object
@@ -278,7 +298,7 @@ class petscMHD2D(object):
         
         
         self.petsc_mat.formRHSPoisson(self.Pb, self.x)
-        self.pksp.solve(self.Pb, self.P)
+        self.poisson_ksp.solve(self.Pb, self.P)
         
         x_arr = self.da4.getVecArray(self.x)
         P_arr = self.da1.getVecArray(self.P)
@@ -381,10 +401,8 @@ class petscMHD2D(object):
                 self.hdf5_viewer(self.P)
             
             
-            Psum = self.P.sum()
             if PETSc.COMM_WORLD.getRank() == 0:
                 print("   Solver:  %5i iterations,   residual = %24.16E " % (self.ksp.getIterationNumber(), self.ksp.getResidualNorm()) )
-                print("   sum(P) = %20.12E" % (Psum))
            
            
            
@@ -392,21 +410,48 @@ class petscMHD2D(object):
         
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
-        # solve for Bx, By, Vx, Vy
+        # explicit predictor for Bx, By, Vx, Vy
         self.rk4(self.x)
+        
+#        # calculate initial guess for total pressure
+#        self.petsc_mat.formRHSPoisson(self.Pb, self.x)
+#        self.poisson_ksp.solve(self.Pb, self.P)
+#        
+#        P_arr = self.da1.getVecArray(self.P)
+#        x_arr = self.da4.getVecArray(self.x)
+#        
+#        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
+#        
+#        if PETSc.COMM_WORLD.getRank() == 0:
+#            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
+        
         
         # calculate initial guess for total pressure
         self.petsc_mat.formRHSPoisson(self.Pb, self.x)
-        self.pksp.solve(self.Pb, self.P)
+        self.poisson_ksp.solve(self.Pb, self.P)
         
+        if PETSc.COMM_WORLD.getRank() == 0:
+            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
+        
+        # precondition V and B
+        self.pc_mat.formRHS(self.b)
+        self.pc_ksp.solve(self.b, self.x)
+
+        if PETSc.COMM_WORLD.getRank() == 0:
+            print("   Precon : %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
+        
+        # precondition P
+#        self.petsc_mat.formRHSPoisson(self.Pb, self.x)
+#        self.poisson_ksp.solve(self.Pb, self.P)
+#        
+#        if PETSc.COMM_WORLD.getRank() == 0:
+#            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
+        
+        # copy pressure to solution vector
         P_arr = self.da1.getVecArray(self.P)
         x_arr = self.da4.getVecArray(self.x)
         
         x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
-        
-        
-        if PETSc.COMM_WORLD.getRank() == 0:
-            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.pksp.getIterationNumber(), self.pksp.getResidualNorm()) )
         
             
             

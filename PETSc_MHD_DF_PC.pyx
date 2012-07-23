@@ -19,12 +19,12 @@ from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
 
-cdef class PETScSolver(object):
+cdef class PETScPreconditioner(object):
     '''
     
     '''
     
-    def __init__(self, DA da1, DA da4,
+    def __init__(self, DA da1, DA da4, Vec P,
                  np.uint64_t nx, np.uint64_t ny,
                  np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''
@@ -46,14 +46,17 @@ cdef class PETScSolver(object):
         self.hx = hx
         self.hy = hy
         
+        # save pressure vector
+        self.P = P
+        
         # create temporary vector
-        self.V    = self.da4.createGlobalVec()
-        self.divV = self.da1.createGlobalVec()
+        self.V = self.da4.createGlobalVec()
         
         # create history vector
         self.Xh = self.da4.createGlobalVec()
         
         # create local vectors
+        self.localP  = da1.createLocalVec()
         self.localV  = da4.createLocalVec()
         self.localB  = da4.createLocalVec()
         self.localX  = da4.createLocalVec()
@@ -78,12 +81,11 @@ cdef class PETScSolver(object):
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xe, xs, ye, ys
         
-        cdef np.float64_t meanDivV
-        
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
         self.da4.globalToLocal(X,       self.localX)
         self.da4.globalToLocal(self.Xh, self.localXh)
+        self.da1.globalToLocal(self.P,  self.localP)
         
         x  = self.da4.getVecArray(self.localX)
         xh = self.da4.getVecArray(self.localXh)
@@ -94,14 +96,12 @@ cdef class PETScSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] By  = x [...][:,:,1]
         cdef np.ndarray[np.float64_t, ndim=2] Vx  = x [...][:,:,2]
         cdef np.ndarray[np.float64_t, ndim=2] Vy  = x [...][:,:,3]
-        cdef np.ndarray[np.float64_t, ndim=2] P   = x [...][:,:,4]
+        cdef np.ndarray[np.float64_t, ndim=2] P   = self.da1.getVecArray(self.localP)[...]
         
         cdef np.ndarray[np.float64_t, ndim=2] Bxh = xh[...][:,:,0]
         cdef np.ndarray[np.float64_t, ndim=2] Byh = xh[...][:,:,1]
         cdef np.ndarray[np.float64_t, ndim=2] Vxh = xh[...][:,:,2]
         cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
-        
-        cdef np.ndarray[np.float64_t, ndim=2] divV = self.da1.getVecArray(self.divV)[...] 
         
         
         v = self.da4.getVecArray(self.V)[...]
@@ -153,21 +153,6 @@ cdef class PETScSolver(object):
                 jx = j-ys+1
                 jy = j-ys
                 
-                divV[iy, jy] = self.derivatives.gradx(tVx, ix, jx) \
-                             + self.derivatives.grady(tVy, ix, jx)
-                
-                
-        meanDivV = self.divV.sum() / (self.nx * self.ny)
-        
-        
-        for i in np.arange(xs, xe):
-            ix = i-xs+1
-            iy = i-xs
-            
-            for j in np.arange(ys, ye):
-                jx = j-ys+1
-                jy = j-ys
-                
                 # B_x
                 y[iy, jy, 0] = self.derivatives.dt(Bx, ix, jx) \
                              + 0.5 * self.derivatives.dy1(Bx,  Vyh, ix, jx) \
@@ -193,8 +178,7 @@ cdef class PETScSolver(object):
                              + 0.5 * self.derivatives.grady(P, ix, jx)
                               
                 # P
-                y[iy, jy, 4] = self.derivatives.laplace(P, ix, jx) \
-                             + divV[iy, jy] - meanDivV
+                y[iy, jy, 4] = 0.0
         
         
     
@@ -217,47 +201,6 @@ cdef class PETScSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
         cdef np.ndarray[np.float64_t, ndim=2] Ph  = xh[...][:,:,4]
         
-#        cdef np.ndarray[np.float64_t, ndim=2] divV = self.da1.getVecArray(self.divV)[...] 
-#        
-#        
-#        v = self.da4.getVecArray(self.V)[...]
-#        
-#        cdef np.ndarray[np.float64_t, ndim=2] tVx = v[:,:,0]
-#        cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
-#        
-#        for i in np.arange(xs, xe):
-#            ix = i-xs+1
-#            iy = i-xs
-#            
-#            for j in np.arange(ys, ye):
-#                jx = j-ys+1
-#                jy = j-ys
-#                
-#                tVx[iy, jy] = 
-#                
-#                tVy[iy, jy] = 
-#                
-#        self.da4.globalToLocal(self.V, self.localV)
-#        
-#        v = self.da4.getVecArray(self.localV)[...]
-#        
-#        tVx = v[:,:,0]
-#        tVy = v[:,:,1]        
-#        
-#        
-#        for i in np.arange(xs, xe):
-#            ix = i-xs+1
-#            iy = i-xs
-#            
-#            for j in np.arange(ys, ye):
-#                jx = j-ys+1
-#                jy = j-ys
-#                
-#                divV[iy, jy] = self.derivatives.gradx(tVx, ix, jx) \
-#                             + self.derivatives.grady(tVy, ix, jx)
-#                
-#                
-#        meanDivV = self.divV.sum() / (self.nx * self.ny)
         
         
         for i in np.arange(xs, xe):

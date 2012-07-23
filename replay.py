@@ -47,6 +47,7 @@ class replay(object):
             print("   min(By)    = %20.12E,     max(By)    = %20.12E" % (self.diagnostics.By.min(), self.diagnostics.By.max()))
             print("   min(Vx)    = %20.12E,     max(Vx)    = %20.12E" % (self.diagnostics.Vx.min(), self.diagnostics.Vx.max()))
             print("   min(Vy)    = %20.12E,     max(Vy)    = %20.12E" % (self.diagnostics.Vy.min(), self.diagnostics.Vy.max()))
+            print("   min(div B) = %20.12E,     max(div B) = %20.12E" % (self.diagnostics.divB.min(), self.diagnostics.divB.max()))
             print("   min(div V) = %20.12E,     max(div V) = %20.12E" % (self.diagnostics.divV.min(), self.diagnostics.divV.max()))
             print
         

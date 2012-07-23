@@ -36,7 +36,10 @@ INCLUDE_DIRS += [numpy.get_include()]
 import petsc4py
 INCLUDE_DIRS += [petsc4py.get_include()]
 
-# MPI
+# OpenMPI
+INCLUDE_DIRS += ['/opt/local/include/openmpi']
+
+# Intel MPI
 INCLUDE_DIRS += ['/afs/@cell/common/soft/intel/impi/4.0.0/intel64/include']
 
 
@@ -99,6 +102,13 @@ ext_modules = [
                  ),
         Extension("PETSc_MHD_DF_NL",
                   sources=["PETSc_MHD_DF_NL.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
+        Extension("PETSc_MHD_DF_PC",
+                  sources=["PETSc_MHD_DF_PC.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
