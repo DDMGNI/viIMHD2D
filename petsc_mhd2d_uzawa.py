@@ -14,11 +14,10 @@ import time
 
 from config import Config
 
-from PETSc_MHD_DF            import PETScSolver
-from PETSc_MHD_DF_PC         import PETScPreconditioner
-from PETSc_MHD_DF_Function   import PETScFunction
-from PETSc_MHD_DF_Jacobian   import PETScJacobian
-from PETSc_MHD_Poisson       import PETScPoissonSolver
+from PETSc_MHD_NL         import PETScSolver
+#from PETSc_MHD_NL_DF         import PETScSolver
+from PETSc_MHD_NL_Function import PETScFunction
+#from PETSc_MHD_NL_DF_Function import PETScFunction
 
 
 
@@ -40,6 +39,7 @@ class petscMHD2D(object):
         self.ht    = cfg['grid']['ht']              # timestep size
         self.nt    = cfg['grid']['nt']              # number of timesteps
         self.nsave = cfg['io']['nsave']             # save only every nsave'th timestep
+        self.omega = 0.1                            # relaxation parameter
         
         # grid setup
         nx   = cfg['grid']['nx']                    # number of points in x
@@ -99,8 +99,17 @@ class petscMHD2D(object):
                                     stencil_type='box')
         
         
+        # create DA (dof = 4 for Bx, By, Vx, Vy)
+        self.da4 = PETSc.DA().create(dim=2, dof=4,
+                                     sizes=[nx, ny],
+                                     proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+                                     boundary_type=('periodic', 'periodic'),
+                                     stencil_width=1,
+                                     stencil_type='box')
+        
+        
         # create DA (dof = 5 for Bx, By, Vx, Vy, P)
-        self.da4 = PETSc.DA().create(dim=2, dof=5,
+        self.da5 = PETSc.DA().create(dim=2, dof=5,
                                      sizes=[nx, ny],
                                      proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
                                      boundary_type=('periodic', 'periodic'),
@@ -122,23 +131,29 @@ class petscMHD2D(object):
         
         
         # initialise grid
-        self.da1.setUniformCoordinates(xmin=x1, xmax=x2, 
+        self.da1.setUniformCoordinates(xmin=x1, xmax=x2,
                                        ymin=y1, ymax=y2)
         
-        self.da4.setUniformCoordinates(xmin=x1, xmax=x2, 
+        self.da4.setUniformCoordinates(xmin=x1, xmax=x2,
                                        ymin=y1, ymax=y2)
         
-        self.dax.setUniformCoordinates(xmin=x1, xmax=x2) 
+        self.da5.setUniformCoordinates(xmin=x1, xmax=x2,
+                                       ymin=y1, ymax=y2)
+        
+        self.dax.setUniformCoordinates(xmin=x1, xmax=x2)
         
         self.day.setUniformCoordinates(xmin=y1, xmax=y2)
         
         
         # create solution and RHS vector
-        self.dx = self.da4.createGlobalVec()
         self.x  = self.da4.createGlobalVec()
         self.b  = self.da4.createGlobalVec()
-        self.Pb = self.da1.createGlobalVec()
-        self.localX = self.da4.createLocalVec()
+        self.u  = self.da5.createGlobalVec()
+        
+        # create residual vectors
+        self.ru = self.da5.createGlobalVec()
+        self.rx = self.da4.createGlobalVec()
+        self.rp = self.da1.createGlobalVec()
         
         # create global RK4 vectors
         self.X1 = self.da4.createGlobalVec()
@@ -147,6 +162,7 @@ class petscMHD2D(object):
         self.X4 = self.da4.createGlobalVec()
         
         # create local RK4 vectors
+        self.localX  = self.da4.createLocalVec()
         self.localX1 = self.da4.createLocalVec()
         self.localX2 = self.da4.createLocalVec()
         self.localX3 = self.da4.createLocalVec()
@@ -171,19 +187,18 @@ class petscMHD2D(object):
         
         
         # create Matrix object
-        self.petsc_matrix   = PETScSolver  (self.da1, self.da4, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_function = PETScFunction(self.da1, self.da4, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da4, nx, ny, self.ht, self.hx, self.hy)
+        self.petsc_matrix   = PETScSolver  (self.da1, self.da4, nx, ny, self.ht, self.hx, self.hy, self.omega)
+        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         
         # create sparse matrix
-        self.J = PETSc.Mat().createPython([self.dx.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
-        self.J.setPythonContext(self.petsc_jacobian)
-        self.J.setUp()
+        self.mat = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
+        self.mat.setPythonContext(self.petsc_matrix)
+        self.mat.setUp()
         
         # create linear solver and preconditioner
         self.ksp = PETSc.KSP().create()
         self.ksp.setFromOptions()
-        self.ksp.setOperators(self.J)
+        self.ksp.setOperators(self.mat)
         self.ksp.setType(cfg['solver']['petsc_ksp_type'])
         self.ksp.setInitialGuessNonzero(True)
         
@@ -191,44 +206,26 @@ class petscMHD2D(object):
         self.pc.setType(cfg['solver']['petsc_pc_type'])
         
         
-        # create Preconditioner matrix and solver
-        self.pc_mat = PETScPreconditioner(self.da1, self.da4, self.P, nx, ny, self.ht, self.hx, self.hy)
-        
-        # create sparse matrix
-        self.pc_A = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
-        self.pc_A.setPythonContext(self.pc_mat)
-        self.pc_A.setUp()
-        
-        # create linear solver and preconditioner
-        self.pc_ksp = PETSc.KSP().create()
-        self.pc_ksp.setFromOptions()
-        self.pc_ksp.setOperators(self.pc_A)
-        self.pc_ksp.setType(cfg['solver']['petsc_ksp_type'])
-        self.pc_ksp.setInitialGuessNonzero(True)
-        
-        self.pc_pc = self.pc_ksp.getPC()
-        self.pc_pc.setType('none')
-        
-        
-        # create Poisson matrix and solver
-        self.poisson_mat = PETScPoissonSolver(self.da1, self.da4, self.x, 
-                                              nx, ny, self.ht, self.hx, self.hy)
-        
-        self.poisson_A = PETSc.Mat().createPython([self.P.getSizes(), self.Pb.getSizes()], comm=PETSc.COMM_WORLD)
-        self.poisson_A.setPythonContext(self.poisson_mat)
-        self.poisson_A.setUp()
-        
-        self.poisson_ksp = PETSc.KSP().create()
-        self.poisson_ksp.setFromOptions()
-        self.poisson_ksp.setOperators(self.poisson_A)
-        self.poisson_ksp.setType(cfg['solver']['petsc_ksp_type'])
-#        self.poisson_ksp.setInitialGuessNonzero(True)
-        
-        self.poisson_pc = self.poisson_ksp.getPC()
-        self.poisson_pc.setType('none')
-        
-        
-        # create Arakawa solver object
+#        # create Preconditioner matrix and solver
+#        self.pc_mat = PETScPreconditioner(self.da1, self.da4, self.P, nx, ny, self.ht, self.hx, self.hy)
+#        
+#        # create sparse matrix
+#        self.pc_A = PETSc.Mat().createPython([self.x.getSizes(), self.b.getSizes()], comm=PETSc.COMM_WORLD)
+#        self.pc_A.setPythonContext(self.pc_mat)
+#        self.pc_A.setUp()
+#        
+#        # create linear solver and preconditioner
+#        self.pc_ksp = PETSc.KSP().create()
+#        self.pc_ksp.setFromOptions()
+#        self.pc_ksp.setOperators(self.pc_A)
+#        self.pc_ksp.setType(cfg['solver']['petsc_ksp_type'])
+#        self.pc_ksp.setInitialGuessNonzero(True)
+#        
+#        self.pc_pc = self.pc_ksp.getPC()
+#        self.pc_pc.setType('none')
+#        
+#        
+#        # create Arakawa solver object
 #        self.mhd_rk4 = PETScRK4(self.da4, nx, ny, self.ht, self.hx, self.hy)
         
         
@@ -256,7 +253,7 @@ class petscMHD2D(object):
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
-#        P_arr  = self.da1.getVecArray(self.P)
+        P_arr  = self.da1.getVecArray(self.P)
         
         
         if cfg['initial_data']['magnetic_python'] != None:
@@ -285,12 +282,12 @@ class petscMHD2D(object):
             Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             
         
-#        if cfg['initial_data']['pressure_python'] != None:
-#            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
-#            
-#        for i in range(xs, xe):
-#            for j in range(ys, ye):
-#                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) #+ 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
+        if cfg['initial_data']['pressure_python'] != None:
+            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+            
+        for i in range(xs, xe):
+            for j in range(ys, ye):
+                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly)
         
         
         # copy distribution function to solution vector
@@ -299,21 +296,12 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 2] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = Vy_arr[xs:xe, ys:ye]
         
-        
-        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
-        self.poisson_ksp.solve(self.Pb, self.P)
-        
-        x_arr = self.da4.getVecArray(self.x)
-        P_arr = self.da1.getVecArray(self.P)
-
-        x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
-        
+        # copy 4D solution vector to 5D solution vector
+        self.copy_solution_to_u()
         
         # update solution history
-        self.petsc_matrix.update_history(self.x)
-        self.petsc_function.update_history(self.x)
-        self.petsc_jacobian.update_history(self.x)
-        self.pc_mat.update_history(self.x)
+        self.petsc_matrix.update_history(self.x, self.P)
+        self.petsc_function.update_history(self.u)
         
         
         # create HDF5 output file
@@ -368,69 +356,135 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-            self.calculate_initial_guess()
+#            self.calculate_initial_guess()
             
-            # update previous iteration
-            self.petsc_jacobian.update_previous(self.x)
             
-            # build RHS and calculate norm
-            self.petsc_function.matrix_mult(self.x, self.b)
-            norm0 = self.b.norm()
-            self.b.scale(-1.)
+            # calculate and print initial residual
+            self.petsc_function.matrix_mult(self.u, self.ru)
+            residual0 = self.ru.norm()
+#            residual  = residual0
+            norm0 = self.u.norm()
+            norm  = norm0
             
-            # solve
-            self.dx.set(0.)
-            self.ksp.solve(self.b, self.dx)
+            if PETSc.COMM_WORLD.getRank() == 0:
+                print
+                print("   initial residual = %22.16E " % (residual0) )
+                print
             
-            # add to solution vector
-            self.x.axpy(1., self.dx)
             
-            # calculate function and norm
-            self.petsc_function.matrix_mult(self.x, self.b)
-            norm1 = self.b.norm()
+            # number of iterations
+            nlin    = 0
+            nnonlin = 0
             
-            # update history
-            self.petsc_function.update_history(self.x)
-            self.petsc_jacobian.update_history(self.x)
-            self.petsc_matrix.update_history(self.x)
-            self.pc_mat.update_history(self.x)
-            
-            # copy solution to B and V vectors
-            x_arr  = self.da4.getVecArray(self.x)
-            Bx_arr = self.da1.getVecArray(self.Bx)
-            By_arr = self.da1.getVecArray(self.By)
-            Vx_arr = self.da1.getVecArray(self.Vx)
-            Vy_arr = self.da1.getVecArray(self.Vy)
-            P_arr  = self.da1.getVecArray(self.P)
+            # start iteration
+            while True:
+                # update previous iteration
+                self.petsc_matrix.update_previous(self.x, self.P)
+                
+                # build RHS and solve
+                self.petsc_matrix.formRHS(self.b)
+                self.ksp.solve(self.b, self.x)
+                self.petsc_matrix.pressure(self.x, self.P)
 
-            Bx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 0]
-            By_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 1]
-            Vx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 2]
-            Vy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
-            P_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
+                # calculate residual
+                self.copy_solution_to_u()
+                self.petsc_function.matrix_mult(self.u, self.ru)
+                
+                ru_arr  = self.da5.getVecArray(self.ru)
+                rx_arr  = self.da4.getVecArray(self.rx)
+                rp_arr  = self.da1.getVecArray(self.rp)
+                
+                rx_arr[xs:xe, ys:ye, :] = ru_arr[xs:xe, ys:ye, 0:4]
+                rp_arr[xs:xe, ys:ye]    = ru_arr[xs:xe, ys:ye, 4  ]
+                
+                residual_u = self.ru.norm()
+                residual_x = self.rx.norm()
+                residual_p = self.rp.norm()
+                
+                
+                if PETSc.COMM_WORLD.getRank() == 0:
+                    print("   it_lin = %5i,   n_iter = %5i,   res_lin = %16.10E,   res_nlin = %16.10E " % (nnonlin+1, self.ksp.getIterationNumber(), self.ksp.getResidualNorm(), residual_u) )
+                    print("                                       res_x   = %16.10E,   res_p    = %16.10E " % (residual_x, residual_p) )
+                
+                
+                # count iterations
+                nnonlin += 1
+                nlin    += self.ksp.getIterationNumber()
+            
+#                self.copy_solution_to_u()
+                normp = norm
+                norm  = self.u.norm()
+                
+#                if abs(residualp - residual) / residual0 < 1.E-10:
+#                 # or abs(normp - norm) / norm0 < 1.E-5:
+                if residual_u < 1.E-3:
+                    break
+                
+            
+            # copy solution to 5D vector
+#            self.copy_solution_to_u()
+        
+            # update history
+            self.petsc_matrix.update_history(self.x, self.P)
+            self.petsc_function.update_history(self.u)
             
             # save to hdf5 file
             if itime % self.nsave == 0 or itime == self.nt + 1:
-                self.hdf5_viewer.HDF5SetTimestep(self.hdf5_viewer.HDF5GetTimestep() + 1)
-                self.hdf5_viewer(self.time)
-                
-#                self.hdf5_viewer(self.x)
-#                self.hdf5_viewer(self.b)
-                
-                self.hdf5_viewer(self.Bx)
-                self.hdf5_viewer(self.By)
-                self.hdf5_viewer(self.Vx)
-                self.hdf5_viewer(self.Vy)
-                self.hdf5_viewer(self.P)
+                self.save_to_hdf5()
             
             
             if PETSc.COMM_WORLD.getRank() == 0:
-                print("   Solver:  %5i iterations,   residual = %24.16E " % (self.ksp.getIterationNumber(), self.ksp.getResidualNorm()) )
-                print("                         Function Norm 0 = %24.16E" % (norm0) )
-                print("                         Function Norm 1 = %24.16E" % (norm1) )
+                print("   Solver:  %5i nonlinear iterations " % (nnonlin) )
+                print("            %5i linear    iterations " % (nlin)    )
+                print("   Function Norm = %24.16E" % (residual_u) )
            
-           
-           
+    
+    def copy_solution_to_u(self):
+        (xs, xe), (ys, ye) = self.da4.getRanges()
+        
+        u_arr  = self.da5.getVecArray(self.u)
+        x_arr  = self.da4.getVecArray(self.x)
+        P_arr  = self.da1.getVecArray(self.P)
+        
+        u_arr[xs:xe, ys:ye, 0:4] = x_arr[xs:xe, ys:ye, :]
+        u_arr[xs:xe, ys:ye, 4  ] = P_arr[xs:xe, ys:ye]
+    
+    
+    
+    
+    def save_to_hdf5(self):
+        
+        (xs, xe), (ys, ye) = self.da4.getRanges()
+        
+        # copy solution to B and V vectors
+        x_arr  = self.da4.getVecArray(self.x)
+        Bx_arr = self.da1.getVecArray(self.Bx)
+        By_arr = self.da1.getVecArray(self.By)
+        Vx_arr = self.da1.getVecArray(self.Vx)
+        Vy_arr = self.da1.getVecArray(self.Vy)
+        
+        Bx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 0]
+        By_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 1]
+        Vx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 2]
+        Vy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
+        
+        
+        # save timestep
+        self.hdf5_viewer.HDF5SetTimestep(self.hdf5_viewer.HDF5GetTimestep() + 1)
+        self.hdf5_viewer(self.time)
+        
+        # save RHS and solution vector
+#        self.hdf5_viewer(self.x)
+#        self.hdf5_viewer(self.b)
+        
+        # save data
+        self.hdf5_viewer(self.Bx)
+        self.hdf5_viewer(self.By)
+        self.hdf5_viewer(self.Vx)
+        self.hdf5_viewer(self.Vy)
+        self.hdf5_viewer(self.P)
+    
+    
     def calculate_initial_guess(self):
         
         (xs, xe), (ys, ye) = self.da4.getRanges()
@@ -458,12 +512,12 @@ class petscMHD2D(object):
         if PETSc.COMM_WORLD.getRank() == 0:
             print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
         
-#        # precondition V and B
-#        self.pc_mat.formRHS(self.b)
-#        self.pc_ksp.solve(self.b, self.x)
-#
-#        if PETSc.COMM_WORLD.getRank() == 0:
-#            print("   Precon : %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
+        # precondition V and B
+        self.pc_mat.formRHS(self.b)
+        self.pc_ksp.solve(self.b, self.x)
+
+        if PETSc.COMM_WORLD.getRank() == 0:
+            print("   Precon : %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
         
         # precondition P
 #        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
@@ -478,7 +532,7 @@ class petscMHD2D(object):
         
         x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
         
-            
+        
             
     def rk4(self, X):
         

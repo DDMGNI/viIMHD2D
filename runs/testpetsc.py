@@ -36,23 +36,23 @@ k = 2.
 #    return va * np.cos(np.pi * x)
 
 
-# Current Sheet in x
-
-def magnetic_x(x, y, Lx, Ly):
-    return 0.0
-
-def magnetic_y(x, y, Lx, Ly):
-    if x1 <= x and x <= x2:
-        return - B0
-    else:
-        return + B0
-#    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
-
-def velocity_x(x, y, Lx, Ly):
-    return u0 * np.sin(np.pi * y)
-
-def velocity_y(x, y, Lx, Ly):
-    return 0.0
+## Current Sheet in x
+#
+#def magnetic_x(x, y, Lx, Ly):
+#    return 0.0
+#
+#def magnetic_y(x, y, Lx, Ly):
+#    if x1 <= x and x <= x2:
+#        return - B0
+#    else:
+#        return + B0
+##    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
+#
+#def velocity_x(x, y, Lx, Ly):
+#    return u0 * np.sin(np.pi * y)
+#
+#def velocity_y(x, y, Lx, Ly):
+#    return 0.0
 
 
 # Current Sheet in y

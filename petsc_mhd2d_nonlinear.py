@@ -17,8 +17,8 @@ from config import Config
 from PETSc_MHD_DF             import PETScSolver
 from PETSc_MHD_DF_PC          import PETScPreconditioner
 from PETSc_MHD_Poisson        import PETScPoissonSolver
-from PETSc_MHD_DF_NL_Function import PETScFunction
-from PETSc_MHD_DF_NL_Jacobian import PETScJacobian
+from PETSc_MHD_NL_DF_Function import PETScFunction
+from PETSc_MHD_NL_DF_Jacobian import PETScJacobian
 
 
 
@@ -80,6 +80,7 @@ class petscMHD2D(object):
         OptDB = PETSc.Options()
         
         OptDB.setValue('ksp_rtol', cfg['solver']['petsc_residual'])
+#        OptDB.setValue('snes_rtol', 1E-2)
 #        OptDB.setValue('ksp_max_it', 100)
         OptDB.setValue('ksp_max_it', 200)
 #        OptDB.setValue('ksp_max_it', 1000)
@@ -255,7 +256,7 @@ class petscMHD2D(object):
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
-#        P_arr  = self.da1.getVecArray(self.P)
+        P_arr  = self.da1.getVecArray(self.P)
         
         
         if cfg['initial_data']['magnetic_python'] != None:
@@ -284,12 +285,12 @@ class petscMHD2D(object):
             Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
             
         
-#        if cfg['initial_data']['pressure_python'] != None:
-#            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
-#            
-#        for i in range(xs, xe):
-#            for j in range(ys, ye):
-#                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) #+ 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
+        if cfg['initial_data']['pressure_python'] != None:
+            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+            
+        for i in range(xs, xe):
+            for j in range(ys, ye):
+                P_arr[i,j] = init_data.pressure(coords[i,j][0], coords[i,j][1], Lx, Ly) #+ 0.5 * (Bx_arr[i,j]**2 + By_arr[i,j]**2)
         
         
         # copy distribution function to solution vector
@@ -297,14 +298,6 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 1] = By_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 2] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = Vy_arr[xs:xe, ys:ye]
-        
-        
-        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
-        self.poisson_ksp.solve(self.Pb, self.P)
-        
-        x_arr = self.da4.getVecArray(self.x)
-        P_arr = self.da1.getVecArray(self.P)
-
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         
@@ -367,7 +360,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-            self.calculate_initial_guess()
+#            self.calculate_initial_guess()
             
             # solve
             self.snes.solve(None, self.x)
@@ -401,7 +394,7 @@ class petscMHD2D(object):
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
         # explicit predictor for Bx, By, Vx, Vy
-        self.rk4(self.x)
+#        self.rk4(self.x)
         
 #        # calculate initial guess for total pressure
 #        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
@@ -417,18 +410,18 @@ class petscMHD2D(object):
         
         
         # calculate initial guess for total pressure
-        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
-        self.poisson_ksp.solve(self.Pb, self.P)
-        
-        if PETSc.COMM_WORLD.getRank() == 0:
-            print("   Poisson Solver: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
+#        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
+#        self.poisson_ksp.solve(self.Pb, self.P)
+#        
+#        if PETSc.COMM_WORLD.getRank() == 0:
+#            print("   Poisson Solver: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
         
 #        # precondition V and B
-#        self.pc_mat.formRHS(self.b)
-#        self.pc_ksp.solve(self.b, self.x)
-#
-#        if PETSc.COMM_WORLD.getRank() == 0:
-#            print("   Preconditioner: %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
+        self.pc_mat.formRHS(self.b)
+        self.pc_ksp.solve(self.b, self.x)
+
+        if PETSc.COMM_WORLD.getRank() == 0:
+            print("   Preconditioner: %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
 #        
 #        # precondition P
 #        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
@@ -438,10 +431,10 @@ class petscMHD2D(object):
 #            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
         
         # copy pressure to solution vector
-        P_arr = self.da1.getVecArray(self.P)
-        x_arr = self.da4.getVecArray(self.x)
-        
-        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
+#        P_arr = self.da1.getVecArray(self.P)
+#        x_arr = self.da4.getVecArray(self.x)
+#        
+#        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
         
             
             

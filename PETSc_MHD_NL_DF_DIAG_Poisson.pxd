@@ -14,7 +14,7 @@ from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
 
-cdef class PETScJacobian(object):
+cdef class PETScPoisson(object):
     '''
     
     '''
@@ -30,16 +30,14 @@ cdef class PETScJacobian(object):
     cdef DA da1
     cdef DA da4
     
-    cdef Vec divV
-    cdef Vec V
-    cdef Vec Xh
-    cdef Vec Xp
+    cdef Vec dPdx
+    cdef Vec dPdy
     
-    cdef Vec localV
-    cdef Vec localB
+    cdef Vec localdPdx
+    cdef Vec localdPdy
+    
     cdef Vec localX
-    cdef Vec localXh
-    cdef Vec localXp
+    cdef Vec localR
     
     cdef PETSc_MHD_Derivatives derivatives
     

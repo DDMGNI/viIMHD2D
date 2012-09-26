@@ -46,16 +46,10 @@ cdef class PETScFunction(object):
         self.hx = hx
         self.hy = hy
         
-        # create temporary vector
-        self.V    = self.da4.createGlobalVec()
-        self.divV = self.da1.createGlobalVec()
-        
         # create history vector
         self.Xh = self.da4.createGlobalVec()
         
         # create local vectors
-        self.localV  = da4.createLocalVec()
-        self.localB  = da4.createLocalVec()
         self.localX  = da4.createLocalVec()
         self.localXh = da4.createLocalVec()
         
@@ -86,8 +80,6 @@ cdef class PETScFunction(object):
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xe, xs, ye, ys
         
-        cdef np.float64_t meanDivV
-        
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
         self.da4.globalToLocal(X,       self.localX)
@@ -110,80 +102,7 @@ cdef class PETScFunction(object):
         cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
         cdef np.ndarray[np.float64_t, ndim=2] Ph  = xh[...][:,:,4]
         
-        cdef np.ndarray[np.float64_t, ndim=2] divV = self.da1.getVecArray(self.divV)[...] 
-        
-        
-        v = self.da4.getVecArray(self.V)[...]
-        
-        cdef np.ndarray[np.float64_t, ndim=2] tVx = v[:,:,0]
-        cdef np.ndarray[np.float64_t, ndim=2] tVy = v[:,:,1]
-        
-        for i in np.arange(xs, xe):
-            ix = i-xs+1
-            iy = i-xs
-            
-            for j in np.arange(ys, ye):
-                jx = j-ys+1
-                jy = j-ys
-                
-                tVx[iy, jy] = \
-                             + 0.25 * self.derivatives.dx1(Vx,  Vx,  ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vx,  Vxh, ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vxh, Vx,  ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vxh, Vxh, ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vx,  Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vx,  Vyh, ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vxh, Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vxh, Vyh, ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bx,  Bx,  ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bx,  Bxh, ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bxh, Bx,  ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bxh, Bxh, ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Bx,  By,  ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Bx,  Byh, ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Bxh, By,  ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Bxh, Byh, ix, jx)
-                
-                tVy[iy, jy] = \
-                             + 0.25 * self.derivatives.dx1(Vx,  Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vx,  Vyh, ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vxh, Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vy,  Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vy,  Vyh, ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vyh, Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.dx1(Vxh, Vyh, ix, jx) \
-                             + 0.25 * self.derivatives.dy1(Vyh, Vyh, ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bx,  By,  ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bx,  Byh, ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bxh, By,  ix, jx) \
-                             - 0.25 * self.derivatives.dy1(By,  By,  ix, jx) \
-                             - 0.25 * self.derivatives.dy1(By,  Byh, ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Byh, By,  ix, jx) \
-                             - 0.25 * self.derivatives.dx1(Bxh, Byh, ix, jx) \
-                             - 0.25 * self.derivatives.dy1(Byh, Byh, ix, jx)
-                
-        self.da4.globalToLocal(self.V, self.localV)
-        
-        v = self.da4.getVecArray(self.localV)[...]
-        
-        tVx = v[:,:,0]
-        tVy = v[:,:,1]
-                
-        
-        for i in np.arange(xs, xe):
-            ix = i-xs+1
-            iy = i-xs
-            
-            for j in np.arange(ys, ye):
-                jx = j-ys+1
-                jy = j-ys
-                
-                divV[iy, jy] = self.derivatives.gradx(tVx, ix, jx) \
-                             + self.derivatives.grady(tVy, ix, jx)
-                
-                
-        meanDivV = self.divV.sum() / (self.nx * self.ny)
-        
+
         
         for i in np.arange(xs, xe):
             ix = i-xs+1
@@ -220,19 +139,50 @@ cdef class PETScFunction(object):
                 # V_x
                 y[iy, jy, 2] = self.derivatives.dt(Vx,  ix, jx) \
                              - self.derivatives.dt(Vxh, ix, jx) \
-                             + tVx[ix, jx] \
-                             + 0.5 * self.derivatives.gradx(P,  ix, jx) \
-                             + 0.5 * self.derivatives.gradx(Ph, ix, jx)
+                             + 0.25 * self.derivatives.dx1(Vx,  Vx,  ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vx,  Vxh, ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vxh, Vx,  ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vxh, Vxh, ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vx,  Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vx,  Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vxh, Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vxh, Vyh, ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bx,  Bx,  ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bx,  Bxh, ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bxh, Bx,  ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bxh, Bxh, ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Bx,  By,  ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Bx,  Byh, ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Bxh, By,  ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Bxh, Byh, ix, jx) \
+                             + 0.5  * self.derivatives.gradx(P,  ix, jx) \
+                             + 0.5  * self.derivatives.gradx(Ph, ix, jx)
                               
                 # V_y
                 y[iy, jy, 3] = self.derivatives.dt(Vy,  ix, jx) \
                              - self.derivatives.dt(Vyh, ix, jx) \
-                             + tVy[ix, jx] \
-                             + 0.5 * self.derivatives.grady(P,  ix, jx) \
-                             + 0.5 * self.derivatives.grady(Ph, ix, jx)
+                             + 0.25 * self.derivatives.dx1(Vx,  Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vx,  Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vxh, Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dx1(Vxh, Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vy,  Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vy,  Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vyh, Vy,  ix, jx) \
+                             + 0.25 * self.derivatives.dy1(Vyh, Vyh, ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bx,  By,  ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bx,  Byh, ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bxh, By,  ix, jx) \
+                             - 0.25 * self.derivatives.dx1(Bxh, Byh, ix, jx) \
+                             - 0.25 * self.derivatives.dy1(By,  By,  ix, jx) \
+                             - 0.25 * self.derivatives.dy1(By,  Byh, ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Byh, By,  ix, jx) \
+                             - 0.25 * self.derivatives.dy1(Byh, Byh, ix, jx) \
+                             + 0.5  * self.derivatives.grady(P,  ix, jx) \
+                             + 0.5  * self.derivatives.grady(Ph, ix, jx)
                               
                 # P
-                y[iy, jy, 4] = self.derivatives.laplace(P, ix, jx) \
-                             + divV[iy, jy] - meanDivV
+                y[iy, jy, 4] = 0.5 * self.derivatives.gradx(Vx,  ix, jx) \
+                             + 0.5 * self.derivatives.gradx(Vxh, ix, jx) \
+                             + 0.5 * self.derivatives.grady(Vy,  ix, jx) \
+                             + 0.5 * self.derivatives.grady(Vyh, ix, jx)
         
-
