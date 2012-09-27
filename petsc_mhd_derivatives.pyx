@@ -40,7 +40,7 @@ cdef class PETSc_MHD_Derivatives(object):
         
         
         
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
                                np.uint64_t i, np.uint64_t j):
@@ -50,51 +50,7 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
-#        result = ( \
-#                     + 4. * B[i+1, j  ] * V[i+1, j  ] \
-#                     - 4. * B[i-1, j  ] * V[i-1, j  ] \
-#                     + 2. * B[i+1, j-1] * V[i+1, j-1] \
-#                     - 2. * B[i-1, j-1] * V[i-1, j-1] \
-#                     + 2. * B[i+1, j-1] * V[i+1, j  ] \
-#                     - 2. * B[i-1, j-1] * V[i-1, j  ] \
-#                     + 2. * B[i+1, j+1] * V[i+1, j+1] \
-#                     - 2. * B[i-1, j+1] * V[i-1, j+1] \
-#                     + 2. * B[i+1, j+1] * V[i+1, j  ] \
-#                     - 2. * B[i-1, j+1] * V[i-1, j  ] \
-#                     + 2. * B[i+1, j  ] * V[i+1, j-1] \
-#                     - 2. * B[i-1, j  ] * V[i-1, j-1] \
-#                     + 2. * B[i+1, j  ] * V[i+1, j+1] \
-#                     - 2. * B[i-1, j  ] * V[i-1, j+1] \
-#                     + 2. * B[i+1, j  ] * V[i,   j  ] \
-#                     - 2. * B[i-1, j  ] * V[i,   j  ] \
-#                     + 2. * B[i,   j  ] * V[i+1, j  ] \
-#                     - 2. * B[i,   j  ] * V[i-1, j  ] \
-#                     + 1. * B[i+1, j-1] * V[i,   j-1] \
-#                     - 1. * B[i-1, j-1] * V[i,   j-1] \
-#                     + 1. * B[i+1, j-1] * V[i,   j  ] \
-#                     - 1. * B[i-1, j-1] * V[i,   j  ] \
-#                     + 1. * B[i+1, j+1] * V[i,   j+1] \
-#                     - 1. * B[i-1, j+1] * V[i,   j+1] \
-#                     + 1. * B[i+1, j+1] * V[i,   j  ] \
-#                     - 1. * B[i-1, j+1] * V[i,   j  ] \
-#                     + 1. * B[i+1, j  ] * V[i,   j-1] \
-#                     - 1. * B[i-1, j  ] * V[i,   j-1] \
-#                     + 1. * B[i+1, j  ] * V[i,   j+1] \
-#                     - 1. * B[i-1, j  ] * V[i,   j+1] \
-#                     + 1. * B[i,   j-1] * V[i+1, j-1] \
-#                     - 1. * B[i,   j-1] * V[i-1, j-1] \
-#                     + 1. * B[i,   j-1] * V[i+1, j  ] \
-#                     - 1. * B[i,   j-1] * V[i-1, j  ] \
-#                     + 1. * B[i,   j+1] * V[i+1, j+1] \
-#                     - 1. * B[i,   j+1] * V[i-1, j+1] \
-#                     + 1. * B[i,   j+1] * V[i+1, j  ] \
-#                     - 1. * B[i,   j+1] * V[i-1, j  ] \
-#                     + 1. * B[i,   j  ] * V[i+1, j+1] \
-#                     - 1. * B[i,   j  ] * V[i-1, j+1] \
-#                     + 1. * B[i,   j  ] * V[i+1, j-1] \
-#                     - 1. * B[i,   j  ] * V[i-1, j-1] \
-#                 ) * self.hx_inv / 192.
-
+        
         result = ( \
                      - 4 * V[i-1, j  ] * B[i-1, j  ]
                      + 4 * V[i+1, j  ] * B[i+1, j  ]
@@ -143,7 +99,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dx1(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j):
@@ -173,7 +129,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t fdudx(self, np.ndarray[np.float64_t, ndim=2] F,
                                   np.ndarray[np.float64_t, ndim=2] U,
                                   np.uint64_t i, np.uint64_t j):
@@ -231,7 +187,29 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
+    cdef np.float64_t fdudx_diag(self, np.ndarray[np.float64_t, ndim=2] F,
+                                       np.ndarray[np.float64_t, ndim=2] U,
+                                       np.uint64_t i, np.uint64_t j):
+        '''
+        MHD Derivative: full single derivative F d_x D
+        '''
+        
+        cdef np.float64_t result
+        
+        result = ( \
+                     + 1 * F[i-1, j-1] * U[i,   j  ] \
+                     + 1 * F[i-1, j+1] * U[i,   j  ] \
+                     + 2 * F[i-1, j  ] * U[i,   j  ] \
+                     - 1 * F[i+1, j-1] * U[i,   j  ] \
+                     - 1 * F[i+1, j+1] * U[i,   j  ] \
+                     - 2 * F[i+1, j  ] * U[i,   j  ] \
+                 ) * self.hx_inv / 32.
+         
+        return result
+
+
+    @cython.boundscheck(False)
     cdef np.float64_t dx3(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j):
@@ -275,7 +253,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dy(self, np.ndarray[np.float64_t, ndim=2] B,
                                np.ndarray[np.float64_t, ndim=2] V,
                                np.uint64_t i, np.uint64_t j):
@@ -285,51 +263,7 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
-#        result = ( \
-#                     + 4. * B[i,   j+1] * V[i,   j+1] \
-#                     - 4. * B[i,   j-1] * V[i,   j-1] \
-#                     + 2. * B[i,   j+1] * V[i,   j  ] \
-#                     - 2. * B[i,   j-1] * V[i,   j  ] \
-#                     + 2. * B[i,   j  ] * V[i,   j+1] \
-#                     - 2. * B[i,   j  ] * V[i,   j-1] \
-#                     + 2. * B[i,   j+1] * V[i+1, j+1] \
-#                     - 2. * B[i,   j-1] * V[i-1, j-1] \
-#                     + 2. * B[i,   j+1] * V[i-1, j+1] \
-#                     - 2. * B[i,   j-1] * V[i+1, j-1] \
-#                     + 2. * B[i-1, j+1] * V[i-1, j+1] \
-#                     - 2. * B[i-1, j-1] * V[i-1, j-1] \
-#                     + 2. * B[i-1, j+1] * V[i,   j+1] \
-#                     - 2. * B[i-1, j-1] * V[i,   j-1] \
-#                     + 2. * B[i+1, j+1] * V[i+1, j+1] \
-#                     - 2. * B[i+1, j-1] * V[i+1, j-1] \
-#                     + 2. * B[i+1, j+1] * V[i,   j+1] \
-#                     - 2. * B[i+1, j-1] * V[i,   j-1] \
-#                     + 1. * B[i-1, j+1] * V[i-1, j  ] \
-#                     - 1. * B[i-1, j-1] * V[i-1, j  ] \
-#                     + 1. * B[i-1, j+1] * V[i,   j  ] \
-#                     - 1. * B[i-1, j-1] * V[i,   j  ] \
-#                     + 1. * B[i-1, j  ] * V[i-1, j+1] \
-#                     - 1. * B[i-1, j  ] * V[i-1, j-1] \
-#                     + 1. * B[i-1, j  ] * V[i,   j+1] \
-#                     - 1. * B[i-1, j  ] * V[i,   j-1] \
-#                     + 1. * B[i+1, j+1] * V[i+1, j  ] \
-#                     - 1. * B[i+1, j-1] * V[i+1, j  ] \
-#                     + 1. * B[i+1, j+1] * V[i,   j  ] \
-#                     - 1. * B[i+1, j-1] * V[i,   j  ] \
-#                     + 1. * B[i+1, j  ] * V[i+1, j+1] \
-#                     - 1. * B[i+1, j  ] * V[i+1, j-1] \
-#                     + 1. * B[i+1, j  ] * V[i,   j+1] \
-#                     - 1. * B[i+1, j  ] * V[i,   j-1] \
-#                     + 1. * B[i,   j+1] * V[i+1, j  ] \
-#                     - 1. * B[i,   j-1] * V[i+1, j  ] \
-#                     + 1. * B[i,   j+1] * V[i-1, j  ] \
-#                     - 1. * B[i,   j-1] * V[i-1, j  ] \
-#                     + 1. * B[i,   j  ] * V[i-1, j+1] \
-#                     - 1. * B[i,   j  ] * V[i-1, j-1] \
-#                     + 1. * B[i,   j  ] * V[i+1, j+1] \
-#                     - 1. * B[i,   j  ] * V[i+1, j-1] \
-#                 ) * self.hy_inv / 192.
-                 
+        
         result = ( \
                      - 4 * V[i,   j-1] * B[i,   j-1]
                      + 4 * V[i,   j+1] * B[i,   j+1]
@@ -378,7 +312,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dy1(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j):
@@ -408,7 +342,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t fdudy(self, np.ndarray[np.float64_t, ndim=2] F,
                                   np.ndarray[np.float64_t, ndim=2] U,
                                   np.uint64_t i, np.uint64_t j):
@@ -466,7 +400,29 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
+    cdef np.float64_t fdudy_diag(self, np.ndarray[np.float64_t, ndim=2] F,
+                                       np.ndarray[np.float64_t, ndim=2] U,
+                                       np.uint64_t i, np.uint64_t j):
+        '''
+        MHD Derivative: full single derivative F d_y D
+        '''
+        
+        cdef np.float64_t result
+        
+        result = ( \
+                     + 1 * F[i-1, j-1] * U[i,   j  ] \
+                     - 1 * F[i-1, j+1] * U[i,   j  ] \
+                     + 1 * F[i+1, j-1] * U[i,   j  ] \
+                     - 1 * F[i+1, j+1] * U[i,   j  ] \
+                     + 2 * F[i,   j-1] * U[i,   j  ] \
+                     - 2 * F[i,   j+1] * U[i,   j  ] \
+                 ) * self.hy_inv / 32.
+        
+        return result
+    
+    
+    @cython.boundscheck(False)
     cdef np.float64_t dy3(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j):
@@ -510,7 +466,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t gradx(self, np.ndarray[np.float64_t, ndim=2] x,
                                   np.uint64_t i, np.uint64_t j):
         '''
@@ -529,7 +485,7 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t grady(self, np.ndarray[np.float64_t, ndim=2] x,
                                   np.uint64_t i, np.uint64_t j):
         '''
@@ -597,7 +553,7 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
     
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
                                np.uint64_t i, np.uint64_t j):
         '''
@@ -623,7 +579,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
 
 
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dt_diag(self, np.ndarray[np.float64_t, ndim=2] x,
                                     np.uint64_t i, np.uint64_t j):
         '''
@@ -637,7 +593,7 @@ cdef class PETSc_MHD_Derivatives(object):
         return result
 
 
-#    @cython.boundscheck(False)
+    @cython.boundscheck(False)
     cdef np.float64_t dt_diag_inv(self, np.ndarray[np.float64_t, ndim=2] x,
                                         np.uint64_t i, np.uint64_t j):
         '''
@@ -646,7 +602,7 @@ cdef class PETSc_MHD_Derivatives(object):
         
         cdef np.float64_t result
         
-        result = 4.0  * self.ht / x[i, j]
+        result = 4.0 * self.ht / x[i, j]
         
         return result
 

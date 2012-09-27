@@ -40,6 +40,10 @@ cdef class PETSc_MHD_Derivatives(object):
                                   np.ndarray[np.float64_t, ndim=2] U,
                                   np.uint64_t i, np.uint64_t j)
 
+    cdef np.float64_t fdudx_diag(self, np.ndarray[np.float64_t, ndim=2] F,
+                                  np.ndarray[np.float64_t, ndim=2] U,
+                                  np.uint64_t i, np.uint64_t j)
+
     cdef np.float64_t dx3(self, np.ndarray[np.float64_t, ndim=2] B,
                                 np.ndarray[np.float64_t, ndim=2] V,
                                 np.uint64_t i, np.uint64_t j)
@@ -54,6 +58,10 @@ cdef class PETSc_MHD_Derivatives(object):
                                 np.uint64_t i, np.uint64_t j)
 
     cdef np.float64_t fdudy(self, np.ndarray[np.float64_t, ndim=2] F,
+                                  np.ndarray[np.float64_t, ndim=2] U,
+                                  np.uint64_t i, np.uint64_t j)
+    
+    cdef np.float64_t fdudy_diag(self, np.ndarray[np.float64_t, ndim=2] F,
                                   np.ndarray[np.float64_t, ndim=2] U,
                                   np.uint64_t i, np.uint64_t j)
     
