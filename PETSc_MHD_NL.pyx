@@ -304,56 +304,58 @@ cdef class PETScSolver(object):
                           )
 
 
-##    @cython.boundscheck(False)
-#    def timestep(self, np.ndarray[np.float64_t, ndim=3] x,
-#                       np.ndarray[np.float64_t, ndim=3] y):
-#        
-#        cdef np.uint64_t ix, iy, i, j
-#        cdef np.uint64_t xs, xe, ys, ye
-#        
-#        (xs, xe), (ys, ye) = self.da4.getRanges()
-#        
-#        cdef np.ndarray[np.float64_t, ndim=2] Bx = x[:,:,0]
-#        cdef np.ndarray[np.float64_t, ndim=2] By = x[:,:,1]
-#        cdef np.ndarray[np.float64_t, ndim=2] Vx = x[:,:,2]
-#        cdef np.ndarray[np.float64_t, ndim=2] Vy = x[:,:,3]
-#        cdef np.ndarray[np.float64_t, ndim=2] P  = x[:,:,4]
-#        
-#        
-#        for j in np.arange(ys, ye):
-#            jx = j-ys+1
-#            jy = j-ys
-#            
-#            for i in np.arange(xs, xe):
-#                ix = i-xs+1
-#                iy = i-xs
-#                
-#                # B_x
-#                y[iy, jy, 0] = \
-#                             - self.derivatives.dy1(Bx, Vy, ix, jx) \
-#                             + self.derivatives.dy1(By, Vx, ix, jx)
-#                    
-#                # B_y
-#                y[iy, jy, 1] = \
-#                             - self.derivatives.dx1(By, Vx, ix, jx) \
-#                             + self.derivatives.dx1(Bx, Vy, ix, jx)
-#                                
-#                # V_x
-#                y[iy, jy, 2] = \
-#                             - self.derivatives.dx1(Vx, Vx, ix, jx) \
-#                             - self.derivatives.dy1(Vx, Vy, ix, jx) \
-#                             + self.derivatives.dx1(Bx, Bx, ix, jx) \
-#                             + self.derivatives.dy1(Bx, By, ix, jx) \
-#                             - self.derivatives.gradx(P, ix, jx)
-#                              
-#                # V_y
-#                y[iy, jy, 3] = \
-#                             - self.derivatives.dx1(Vx, Vy, ix, jx) \
-#                             - self.derivatives.dy1(Vy, Vy, ix, jx) \
-#                             + self.derivatives.dx1(Bx, By, ix, jx) \
-#                             + self.derivatives.dy1(By, By, ix, jx) \
-#                             - self.derivatives.grady(P, ix, jx)
-#                              
-#                # P
-#                y[iy, jy, 4] = 0.0
-#          
+#    @cython.boundscheck(False)
+    def timestep(self, np.ndarray[np.float64_t, ndim=3] x,
+                       np.ndarray[np.float64_t, ndim=2] p,
+                       np.ndarray[np.float64_t, ndim=3] y):
+        
+        cdef np.uint64_t ix, iy, i, j
+        cdef np.uint64_t xs, xe, ys, ye
+        
+        (xs, xe), (ys, ye) = self.da4.getRanges()
+        
+        cdef np.ndarray[np.float64_t, ndim=2] Bx = x[:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] By = x[:,:,1]
+        cdef np.ndarray[np.float64_t, ndim=2] Vx = x[:,:,2]
+        cdef np.ndarray[np.float64_t, ndim=2] Vy = x[:,:,3]
+        cdef np.ndarray[np.float64_t, ndim=2] P  = p[:,:]
+        
+        
+        for j in np.arange(ys, ye):
+            jx = j-ys+1
+            jy = j-ys
+            
+            for i in np.arange(xs, xe):
+                ix = i-xs+1
+                iy = i-xs
+                
+                # B_x
+                y[iy, jy, 0] = \
+                             - self.derivatives.fdudx(Vx, Bx, ix, jx) \
+                             - self.derivatives.fdudy(Vy, Bx, ix, jx) \
+                             + self.derivatives.fdudx(Bx, Vx, ix, jx) \
+                             + self.derivatives.fdudy(By, Vx, ix, jx)
+                    
+                # B_y
+                y[iy, jy, 1] = \
+                             - self.derivatives.fdudx(Vx, By, ix, jx) \
+                             - self.derivatives.fdudy(Vy, By, ix, jx) \
+                             + self.derivatives.fdudx(Bx, Vy, ix, jx) \
+                             + self.derivatives.fdudy(By, Vy, ix, jx)
+                                
+                # V_x
+                y[iy, jy, 2] = \
+                             - self.derivatives.fdudx(Vx, Vx, ix, jx) \
+                             - self.derivatives.fdudy(Vy, Vx, ix, jx) \
+                             + self.derivatives.fdudx(Bx, Bx, ix, jx) \
+                             + self.derivatives.fdudy(By, Bx, ix, jx) \
+                             - self.derivatives.gradx(P, ix, jx)
+                              
+                # V_y
+                y[iy, jy, 3] = \
+                             - self.derivatives.fdudx(Vx, Vy, ix, jx) \
+                             - self.derivatives.fdudy(Vy, Vy, ix, jx) \
+                             + self.derivatives.fdudx(Bx, By, ix, jx) \
+                             + self.derivatives.fdudy(By, By, ix, jx) \
+                             - self.derivatives.grady(P, ix, jx)
+          

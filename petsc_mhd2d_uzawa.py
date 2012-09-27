@@ -167,6 +167,7 @@ class petscMHD2D(object):
         self.localX2 = self.da4.createLocalVec()
         self.localX3 = self.da4.createLocalVec()
         self.localX4 = self.da4.createLocalVec()
+        self.localP  = self.da1.createLocalVec()
         
         # create vectors for magnetic and velocity field
         self.Bx = self.da1.createGlobalVec()
@@ -356,7 +357,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-#            self.calculate_initial_guess()
+            self.calculate_initial_guess()
             
             
             # calculate and print initial residual
@@ -487,7 +488,7 @@ class petscMHD2D(object):
     
     def calculate_initial_guess(self):
         
-        (xs, xe), (ys, ye) = self.da4.getRanges()
+#        (xs, xe), (ys, ye) = self.da4.getRanges()
         
         # explicit predictor for Bx, By, Vx, Vy
         self.rk4(self.x)
@@ -503,58 +504,61 @@ class petscMHD2D(object):
 #        
 #        if PETSc.COMM_WORLD.getRank() == 0:
 #            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
-        
-        
-        # calculate initial guess for total pressure
-        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
-        self.poisson_ksp.solve(self.Pb, self.P)
-        
-        if PETSc.COMM_WORLD.getRank() == 0:
-            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
-        
-        # precondition V and B
-        self.pc_mat.formRHS(self.b)
-        self.pc_ksp.solve(self.b, self.x)
-
-        if PETSc.COMM_WORLD.getRank() == 0:
-            print("   Precon : %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
-        
-        # precondition P
+#        
+#        
+#        # calculate initial guess for total pressure
 #        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
 #        self.poisson_ksp.solve(self.Pb, self.P)
 #        
 #        if PETSc.COMM_WORLD.getRank() == 0:
 #            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
-        
-        # copy pressure to solution vector
-        P_arr = self.da1.getVecArray(self.P)
-        x_arr = self.da4.getVecArray(self.x)
-        
-        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
+#        
+#        # precondition V and B
+#        self.pc_mat.formRHS(self.b)
+#        self.pc_ksp.solve(self.b, self.x)
+#
+#        if PETSc.COMM_WORLD.getRank() == 0:
+#            print("   Precon : %5i iterations,   residual = %24.16E " % (self.pc_ksp.getIterationNumber(), self.pc_ksp.getResidualNorm()) )
+#        
+#        # precondition P
+#        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
+#        self.poisson_ksp.solve(self.Pb, self.P)
+#        
+#        if PETSc.COMM_WORLD.getRank() == 0:
+#            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
+#        
+#        # copy pressure to solution vector
+#        P_arr = self.da1.getVecArray(self.P)
+#        x_arr = self.da4.getVecArray(self.x)
+#        
+#        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
         
         
             
     def rk4(self, X):
         
+        self.da1.globalToLocal(self.P, self.localP)
+        p  = self.da1.getVecArray(self.localP)[...]
+        
         self.da4.globalToLocal(X, self.localX)
         x  = self.da4.getVecArray(self.localX)[...]
         x1 = self.da4.getVecArray(self.X1)[...]
-        self.petsc_matrix.timestep(x, x1)
+        self.petsc_matrix.timestep(x, p, x1)
         
         self.da4.globalToLocal(self.X1, self.localX1)
         x1 = self.da4.getVecArray(self.localX1)[...]
         x2 = self.da4.getVecArray(self.X2)[...]
-        self.petsc_matrix.timestep(x + 0.5 * self.ht * x1, x2)
+        self.petsc_matrix.timestep(x + 0.5 * self.ht * x1, p, x2)
         
         self.da4.globalToLocal(self.X2, self.localX2)
         x2 = self.da4.getVecArray(self.localX2)[...]
         x3 = self.da4.getVecArray(self.X3)[...]
-        self.petsc_matrix.timestep(x + 0.5 * self.ht * x2, x3)
+        self.petsc_matrix.timestep(x + 0.5 * self.ht * x2, p, x3)
         
         self.da4.globalToLocal(self.X3, self.localX3)
         x3 = self.da4.getVecArray(self.localX3)[...]
         x4 = self.da4.getVecArray(self.X4)[...]
-        self.petsc_matrix.timestep(x + 1.0 * self.ht * x3, x4)
+        self.petsc_matrix.timestep(x + 1.0 * self.ht * x3, p, x4)
         
         x  = self.da4.getVecArray(X)[...]
         x1 = self.da4.getVecArray(self.X1)[...]
