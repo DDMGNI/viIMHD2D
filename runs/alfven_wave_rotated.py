@@ -2,31 +2,24 @@
 import numpy as np
 
 u0 = 1.0
-B0 = 1.0E-3
-p0 = 1.0
+B0 = 1.0
+p0 = 0.1
 
 Bx0 = B0
 By0 = B0
 
-sigma   = 0.25
-xcenter = 1.0
-
 
 def magnetic_x(x, y, Lx, Ly):
-    return Bx0
+    return Bx0 * np.sin(np.pi * y)
 
 def magnetic_y(x, y, Lx, Ly):
-    return By0 * gaussian(x)
+    return By0
 
 def velocity_x(x, y, Lx, Ly):
-    return u0
+    return u0 * np.cos(np.pi * y)
 
 def velocity_y(x, y, Lx, Ly):
     return u0
 
 def pressure(x, y, Lx, Ly):
     return p0
-
-
-def gaussian(x):
-    return 1. / (sigma * np.sqrt(2*np.pi)) * np.exp(-0.5 * ((x-xcenter)/sigma)**2 )

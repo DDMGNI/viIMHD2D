@@ -10,8 +10,8 @@ th = 0.5
 vx = u0 * np.cos(np.arctan(th))
 vy = u0 * np.sin(np.arctan(th))
 
-nx = 128
-ny = 64
+nx = 512
+ny = 256
 
 x1 = -1.0
 x2 = +1.0
