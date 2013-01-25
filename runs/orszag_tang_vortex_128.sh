@@ -30,7 +30,7 @@ module load python32/all
 export LD_PRELOAD=/afs/@cell/common/soft/intel/ics13/13.0/mkl/lib/intel64/libmkl_core.so:/afs/@cell/common/soft/intel/ics13/13.0/mkl/lib/intel64/libmkl_intel_thread.so:/afs/@cell/common/soft/intel/ics13/13.0/compiler/lib/intel64/libiomp5.so
 
 
-export RUN_DIR=/afs/ipp/home/m/mkraus/Codes/petscMHD2D-current
+export RUN_DIR=/afs/ipp/home/m/mkraus/Codes/petscMHD2D
 
 export PYTHONPATH=$RUN_DIR/vi:$PYTHONPATH
 
