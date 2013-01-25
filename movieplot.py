@@ -192,7 +192,7 @@ class PlotMHD2D(object):
         
 #        self.update_boundaries()
 
-        for ckey, cont in self.conts.iteritems():
+        for ckey, cont in self.conts.items():
             for coll in cont.collections:
                 self.axes[ckey].collections.remove(coll)
         
@@ -220,8 +220,12 @@ class PlotMHD2D(object):
         self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         
+#        self.axes["B"].clear()
+#        self.axes["B"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+
         self.axes["B"].clear()
-        self.axes["B"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+        plt.subplot(self.gs[2:4,0:2])
+        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -254,6 +258,8 @@ class PlotMHD2D(object):
         if self.write:
             filename = self.prefix + str('%06d' % self.iTime) + '.png'
             plt.savefig(filename, dpi=70)
+#            filename = self.prefix + str('%06d' % self.iTime) + '.pdf'
+#            plt.savefig(filename)
         else:
             plt.draw()
             plt.show(block=final)

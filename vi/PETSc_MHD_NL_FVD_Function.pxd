@@ -26,9 +26,11 @@ cdef class PETScFunction(object):
     cdef np.float64_t hx
     cdef np.float64_t hy
     
+    cdef np.float64_t ht_inv
+    
     
     cdef DA da1
-    cdef DA da4
+    cdef DA da5
     
     cdef Vec divV
     cdef Vec V
@@ -41,3 +43,13 @@ cdef class PETScFunction(object):
     
     cdef PETSc_MHD_Derivatives derivatives
     
+    
+    cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
+                               np.uint64_t i, np.uint64_t j)
+
+    cdef np.float64_t dt_x(self, np.ndarray[np.float64_t, ndim=2] x,
+                                 np.uint64_t i, np.uint64_t j)
+
+    cdef np.float64_t dt_y(self, np.ndarray[np.float64_t, ndim=2] x,
+                                 np.uint64_t i, np.uint64_t j)
+

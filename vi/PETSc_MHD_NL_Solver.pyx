@@ -98,8 +98,7 @@ cdef class PETScSolver(object):
         cdef np.uint64_t i, j
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xe, xs, ye, ys
-        
-        cdef np.float64_t meanDivV
+        cdef np.float64_t diag
         
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
@@ -142,76 +141,76 @@ cdef class PETScSolver(object):
                 y[iy, jy, 0] = self.derivatives.dt(Bx, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxp, Bx,  ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxh, Bx,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudx(Vxp, Bxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyp, Bx,  ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyh, Bx,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudy(Vyp, Bxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxp, Vx,  ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxh, Vx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudx(Bxp, Vxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Byp, Vx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byh, Vx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byp, Vxh, ix, jx)
+                             - 0.25 * self.derivatives.fdudy(Byh, Vx,  ix, jx)
                     
                 # B_y
                 y[iy, jy, 1] = self.derivatives.dt(By, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxp, By,  ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxh, By,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudx(Vxp, Byh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyp, By,  ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyh, By,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudy(Vyp, Byh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxp, Vy,  ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxh, Vy,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudx(Bxp, Vyh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Byp, Vy,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byh, Vy,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byp, Vyh, ix, jx)
+                             - 0.25 * self.derivatives.fdudy(Byh, Vy,  ix, jx)
                 
                 # V_x
                 y[iy, jy, 2] = self.derivatives.dt(Vx, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxp, Vx,  ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxh, Vx,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudx(Vxp, Vxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyp, Vx,  ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyh, Vx,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudy(Vyp, Vxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxp, Bx,  ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxh, Bx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudx(Bxp, Bxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Byp, Bx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byh, Bx,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byp, Bxh, ix, jx)
+                             - 0.25 * self.derivatives.fdudy(Byh, Bx,  ix, jx)
                               
                 # V_y
                 y[iy, jy, 3] = self.derivatives.dt(Vy, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxp, Vy,  ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Vxh, Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudx(Vxp, Vyh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyp, Vy,  ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Vyh, Vy,  ix, jx) \
-                             + 0.25 * self.derivatives.fdudy(Vyp, Vyh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxp, By,  ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Bxh, By,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudx(Bxp, Byh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Byp, By,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byh, By,  ix, jx) \
-                             - 0.25 * self.derivatives.fdudy(Byp, Byh, ix, jx)
-        
-        
+                             - 0.25 * self.derivatives.fdudy(Byh, By,  ix, jx)
+                
+                
+#                # divide by diagonal
+#                diag = self.derivatives.dt_diag_fac() \
+#                     + 0.25 * self.derivatives.fdudx_diag_fac(Vxp, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudx_diag_fac(Vxh, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudy_diag_fac(Vyp, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudy_diag_fac(Vyh, ix, jx)
+#                
+##                if diag != 0.:
+#                y[iy, jy, 0] /= diag 
+#                y[iy, jy, 1] /= diag 
+#                y[iy, jy, 2] /= diag 
+#                y[iy, jy, 3] /= diag 
+                    
     
 #    @cython.boundscheck(False)
     def formRHS(self, Vec B):
         cdef np.uint64_t ix, iy, jx, jy
         cdef np.uint64_t xs, xe, ys, ye
+        cdef np.float64_t diag
         
         (xs, xe), (ys, ye) = self.da4.getRanges()
         
         self.da4.globalToLocal(self.Xh, self.localXh)
+        self.da4.globalToLocal(self.Xp, self.localXp)
         self.da1.globalToLocal(self.Ph, self.localPh)
         self.da1.globalToLocal(self.Pp, self.localPp)
         
         xh = self.da4.getVecArray(self.localXh)
+        xp = self.da4.getVecArray(self.localXp)
         ph = self.da1.getVecArray(self.localPh)
         pp = self.da1.getVecArray(self.localPp)
         
@@ -221,6 +220,11 @@ cdef class PETScSolver(object):
         cdef np.ndarray[np.float64_t, ndim=2] Byh = xh[...][:,:,1]
         cdef np.ndarray[np.float64_t, ndim=2] Vxh = xh[...][:,:,2]
         cdef np.ndarray[np.float64_t, ndim=2] Vyh = xh[...][:,:,3]
+        
+        cdef np.ndarray[np.float64_t, ndim=2] Bxp = xp[...][:,:,0]
+        cdef np.ndarray[np.float64_t, ndim=2] Byp = xp[...][:,:,1]
+        cdef np.ndarray[np.float64_t, ndim=2] Vxp = xp[...][:,:,2]
+        cdef np.ndarray[np.float64_t, ndim=2] Vyp = xp[...][:,:,3]
         
         cdef np.ndarray[np.float64_t, ndim=2] Ph  = ph[...]
         cdef np.ndarray[np.float64_t, ndim=2] Pp  = pp[...]
@@ -237,35 +241,65 @@ cdef class PETScSolver(object):
                 
                 # B_x
                 b[iy, jy, 0] = self.derivatives.dt(Bxh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudx(Vxp, Bxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Vxh, Bxh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudy(Vyp, Bxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Vyh, Bxh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudx(Bxp, Vxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Bxh, Vxh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudy(Byp, Vxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Byh, Vxh, ix, jx)
                 
                 # B_y
                 b[iy, jy, 1] = self.derivatives.dt(Byh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudx(Vxp, Byh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Vxh, Byh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudy(Vyp, Byh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Vyh, Byh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudx(Bxp, Vyh, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Bxh, Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudy(Byp, Vyh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Byh, Vyh, ix, jx)
                 
                 # V_x
                 b[iy, jy, 2] = self.derivatives.dt(Vxh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudx(Vxp, Vxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Vxh, Vxh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudy(Vyp, Vxh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Vyh, Vxh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudx(Bxp, Bxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Bxh, Bxh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudy(Byp, Bxh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Byh, Bxh, ix, jx) \
                              - 0.5 * self.derivatives.gradx(Pp, ix, jx) \
                              - 0.5 * self.derivatives.gradx(Ph, ix, jx)
 
                 # V_y
                 b[iy, jy, 3] = self.derivatives.dt(Vyh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudx(Vxp, Vyh, ix, jx) \
                              - 0.25 * self.derivatives.fdudx(Vxh, Vyh, ix, jx) \
+                             - 0.25 * self.derivatives.fdudy(Vyp, Vyh, ix, jx) \
                              - 0.25 * self.derivatives.fdudy(Vyh, Vyh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudx(Bxp, Byh, ix, jx) \
                              + 0.25 * self.derivatives.fdudx(Bxh, Byh, ix, jx) \
+                             + 0.25 * self.derivatives.fdudy(Byp, Byh, ix, jx) \
                              + 0.25 * self.derivatives.fdudy(Byh, Byh, ix, jx) \
                              - 0.5 * self.derivatives.grady(Pp, ix, jx) \
                              - 0.5 * self.derivatives.grady(Ph, ix, jx)
+                
+    
+#                # divide by diagonal
+#                diag = self.derivatives.dt_diag_fac() \
+#                     + 0.25 * self.derivatives.fdudx_diag_fac(Vxp, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudx_diag_fac(Vxh, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudy_diag_fac(Vyp, ix, jx) \
+#                     + 0.25 * self.derivatives.fdudy_diag_fac(Vyh, ix, jx)
+#                
+##                if diag != 0.:
+#                b[iy, jy, 0] /= diag 
+#                b[iy, jy, 1] /= diag 
+#                b[iy, jy, 2] /= diag 
+#                b[iy, jy, 3] /= diag 
                 
     
     

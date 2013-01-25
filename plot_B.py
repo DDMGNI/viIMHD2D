@@ -144,9 +144,13 @@ class PlotMHD2D(object):
 #        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
 #        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
 
-        plt.subplot(self.gs[0:10,1:3])
-        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
+#        plt.subplot(self.gs[0:10,1:3])
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
         
+        
+#        self.stream_xstart = np.linspace(0., 2., 25)
+#        self.stream_ystart = np.zeros(25)
+#        self.stream_ystart[7:19] = 2.
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -311,22 +315,22 @@ class PlotMHD2D(object):
         self.divV[  -1, 0:-1] = self.diagnostics.divV[0,:]
         self.divV[   :,   -1] = self.divV[:,0]
         
-#        self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
-#        self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
-#        self.P[   :,   -1] = self.P[:,0]
-        
-        self.P[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
-        self.P[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
+        self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
         self.P[   :,   -1] = self.P[:,0]
         
-        Pmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-        Pmax = max(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+#        self.P[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
+#        self.P[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+#        self.P[   :,   -1] = self.P[:,0]
         
-        if Pmin == Pmax:
-            Pmin -= 1.
-            Pmax += 1.
-        
-        self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
+#        Pmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
+#        Pmax = max(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+#        
+#        if Pmin == Pmax:
+#            Pmin -= 1.
+#            Pmax += 1.
+#        
+#        self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
                 
         
         self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
@@ -345,13 +349,30 @@ class PlotMHD2D(object):
         self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
         
 #        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
-##        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
+#        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
+        
+        
+        stream_n = 19
+        stream_res_fac = 10
+        stream_density = stream_n / 30. * stream_res_fac
+        self.stream_xstart = np.arange(stream_n, dtype=np.int) * stream_res_fac
+        self.stream_ystart = np.zeros(stream_n, dtype=np.int)
+        
+        self.stream_xstart[0:5 ] -= 5
+        self.stream_xstart[5:14] -= 1
+        self.stream_xstart[14: ] += 3
         
         
         ### temporarily disabled
-#        self.axes["Babs"].clear()
-#        plt.subplot(self.gs[0:10,1:3])
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
+        self.axes["Babs"].clear()
+        plt.subplot(self.gs[0:10,1:3])
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.8, color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.72, color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, color='b')
+        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, xstart=self.stream_xstart[1:], ystart=self.stream_ystart[1:], density=stream_density, arrowsize=0., color='b')
+        
         
         
 #        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
@@ -399,8 +420,8 @@ class PlotMHD2D(object):
 #        streamplot(self.x, self.y, self.Vx.T, self.Vy.T, density=1, arrowsize=1, color='b')
         
         ### temporarily disabled
-#        self.axes["Vabs"].clear()
-#        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+        self.axes["Vabs"].clear()
+        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()

@@ -4,14 +4,18 @@ Created on Apr 06, 2012
 @author: Michael Kraus (michael.kraus@ipp.mpg.de)
 '''
 
-import matplotlib as mpl
+import matplotlib
+#matplotlib.use('Cairo')
+matplotlib.use('AGG')
+#matplotlib.use('PDF')
 
-import StringIO
+
+#import StringIO
 import argparse
-import os
+#import os
 
-import numpy as np
-import h5py
+#import numpy as np
+#import h5py
 
 from diagnostics import Diagnostics 
 
@@ -58,26 +62,6 @@ class movie(object):
             self.update(itime, final=(itime == self.nt))
         
     
-    def movie(self, outfile, fps=10):
-        self.run(write=True)
-        
-        command = ('mencoder',
-                   'mf://*.png',
-                   '-mf',
-                   'type=png:w=980:h=630:fps=' + str(fps),
-                   '-ovc',
-                   'x264',
-#                   'lavc',
-#                   '-lavcopts',
-#                   'vcodec=mpeg4', 
-                   '-oac',
-                   'copy',
-                   '-o',
-                   outfile)
-        
-        os.spawnvp(os.P_WAIT, 'mencoder', command)
-        
-    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Vlasov-Poisson Solver in 1D')
@@ -95,13 +79,6 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    if args.o != None:
-        write = True
-        mpl.use('AGG')
-    else:
-        write = False
-    
-
     from movieplot import PlotMHD2D
     
     
@@ -109,17 +86,9 @@ if __name__ == '__main__':
     print("Replay run with " + args.hdf5_file)
     print
     
-    pyvp = movie(args.hdf5_file, ntMax=args.ntmax, nPlot=args.np, write=write)
+    pyvp = movie(args.hdf5_file, ntMax=args.ntmax, nPlot=args.np, write=True)
     
-    if not write:
-        print
-        raw_input('Hit any key to start replay.')
-        print
-    
-    if write:
-        pyvp.movie(args.o, args.fps)
-    else:
-        pyvp.run()
+    pyvp.run()
     
     print
     print("Replay finished.")

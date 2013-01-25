@@ -36,12 +36,6 @@ class PlotMHD2D(object):
         self.diagnostics = diagnostics
         
         
-#        self.L1_magnetic = np.zeros_like(diagnostics.tGrid)
-#        self.L1_velocity = np.zeros_like(diagnostics.tGrid)
-#        
-#        self.L2_magnetic = np.zeros_like(diagnostics.tGrid)
-#        self.L2_velocity = np.zeros_like(diagnostics.tGrid)
-        
         self.E_velocity  = np.zeros_like(diagnostics.tGrid)
         self.E_magnetic  = np.zeros_like(diagnostics.tGrid)
         
@@ -64,17 +58,20 @@ class PlotMHD2D(object):
         self.Vy      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.P       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
+        self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+                
         self.B       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.V       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
-        self.divB    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
-        self.divV    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+#        self.read_data()
+        self.update_boundaries()
         
         # set up figure/window size
         self.figure = plt.figure(num=None, figsize=(16,9))
         
         # set up plot margins
-        plt.subplots_adjust(hspace=1.75, wspace=0.25)
+        plt.subplots_adjust(hspace=2.5, wspace=0.25)
 #        plt.subplots_adjust(hspace=0.2, wspace=0.25)
         plt.subplots_adjust(left=0.03, right=0.97, top=0.93, bottom=0.05)
         
@@ -97,8 +94,6 @@ class PlotMHD2D(object):
         self.lines = {}
         self.vecs  = {}
         
-        self.update_boundaries()
-        
         
         # create subplots
         gs = gridspec.GridSpec(20, 5)
@@ -109,8 +104,8 @@ class PlotMHD2D(object):
         self.axes["Vx"]    = plt.subplot(gs[ 8:12,  0])
         self.axes["Vy"]    = plt.subplot(gs[12:16,  0])
         self.axes["P"]     = plt.subplot(gs[16:20,  0])
-        self.axes["Babs"]  = plt.subplot(gs[ 0:10,1:3])
-        self.axes["Vabs"]  = plt.subplot(gs[10:20,1:3])
+        self.axes["PB"]    = plt.subplot(gs[ 0:10,1:3])
+        self.axes["J"]     = plt.subplot(gs[10:20,1:3])
         self.axes["Emag"]  = plt.subplot(gs[ 0: 5,3:5])
         self.axes["Evel"]  = plt.subplot(gs[ 5:10,3:5])
         self.axes["E"]     = plt.subplot(gs[10:15,3:5])
@@ -122,8 +117,8 @@ class PlotMHD2D(object):
         self.axes["Vx"].set_title('$V_{x} (x,y)$')
         self.axes["Vy"].set_title('$V_{y} (x,y)$')
         self.axes["P" ].set_title('$P (x,y)$')
-        self.axes["Babs"].set_title('$div \, V  (x,y)$')
-        self.axes["Vabs"].set_title('$B (x,y)$')
+        self.axes["PB"].set_title('$B^{2} (x,y)$')
+        self.axes["J" ].set_title('$J (x,y)$')
         
         
         self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
@@ -141,13 +136,16 @@ class PlotMHD2D(object):
         self.conts["P" ] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet)
         self.cbars["P" ] = self.figure.colorbar(self.conts["P"], ax=self.axes["P"], orientation='vertical', ticks=self.PTicks)
         
-#        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
-#        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
+#        self.conts["PB"] = self.axes["PB"].contourf(self.x, self.y, self.PB.T, ticks=self.PBTicks)
+#        self.cbars["PB"] = self.figure.colorbar(self.conts["PB"], ax=self.axes["PB"], orientation='vertical', ticks=self.PBTicks)
+        self.conts["PB"] = self.axes["PB"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)
+#        self.cbars["PB"] = self.figure.colorbar(self.conts["PB"], ax=self.axes["PB"], orientation='vertical')
 
-        plt.subplot(self.gs[0:10,1:3])
-        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
-        
-        
+#        self.conts["J" ] = self.axes["J"].contourf(self.x, self.y, self.J.T, ticks=self.JTicks)
+#        self.cbars["J" ] = self.figure.colorbar(self.conts["J"], ax=self.axes["J"], orientation='vertical', ticks=self.JTicks)
+        self.conts["J" ] = self.axes["J"].contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
+#        self.cbars["J" ] = self.figure.colorbar(self.conts["J"], ax=self.axes["J"], orientation='vertical')
+
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
 
@@ -185,7 +183,7 @@ class PlotMHD2D(object):
         plt.setp(self.axes["By"   ].get_xticklabels(), visible=False)
         plt.setp(self.axes["Vx"   ].get_xticklabels(), visible=False)
         plt.setp(self.axes["Vy"   ].get_xticklabels(), visible=False)
-        plt.setp(self.axes["Babs" ].get_xticklabels(), visible=False)
+        plt.setp(self.axes["PB"   ].get_xticklabels(), visible=False)
         plt.setp(self.axes["Emag" ].get_xticklabels(), visible=False)
         plt.setp(self.axes["Evel" ].get_xticklabels(), visible=False)
         plt.setp(self.axes["E"    ].get_xticklabels(), visible=False)
@@ -194,90 +192,8 @@ class PlotMHD2D(object):
         self.update()
         
     
-    def update_boundaries(self):
-        
-        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
-        Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
-        
-#        Bxmin = self.diagnostics.Bx.min()
-#        Bxmax = self.diagnostics.Bx.max()
-#        
-#        Bymin = self.diagnostics.By.min()
-#        Bymax = self.diagnostics.By.max()
-#
-#        if Bxmin == Bxmax:
-#            Bxmin -= 1.
-#            Bxmax += 1.
-#        
-#        if Bymin == Bymax:
-#            Bymin -= 1.
-#            Bymax += 1.
-        
-        self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
-        self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
-
-#        self.BxNorm = colors.Normalize(vmin=Bxmin, vmax=Bxmax)
-#        self.ByNorm = colors.Normalize(vmin=Bymin, vmax=Bymax)
-        
-        
-        Vmin = 2. * min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
-        Vmax = 2. * max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
-        
-#        Vxmin = self.diagnostics.Vx.min()
-#        Vxmax = self.diagnostics.Vx.max()
-#        
-#        Vymin = self.diagnostics.Vy.min()
-#        Vymax = self.diagnostics.Vy.max()
-
-        divVmin = self.diagnostics.divV.min()
-        divVmax = self.diagnostics.divV.max()
-        
-        if Vmin == Vmax:
-            Vmin -= 1.
-            Vmax += 1.
-        
-#        if Vxmin == Vxmax:
-#            Vxmin -= 1.
-#            Vxmax += 1.
-#        
-#        if Vymin == Vymax:
-#            Vymin -= 1.
-#            Vymax += 1.
-        
-        if divVmin == divVmax:
-            divVmin -= 0.1
-            divVmax += 0.1
-        
-        self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
-        self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
-
-        self.divVTicks = np.linspace(divVmin, divVmax, 11, endpoint=True)
-        
-        
-        Pmin = min(self.diagnostics.P.min(), -self.diagnostics.P.max())
-        Pmax = max(self.diagnostics.P.max(), -self.diagnostics.P.min())
-        
-#        Pmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-#        Pmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
-        
-        if Pmin == Pmax:
-            Pmin -= 1.
-            Pmax += 1.
-        
-        self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
-        
     
-    def update(self, final=False):
-        
-        if not (self.iTime == 1 or (self.iTime-1) % self.nPlot == 0 or self.iTime-1 == self.nTime):
-            return
-        
-#        self.update_boundaries()
-
-        for ckey, cont in self.conts.items():
-            for coll in cont.collections:
-                self.axes[ckey].collections.remove(coll)
-        
+    def read_data(self):
         
         self.B [0:-1, 0:-1] = self.diagnostics.B [:,:]
         self.B [  -1, 0:-1] = self.diagnostics.B [0,:]
@@ -291,10 +207,6 @@ class PlotMHD2D(object):
         self.By[  -1, 0:-1] = self.diagnostics.By[0,:]
         self.By[   :,   -1] = self.By[:,0]
         
-        self.divB[0:-1, 0:-1] = self.diagnostics.divB[:,:]
-        self.divB[  -1, 0:-1] = self.diagnostics.divB[0,:]
-        self.divB[   :,   -1] = self.divB[:,0]
-        
         self.V [0:-1, 0:-1] = self.diagnostics.V [:,:]
         self.V [  -1, 0:-1] = self.diagnostics.V [0,:]
         self.V [   :,   -1] = self.V[:,0]
@@ -307,27 +219,92 @@ class PlotMHD2D(object):
         self.Vy[  -1, 0:-1] = self.diagnostics.Vy[0,:]
         self.Vy[   :,   -1] = self.Vy[:,0]
         
-        self.divV[0:-1, 0:-1] = self.diagnostics.divV[:,:]
-        self.divV[  -1, 0:-1] = self.diagnostics.divV[0,:]
-        self.divV[   :,   -1] = self.divV[:,0]
-        
-#        self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
-#        self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
-#        self.P[   :,   -1] = self.P[:,0]
-        
-        self.P[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
-        self.P[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
+        self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
         self.P[   :,   -1] = self.P[:,0]
         
-        Pmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-        Pmax = max(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
+        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.PB[   :,   -1] = self.PB[:,0]
+        
+        self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
+        self.J[  -1, 0:-1] = self.diagnostics.J[0,:]
+        self.J[   :,   -1] = self.J[:,0]
+        
+        
+    
+    
+    def update_boundaries(self):
+        
+        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
+        Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
+        
+        self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
+        self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
+
+#        self.BxNorm = colors.Normalize(vmin=Bxmin, vmax=Bxmax)
+#        self.ByNorm = colors.Normalize(vmin=Bymin, vmax=Bymax)
+        
+        
+        Vmin = 2. * min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
+        Vmax = 2. * max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
+        
+        if Vmin == Vmax:
+            Vmin -= 1.
+            Vmax += 1.
+        
+        self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
+        self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
+
+        
+        Pmin = min(self.diagnostics.P.min(), -self.diagnostics.P.max())
+        Pmax = max(self.diagnostics.P.max(), -self.diagnostics.P.min())
         
         if Pmin == Pmax:
             Pmin -= 1.
             Pmax += 1.
         
         self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
-                
+        
+        
+        PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
+        PBmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        PBdiff = (PBmax - PBmin)
+        
+        if PBmin == PBmax:
+            PBmin -= 1.
+            PBmax += 1.
+        
+#        self.PBnorm = colors.Normalize(vmin=PBmin, vmax=PBmax)
+        self.PBnorm = colors.Normalize(vmin=PBmin - 0.2*PBdiff, vmax=PBmax + 0.2*PBdiff)
+        self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
+        
+    
+        Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
+        Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
+        Jdiff = (Jmax - Jmin)
+        
+        if Jmin == Jmax:
+            Jmin -= 1.
+            Jmax += 1.
+        
+#        self.Jnorm = colors.Normalize(vmin=Jmin, vmax=Jmax)
+        self.Jnorm = colors.Normalize(vmin=Jmin - 0.2*Jdiff, vmax=Jmax + 0.2*Jdiff)
+        self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
+        
+    
+    def update(self, final=False):
+        
+        if not (self.iTime == 1 or (self.iTime-1) % self.nPlot == 0 or self.iTime-1 == self.nTime):
+            return
+        
+        self.read_data()
+#        self.update_boundaries()
+
+        for ckey, cont in self.conts.items():
+            for coll in cont.collections:
+                self.axes[ckey].collections.remove(coll)
+        
         
         self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
 #        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
@@ -344,63 +321,13 @@ class PlotMHD2D(object):
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both')
         self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
         
-#        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
-##        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
+#        self.conts["PB"] = self.axes["PB"].contourf(self.x, self.y, self.PB.T, ticks=self.PBTicks)#, extend='neither')
+        self.conts["PB"] = self.axes["PB"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)#, extend='neither')
+#        self.cbars["PB"] = self.figure.colorbar(self.conts["PB"], ax=self.axes["PB"], orientation='vertical', ticks=self.PBTicks)
         
-        
-        ### temporarily disabled
-#        self.axes["Babs"].clear()
-#        plt.subplot(self.gs[0:10,1:3])
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
-        
-        
-#        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
-#        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
-#        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
-#        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
-        
-#        self.cbars["By"].set_clim(self.ByTicks[0], self.ByTicks[-1])
-#        self.cbars["By"].draw_all()
-        
-#        self.cbars["Bx"].set_ticks(self.BxTicks)
-#        self.cbars["By"].set_ticks(self.ByTicks)
-#        self.cbars["Vx"].set_ticks(self.VxTicks)
-#        self.cbars["Vy"].set_ticks(self.VyTicks)
-        
-#        self.cbars["Bx"].set_clim(vmin=self.BxTicks[0], vmax=self.BxTicks[-1]) 
-#        self.cbars["Bx"].draw_all()
-#        
-#        self.cbars["By"].set_clim(vmin=self.ByTicks[0], vmax=self.ByTicks[-1]) 
-#        self.cbars["By"].draw_all()
-        
-#        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
-#        self.cbars["Babs"].set_ticks(self.divVTicks)
-        
-#        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.divV.T, 10)        
-        
-#        if len(self.B[self.B == self.B[0,0]]) == len(self.B.ravel()):
-#            self.conts["Babs"] = self.axes["Babs"].contourf(, 10)
-#        else:
-#            self.conts["Babs"] = self.axes["Babs"].contour(self.x, self.y, self.B.T, 10)
-#        
-#        self.conts["Vabs"] = self.axes["Vabs"].contourf(self.x, self.y, self.V.T, 20)
-        
-        
-#        self.axes["Babs"].clear()
-#        plt.subplot(self.gs[0:2,1:3])
-#        streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.5, arrowsize=.5, color='b')
-        
-#        self.axes["Babs"].clear()
-#        st_B = Streamlines(self.x, self.y, self.Bx.T, self.By.T, spacing=1)#, res=.25)
-#        st_B.plot(ax=self.axes["Babs"])
-        
-#        self.axes["Vabs"].clear()
-#        plt.subplot(self.gs[2:4,1:3])
-#        streamplot(self.x, self.y, self.Vx.T, self.Vy.T, density=1, arrowsize=1, color='b')
-        
-        ### temporarily disabled
-#        self.axes["Vabs"].clear()
-#        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+#        self.conts["J"] = self.axes["J"].contourf(self.x, self.y, self.J.T, ticks=self.JTicks)#, extend='neither')
+        self.conts["J"] = self.axes["J"].contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)#, extend='neither')
+#        self.cbars["J"] = self.figure.colorbar(self.conts["J"], ax=self.axes["J"], orientation='vertical', ticks=self.JTicks)
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -451,11 +378,6 @@ class PlotMHD2D(object):
         else:
             self.helicity   [self.iTime] = self.diagnostics.H_error
         
-        
-#        self.L1_magnetic[self.iTime] = self.diagnostics.L1_magnetic_error
-#        self.L1_velocity[self.iTime] = self.diagnostics.L1_velocity_error
-#        self.L2_magnetic[self.iTime] = self.diagnostics.L2_magnetic_error
-#        self.L2_velocity[self.iTime] = self.diagnostics.L2_velocity_error
         
         self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
         

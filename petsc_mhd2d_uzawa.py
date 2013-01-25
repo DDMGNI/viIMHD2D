@@ -11,10 +11,11 @@ from petsc4py import PETSc
 
 import argparse
 import time
+from numpy import abs 
 
 from config import Config
 
-from PETSc_MHD_NL         import PETScSolver
+from PETSc_MHD_NL_Solver         import PETScSolver
 #from PETSc_MHD_NL_DF         import PETScSolver
 from PETSc_MHD_NL_Function import PETScFunction
 #from PETSc_MHD_NL_DF_Function import PETScFunction
@@ -357,19 +358,20 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-            self.calculate_initial_guess()
+#            self.calculate_initial_guess()
             
             
             # calculate and print initial residual
             self.petsc_function.matrix_mult(self.u, self.ru)
-            residual0 = self.ru.norm()
-#            residual  = residual0
-            norm0 = self.u.norm()
-            norm  = norm0
+            
+            residual_u = self.ru.norm()
+            
+#            norm0 = self.u.norm()
+#            norm  = norm0
             
             if PETSc.COMM_WORLD.getRank() == 0:
                 print
-                print("   initial residual = %22.16E " % (residual0) )
+                print("   initial residual = %22.16E " % (residual_u) )
                 print
             
             
@@ -398,6 +400,7 @@ class petscMHD2D(object):
                 rx_arr[xs:xe, ys:ye, :] = ru_arr[xs:xe, ys:ye, 0:4]
                 rp_arr[xs:xe, ys:ye]    = ru_arr[xs:xe, ys:ye, 4  ]
                 
+                residual_u_prev = residual_u
                 residual_u = self.ru.norm()
                 residual_x = self.rx.norm()
                 residual_p = self.rp.norm()
@@ -411,14 +414,16 @@ class petscMHD2D(object):
                 # count iterations
                 nnonlin += 1
                 nlin    += self.ksp.getIterationNumber()
-            
-#                self.copy_solution_to_u()
-                normp = norm
-                norm  = self.u.norm()
                 
-#                if abs(residualp - residual) / residual0 < 1.E-10:
-#                 # or abs(normp - norm) / norm0 < 1.E-5:
-                if residual_u < 1.E-3:
+                
+                # check break condition
+                if residual_u < 1.E-1 or abs(residual_u - residual_u_prev) < 1.E-7:
+                    if PETSc.COMM_WORLD.getRank() == 0:
+                        print
+                        print("   %16.8E" % (residual_u) )
+                        print("   %16.8E" % (residual_u - residual_u_prev) )
+                        print
+                    
                     break
                 
             

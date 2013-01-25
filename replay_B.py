@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.animation as animation
 
 from diagnostics import Diagnostics 
-from plot import PlotMHD2D
+from plot_B import PlotMHD2D
 #from plot_chaco import PlotMHD2D
 
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     
     print
 #    input('Hit any key to start replay.')
-    raw_input('Hit any key to start replay.')
+    input('Hit any key to start replay.')
     print
     
     if args.o != None:
