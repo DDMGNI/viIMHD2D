@@ -34,6 +34,7 @@ from config import Config
 
 from PETSc_MHD_NL_FVM_Jacobian_Matrix5d import PETScJacobian     # our Scheme
 from PETSc_MHD_NL_FVM_Function          import PETScFunction
+from PETSc_MHD_NL_FVM_Matrix            import PETScMatrix
 
 
 
@@ -191,6 +192,7 @@ class petscMHD2D(object):
         # create solution and RHS vector
         self.f  = self.da5.createGlobalVec()
         self.x  = self.da5.createGlobalVec()
+        self.b  = self.da5.createGlobalVec()
         
         # create global RK4 vectors
         self.Y  = self.da5.createGlobalVec()
@@ -230,13 +232,19 @@ class petscMHD2D(object):
         
         
         # create Matrix object
+        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         
 #        self.petsc_jacobian_4d = PETSc_MHD_NL_Jacobian_Matrix.PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         
         
-        # create matrix
+        # initialise matrix
+        self.A = self.da5.createMat()
+        self.A.setOption(self.A.Option.NEW_NONZERO_ALLOCATION_ERR, False)
+        self.A.setUp()
+
+        # create jacobian
         self.J = self.da5.createMat()
         self.J.setOption(self.J.Option.NEW_NONZERO_ALLOCATION_ERR, False)
         self.J.setUp()
@@ -254,6 +262,9 @@ class petscMHD2D(object):
         self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
         
         print(self.snes.getTolerances())
+        
+        
+        self.ksp = None
         
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
@@ -331,6 +342,7 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         # update solution history
+        self.petsc_matrix.update_history(self.x)
         self.petsc_jacobian.update_history(self.x)
         self.petsc_function.update_history(self.x)
         
@@ -384,7 +396,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-#            self.calculate_initial_guess()
+            self.calculate_initial_guess()
             
             # solve
             self.snes.solve(None, self.x)
@@ -417,6 +429,7 @@ class petscMHD2D(object):
                 exit()
            
             # update history
+            self.petsc_matrix.update_history(self.x)
             self.petsc_jacobian.update_history(self.x)
             self.petsc_function.update_history(self.x)
             
@@ -427,34 +440,23 @@ class petscMHD2D(object):
     
     def calculate_initial_guess(self):
         
-#        (xs, xe), (ys, ye) = self.da1.getRanges()
+        self.ksp = PETSc.KSP().create()
+        self.ksp.setFromOptions()
+        self.ksp.setOperators(self.A)
+        self.ksp.setType('preonly')
+        self.ksp.getPC().setType('lu')
+#        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
+        self.ksp.getPC().setFactorSolverPackage('mumps')
+    
+        # build matrix
+        self.petsc_matrix.formMat(self.A)
         
-        # explicit predictor for Bx, By, Vx, Vy
-        self.x.copy(self.X0)
+        # build RHS
+        self.petsc_matrix.formRHS(self.b)
         
-        self.rk4(self.X0, self.Y)
+        # solve
+        self.ksp.solve(self.b, self.x)
         
-#        for i in range(10):
-#            self.rk4(self.X0, self.Y, fac=0.1)
-#            self.Y.copy(self.X0)
-        
-        self.Y.copy(self.x)
-        
-        if PETSc.COMM_WORLD.getRank() == 0:
-            print("     RK4")
-                
-#        # calculate initial guess for total pressure
-#        self.petsc_matrix.formRHSPoisson(self.Pb, self.x)
-#        self.poisson_ksp.solve(self.Pb, self.P)
-#        
-#        P_arr = self.da1.getVecArray(self.P)
-#        x_arr = self.da4.getVecArray(self.x)
-#        
-#        x_arr[xs:xe, ys:ye, 4] = P_arr[xs:xe, ys:ye]
-#        
-#        if PETSc.COMM_WORLD.getRank() == 0:
-#            print("   Poisson: %5i iterations,   residual = %24.16E " % (self.poisson_ksp.getIterationNumber(), self.poisson_ksp.getResidualNorm()) )
-                
         
             
     def rk4(self, X, Y, fac=1.0):

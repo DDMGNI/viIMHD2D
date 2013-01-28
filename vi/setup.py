@@ -212,6 +212,13 @@ ext_modules = [
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS
                  ),
+        Extension("PETSc_MHD_NL_FVM_Matrix",
+                  sources=["PETSc_MHD_NL_FVM_Matrix.pyx"],
+                  include_dirs=INCLUDE_DIRS + [os.curdir],
+                  libraries=LIBRARIES,
+                  library_dirs=LIBRARY_DIRS,
+                  runtime_library_dirs=LIBRARY_DIRS
+                 ),
         Extension("PETSc_MHD_NL_FVM_Function",
                   sources=["PETSc_MHD_NL_FVM_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
