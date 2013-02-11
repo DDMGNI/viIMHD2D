@@ -253,8 +253,8 @@ class PlotMHD2D(object):
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
 
         
-        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
-        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
+        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min())
+        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max())
         
         if Vmin == Vmax:
             Vmin -= .1 * Vmin
