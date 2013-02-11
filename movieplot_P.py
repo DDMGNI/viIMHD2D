@@ -8,6 +8,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
+from matplotlib import rc
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, FuncFormatter
 
 
@@ -136,16 +137,18 @@ class PlotMHD2D(object):
         self.axes["P" ].set_title('$P_{B} (x,y)$')
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
-        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
+        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)
+        self.cbars["Bx"].ax.set_yticklabels(self.BxTickLabels)
        
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
         self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
+        self.cbars["By"].ax.set_yticklabels(self.ByTickLabels)
         
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
         
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
         
         
@@ -248,30 +251,41 @@ class PlotMHD2D(object):
         Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
         Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
         
-        if Bmin == Bmax:
-            Bmin -= .1 * Bmin
-            Bmax += .1 * Bmax
+#        if Bmin == Bmax:
+#            Bmin -= .1 * Bmin
+#            Bmax += .1 * Bmax
         
         self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
+        
+        self.BxTickLabels = ["$%s \\times 10^{-3}$" % ( "%+1.1f" % (t * 1.E3)) for t in self.BxTicks]
+        self.ByTickLabels = ["$%s \\times 10^{-3}$" % ( "%+1.1f" % (t * 1.E3)) for t in self.ByTicks]
+        
+        for i in range(0, len(self.BxTickLabels)):
+            if (i+1) % 2 == 0:
+                self.BxTickLabels[i] = ''
+
+        for i in range(0, len(self.ByTickLabels)):
+            if (i+1) % 2 == 0:
+                self.ByTickLabels[i] = ''
 
         
         Vxmin = self.diagnostics.Vx.min()
         Vxmax = self.diagnostics.Vx.max()
         
         if Vxmin == Vxmax:
-            Vxmin -= .1 * Vxmin
-            Vxmax += .1 * Vxmax
+            Vxmin = np.round(Vxmin, 2) - 0.01
+            Vxmax = np.round(Vxmax, 2) + 0.01
         
         Vymin = self.diagnostics.Vy.min()
         Vymax = self.diagnostics.Vy.max()
         
         if Vymin == Vymax:
-            Vymin -= .1 * Vymin
-            Vymax += .1 * Vymax
+            Vymin = np.round(Vymin, 2) - 0.01
+            Vymax = np.round(Vymax, 2) + 0.01
         
-        self.VxTicks = np.linspace(Vxmin, Vxmax, 11, endpoint=True)
-        self.VyTicks = np.linspace(Vymin, Vymax, 11, endpoint=True)
+        self.VxTicks = np.linspace(Vxmin, Vxmax, 5, endpoint=True)
+        self.VyTicks = np.linspace(Vymin, Vymax, 5, endpoint=True)
         
         
         PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
@@ -290,7 +304,7 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.5 * Adif, Amax, 10)
+        self.ATicks = np.linspace(Amin + 0.45 * Adif, Amax, 10)
 
     
     def update(self, final=False):
@@ -324,10 +338,10 @@ class PlotMHD2D(object):
         
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T)
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T)
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T)
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T)
         
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)
         self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, levels=self.ATicks, cmap=cm.jet, extend='neither')
