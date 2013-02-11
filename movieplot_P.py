@@ -53,6 +53,9 @@ class PlotMHD2D(object):
         self.diagnostics = diagnostics
         
         
+        self.E_velocity0 = self.diagnostics.E_velocity
+        self.E_magnetic0 = self.diagnostics.E_magnetic
+        
         self.E_velocity  = np.zeros(ntMax+1)
         self.E_magnetic  = np.zeros(ntMax+1)
         
@@ -153,8 +156,8 @@ class PlotMHD2D(object):
         self.lines["E"    ], = self.axes["E"    ].plot(self.diagnostics.tGrid[tStart:tEnd], self.energy     [tStart:tEnd])
         self.lines["H"    ], = self.axes["H"    ].plot(self.diagnostics.tGrid[tStart:tEnd], self.helicity   [tStart:tEnd])
         
-        self.axes["Emag"].set_title('$E_{B} (t)$')
-        self.axes["Evel"].set_title('$E_{V} (t)$')
+        self.axes["Emag"].set_title('$E_{B} (t) - E_{B} (0)$')
+        self.axes["Evel"].set_title('$E_{V} (t) - E_{V} (0)$')
         
         if self.diagnostics.plot_energy:
             self.axes["E"].set_title('$E (t)$')
@@ -327,7 +330,7 @@ class PlotMHD2D(object):
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)
-        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
+        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet, extend='neither')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -369,8 +372,8 @@ class PlotMHD2D(object):
     
     def add_timepoint(self):
         
-        self.E_magnetic [self.iTime] = self.diagnostics.E_magnetic
-        self.E_velocity [self.iTime] = self.diagnostics.E_velocity
+        self.E_magnetic [self.iTime] = self.diagnostics.E_magnetic - self.E_magnetic0
+        self.E_velocity [self.iTime] = self.diagnostics.E_velocity - self.E_velocity0
         
         if self.diagnostics.plot_energy:
             self.energy     [self.iTime] = self.diagnostics.energy
