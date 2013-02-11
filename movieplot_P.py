@@ -253,15 +253,22 @@ class PlotMHD2D(object):
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
 
         
-        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min())
-        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max())
+        Vxmin = self.diagnostics.Vx.min()
+        Vxmax = self.diagnostics.Vx.max()
         
-        if Vmin == Vmax:
-            Vmin -= .1 * Vmin
-            Vmax += .1 * Vmax
+        if Vxmin == Vxmax:
+            Vxmin -= .1 * Vxmin
+            Vxmax += .1 * Vxmax
         
-        self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
-        self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
+        Vymin = self.diagnostics.Vy.min()
+        Vymax = self.diagnostics.Vy.max()
+        
+        if Vymin == Vymax:
+            Vymin -= .1 * Vymin
+            Vymax += .1 * Vymax
+        
+        self.VxTicks = np.linspace(Vxmin, Vxmax, 11, endpoint=True)
+        self.VyTicks = np.linspace(Vymin, Vymax, 11, endpoint=True)
         
         
         PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
