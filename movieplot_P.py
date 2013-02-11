@@ -242,21 +242,23 @@ class PlotMHD2D(object):
     
     def update_boundaries(self):
         
-#        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
-#        Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
+        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
+        Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
         
-        Bmin = -1.
-        Bmax = +1.
+        if Bmin == Bmax:
+            Bmin = -1.
+            Bmax = +1.
         
         self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
 
         
-#        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
-#        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
+        Vmin = min(self.diagnostics.Vx.min(), self.diagnostics.Vy.min(), -self.diagnostics.Vx.max(), -self.diagnostics.Vy.max())
+        Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
         
-        Vmin = -1.
-        Vmax = +1.
+        if Vmin == Vmax:
+            Vmin = -1.
+            Vmax = +1.
         
         self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
         self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
@@ -270,7 +272,6 @@ class PlotMHD2D(object):
             PBmin -= 1.
             PBmax += 1.
         
-#        self.PBnorm = colors.Normalize(vmin=PBmin, vmax=PBmax)
         self.PBnorm = colors.Normalize(vmin=PBmin - 0.2*PBdiff, vmax=PBmax + 0.2*PBdiff)
         self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
 
@@ -279,7 +280,7 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.2 * Adif, Amax, 11)
+        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax, 10)
 
     
     def update(self, final=False):
