@@ -143,31 +143,23 @@ class Diagnostics(object):
     
     def update_invariants(self, iTime):
         
-        self.A[0,0] = 0.0
+        self.A[-1,-1] = 0.0
         
-#        for ix in range(0, self.nx):
-#            ixp = (ix+1) % self.nx
-#            
-#            for iy in range(1, self.ny):
-#                iyp = (iy+1) % self.ny
-#                
-#                self.A[ix,iyp] = self.A[ix,iy] + self.hy * self.Bx[ix,iy]  
-#            
-#            if ixp < self.nx:
-#                self.A[ixp,iy] = self.A[ix,iy] - self.hx * self.By[ix,iy]
-        
-        for iy in range(0, self.ny):
-            iyp = (iy+1) % self.ny
+        for i in range(0, self.nx):
+            ix = self.nx-i-1
+            ixm = (ix-1+self.nx) % self.nx
             
-            for ix in range(1, self.nx):
-                ixp = (ix+1) % self.nx
+            for j in range(0, self.ny):
+                iy = self.ny-j-1
+                iyp = (iy+1+self.ny) % self.ny
+                
+                self.A[ix,iy] = self.A[ix,iyp] - self.hy * self.Bx[ix,iy]  
             
-                self.A[ixp,iy] = self.A[ix,iy] - self.hx * self.By[ix,iy]
-                
-                
-            if iyp < self.ny:
-                self.A[ix,iyp] = self.A[ix,iy] + self.hy * self.Bx[ix,iy]  
+            if ixm > 0:
+                self.A[ixm,iy] = self.A[ix,iy] + self.hx * self.By[ix,iy]
         
+#        self.A -= self.A.mean()
+        self.A -= self.A.min()
         
         
         self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
