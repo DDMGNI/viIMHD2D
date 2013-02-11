@@ -279,7 +279,7 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax + 0.2 * Adif, 15, endpoint=True)
+        self.ATicks = np.linspace(Amin + 0.2 * Adif, Amax, 11)
 
     
     def update(self, final=False):
