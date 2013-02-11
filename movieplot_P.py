@@ -290,7 +290,7 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.4 * Adif, Amax, 10)
+        self.ATicks = np.linspace(Amin + 0.5 * Adif, Amax + 0.1 * Adif, 5)
 
     
     def update(self, final=False):
@@ -330,7 +330,7 @@ class PlotMHD2D(object):
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)
-        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet, extend='neither')
+        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, levels=self.ATicks, cmap=cm.jet, extend='neither')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
