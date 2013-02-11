@@ -64,11 +64,16 @@ class PlotMHD2D(object):
         self.Vy      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.P       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
+        self.A       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+                
         self.B       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.V       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
         self.divB    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.divV    = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        
         
         # set up figure/window size
         self.figure = plt.figure(num=None, figsize=(16,9))
@@ -269,6 +274,13 @@ class PlotMHD2D(object):
             Pmax += 1.
         
         self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
+
+
+        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
+        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
+        Adif = Amax - Amin
+        
+        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax + 0.2 * Adif, 21, endpoint=True)
         
     
     def update(self, final=False):
@@ -319,6 +331,10 @@ class PlotMHD2D(object):
         self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
         self.P[   :,   -1] = self.P[:,0]
         
+        self.A[0:-1, 0:-1] = self.diagnostics.A[:,:]
+        self.A[  -1, 0:-1] = self.diagnostics.A[0,:]
+        self.A[   :,   -1] = self.A[:,0]
+        
 #        self.P[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
 #        self.P[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
 #        self.P[   :,   -1] = self.P[:,0]
@@ -352,26 +368,27 @@ class PlotMHD2D(object):
 #        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
         
         
-        stream_n = 19
-        stream_res_fac = 10
-        stream_density = stream_n / 30. * stream_res_fac
-        self.stream_xstart = np.arange(stream_n, dtype=np.int) * stream_res_fac
-        self.stream_ystart = np.zeros(stream_n, dtype=np.int)
-        
-        self.stream_xstart[0:5 ] -= 5
-        self.stream_xstart[5:14] -= 1
-        self.stream_xstart[14: ] += 3
+#        stream_n = 19
+#        stream_res_fac = 10
+#        stream_density = stream_n / 30. * stream_res_fac
+#        self.stream_xstart = np.arange(stream_n, dtype=np.int) * stream_res_fac
+#        self.stream_ystart = np.zeros(stream_n, dtype=np.int)
+#        
+#        self.stream_xstart[0:5 ] -= 5
+#        self.stream_xstart[5:14] -= 1
+#        self.stream_xstart[14: ] += 3
         
         
         ### temporarily disabled
-        self.axes["Babs"].clear()
-        plt.subplot(self.gs[0:10,1:3])
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, color='b')
+#        self.axes["Babs"].clear()
+#        plt.subplot(self.gs[0:10,1:3])
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1.2, arrowsize=0., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1., arrowsize=0., color='b')
 #        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=1., color='b')
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.8, color='b')
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.72, color='b')
-#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, color='b')
-        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, xstart=self.stream_xstart[1:], ystart=self.stream_ystart[1:], density=stream_density, arrowsize=0., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.8, arrowsize=0., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.72, arrowsize=0., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, arrowsize=0., color='b')
+#        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, xstart=self.stream_xstart[1:], ystart=self.stream_ystart[1:], density=stream_density, arrowsize=0., color='b')
         
         
         
@@ -420,9 +437,12 @@ class PlotMHD2D(object):
 #        streamplot(self.x, self.y, self.Vx.T, self.Vy.T, density=1, arrowsize=1, color='b')
         
         ### temporarily disabled
-        self.axes["Vabs"].clear()
-        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+#        self.axes["Vabs"].clear()
+#        self.axes["Vabs"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
         
+#        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
+#        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, 40)
+        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
         

@@ -63,8 +63,9 @@ class PlotMHD2D(object):
         self.Vy      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.P       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
-        self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.A       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
                 
         self.B       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.V       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
@@ -206,14 +207,17 @@ class PlotMHD2D(object):
         self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
         self.P[   :,   -1] = self.P[:,0]
         
-        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
-        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
-        self.PB[   :,   -1] = self.PB[:,0]
+        self.A[0:-1, 0:-1] = self.diagnostics.A[:,:]
+        self.A[  -1, 0:-1] = self.diagnostics.A[0,:]
+        self.A[   :,   -1] = self.A[:,0]
         
         self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
         self.J[  -1, 0:-1] = self.diagnostics.J[0,:]
         self.J[   :,   -1] = self.J[:,0]
         
+        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
+        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.PB[   :,   -1] = self.PB[:,0]
         
     
     
@@ -239,6 +243,12 @@ class PlotMHD2D(object):
         self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
         
         
+        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
+        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
+        Adif = Amax - Amin
+        
+        self.ATicks = np.linspace(Amin + 0.1 * Adif, Amax + 0.1 * Adif, 31, endpoint=True)
+    
     
     def update(self, final=False):
         
@@ -276,9 +286,7 @@ class PlotMHD2D(object):
         self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         
-        self.axes["B"].clear()
-        plt.subplot(self.gs[2:4,0:2])
-        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
+        self.conts["B"]  = self.axes["B"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()

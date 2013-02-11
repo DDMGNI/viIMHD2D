@@ -83,6 +83,7 @@ class Diagnostics(object):
         self.e_magnetic = np.zeros((self.nx, self.ny))
         self.e_velocity = np.zeros((self.nx, self.ny))
         
+        self.A  = np.zeros((self.nx, self.ny))
         self.B  = np.zeros((self.nx, self.ny))
         self.V  = np.zeros((self.nx, self.ny))
         
@@ -141,6 +142,33 @@ class Diagnostics(object):
         
     
     def update_invariants(self, iTime):
+        
+        self.A[0,0] = 0.0
+        
+#        for ix in range(0, self.nx):
+#            ixp = (ix+1) % self.nx
+#            
+#            for iy in range(1, self.ny):
+#                iyp = (iy+1) % self.ny
+#                
+#                self.A[ix,iyp] = self.A[ix,iy] + self.hy * self.Bx[ix,iy]  
+#            
+#            if ixp < self.nx:
+#                self.A[ixp,iy] = self.A[ix,iy] - self.hx * self.By[ix,iy]
+        
+        for iy in range(0, self.ny):
+            iyp = (iy+1) % self.ny
+            
+            for ix in range(1, self.nx):
+                ixp = (ix+1) % self.nx
+            
+                self.A[ixp,iy] = self.A[ix,iy] - self.hx * self.By[ix,iy]
+                
+                
+            if iyp < self.ny:
+                self.A[ix,iyp] = self.A[ix,iy] + self.hy * self.Bx[ix,iy]  
+        
+        
         
         self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
         self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
