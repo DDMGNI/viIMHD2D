@@ -246,8 +246,8 @@ class PlotMHD2D(object):
         Bmax = max(self.diagnostics.Bx.max(), self.diagnostics.By.max(), -self.diagnostics.Bx.min(), -self.diagnostics.By.min())
         
         if Bmin == Bmax:
-            Bmin = -1.
-            Bmax = +1.
+            Bmin -= .1 * Bmin
+            Bmax += .1 * Bmax
         
         self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
@@ -257,8 +257,8 @@ class PlotMHD2D(object):
         Vmax = max(self.diagnostics.Vx.max(), self.diagnostics.Vy.max(), -self.diagnostics.Vx.min(), -self.diagnostics.Vy.min())
         
         if Vmin == Vmax:
-            Vmin = -1.
-            Vmax = +1.
+            Vmin -= .1 * Vmin
+            Vmax += .1 * Vmax
         
         self.VxTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
         self.VyTicks = np.linspace(Vmin, Vmax, 11, endpoint=True)
@@ -269,8 +269,8 @@ class PlotMHD2D(object):
         PBdiff = (PBmax - PBmin)
         
         if PBmin == PBmax:
-            PBmin -= 1.
-            PBmax += 1.
+            PBmin -= .1 * PBmin
+            PBmax += .1 * PBmax
         
         self.PBnorm = colors.Normalize(vmin=PBmin - 0.2*PBdiff, vmax=PBmax + 0.2*PBdiff)
         self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
