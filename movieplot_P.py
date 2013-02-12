@@ -262,8 +262,8 @@ class PlotMHD2D(object):
         self.BxTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
         self.ByTicks = np.linspace(Bmin, Bmax, 11, endpoint=True)
         
-        self.BxTickLabels = ["$%s \\times 10^{-3}$" % ( "%+1.1f" % (t * 1.E3)) for t in self.BxTicks]
-        self.ByTickLabels = ["$%s \\times 10^{-3}$" % ( "%+1.1f" % (t * 1.E3)) for t in self.ByTicks]
+        self.BxTickLabels = ["$%+1.1f \\times 10^{-3}$" % (t * 1.E3) for t in self.BxTicks]
+        self.ByTickLabels = ["$%+1.1f \\times 10^{-3}$" % (t * 1.E3) for t in self.ByTicks]
         
         for i in range(0, len(self.BxTickLabels)):
             if (i+1) % 2 == 0:
