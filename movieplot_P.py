@@ -155,6 +155,8 @@ class PlotMHD2D(object):
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
         
+        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, levels=self.ATicks, cmap=cm.jet, extend='neither')
+        
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
 
@@ -342,13 +344,12 @@ class PlotMHD2D(object):
         
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T)
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T)
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T)
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T)
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, extend='both')
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, extend='both')
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, extend='both')
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, extend='both')
         
-#        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.PB.T, 51, norm=self.PBnorm)
-        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, levels=self.ATicks, cmap=cm.jet, extend='neither')
+        self.conts["P"] = self.axes["P"].contour(self.x, self.y, self.A.T, levels=self.ATicks, extend='neither')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()

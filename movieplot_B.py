@@ -41,6 +41,9 @@ class PlotMHD2D(object):
         self.diagnostics = diagnostics
         
         
+        self.E_velocity0 = self.diagnostics.E_velocity
+        self.E_magnetic0 = self.diagnostics.E_magnetic
+        
         self.E_velocity  = np.zeros(ntMax+1)
         self.E_magnetic  = np.zeros(ntMax+1)
         
@@ -81,7 +84,7 @@ class PlotMHD2D(object):
         self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center') 
         
         # set up tick formatter
-        majorFormatter = ScalarFormatter(useOffset=True)
+        majorFormatter = ScalarFormatter(useOffset=False)
         ## -> limit to 1.1f precision
         majorFormatter.set_powerlimits((-1,+1))
         majorFormatter.set_scientific(True)
@@ -121,17 +124,19 @@ class PlotMHD2D(object):
         self.axes["B" ].set_title('$A (x,y)$')
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
-        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
+        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)
        
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
         self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
         
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
         
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
+        
+        self.conts["B"]  = self.axes["B"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet, extend='neither')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -141,8 +146,8 @@ class PlotMHD2D(object):
         self.lines["E"    ], = self.axes["E"    ].plot(self.diagnostics.tGrid[tStart:tEnd], self.energy     [tStart:tEnd])
         self.lines["H"    ], = self.axes["H"    ].plot(self.diagnostics.tGrid[tStart:tEnd], self.helicity   [tStart:tEnd])
         
-        self.axes["Emag"].set_title('$E_{B} (t)$')
-        self.axes["Evel"].set_title('$E_{V} (t)$')
+        self.axes["Emag"].set_title('$E_{B} (t) - E_{B} (0)$')
+        self.axes["Evel"].set_title('$E_{V} (t) - E_{V} (0)$')
         
         if self.diagnostics.plot_energy:
             self.axes["E"].set_title('$E (t)$')
@@ -249,7 +254,7 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.1 * Adif, Amax + 0.1 * Adif, 31, endpoint=True)
+        self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
     
     
     def update(self, final=False):
@@ -283,12 +288,12 @@ class PlotMHD2D(object):
         
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, extend='both')
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, extend='both')
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, extend='both')
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, extend='both')
         
-        self.conts["B"]  = self.axes["B"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
+        self.conts["B"]  = self.axes["B"].contour(self.x, self.y, self.A.T, self.ATicks, extend='neither')
         
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
@@ -330,8 +335,8 @@ class PlotMHD2D(object):
     
     def add_timepoint(self):
         
-        self.E_magnetic [self.iTime] = self.diagnostics.E_magnetic
-        self.E_velocity [self.iTime] = self.diagnostics.E_velocity
+        self.E_magnetic [self.iTime] = self.diagnostics.E_magnetic - self.E_magnetic0
+        self.E_velocity [self.iTime] = self.diagnostics.E_velocity - self.E_velocity0
         
         if self.diagnostics.plot_energy:
             self.energy     [self.iTime] = self.diagnostics.energy
