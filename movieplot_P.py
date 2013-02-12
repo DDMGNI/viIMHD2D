@@ -8,7 +8,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
-from matplotlib import rc
+from matplotlib import rc, rcParams
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter, FuncFormatter
 
 
@@ -33,6 +33,10 @@ class PlotMHD2D(object):
         '''
         Constructor
         '''
+        
+#        rc('text.latex',preamble=r'\usepackage[math]{helvet}')
+#        rcParams.update({'font.sans-serif': 'Helvetica'})
+#        rc('text',usetex=True)
         
         self.write = write
         self.prefix = '_petscMHD2D_'
@@ -134,7 +138,7 @@ class PlotMHD2D(object):
         self.axes["By"].set_title('$B_{y} (x,y)$')
         self.axes["Vx"].set_title('$V_{x} (x,y)$')
         self.axes["Vy"].set_title('$V_{y} (x,y)$')
-        self.axes["P" ].set_title('$P_{B} (x,y)$')
+        self.axes["P" ].set_title('$A (x,y)$')
         
         
         self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')

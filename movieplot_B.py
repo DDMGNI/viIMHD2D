@@ -118,7 +118,7 @@ class PlotMHD2D(object):
         self.axes["By"].set_title('$B_{y} (x,y)$')
         self.axes["Vx"].set_title('$V_{x} (x,y)$')
         self.axes["Vy"].set_title('$V_{y} (x,y)$')
-        self.axes["B" ].set_title('$B (x,y)$')
+        self.axes["B" ].set_title('$A (x,y)$')
         
         
         self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
