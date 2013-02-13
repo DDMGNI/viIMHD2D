@@ -131,20 +131,22 @@ class PlotMHD2D(object):
         self.axes["Vabs"].set_title('$B (x,y)$')
         
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet)
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
         self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
        
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet)
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
         self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
         
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet)
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
         
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet)
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
         
-        self.conts["P" ] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet)
+        self.conts["P" ] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both')
         self.cbars["P" ] = self.figure.colorbar(self.conts["P"], ax=self.axes["P"], orientation='vertical', ticks=self.PTicks)
+        
+        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet, extend='neither')
         
 #        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
 #        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
@@ -280,7 +282,8 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax + 0.2 * Adif, 21, endpoint=True)
+#        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax + 0.2 * Adif, 21, endpoint=True)
+        self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
         
     
     def update(self, final=False):
@@ -349,20 +352,20 @@ class PlotMHD2D(object):
 #        self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
                 
         
-        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, cmap=cm.jet, extend='both')
+        self.conts["Bx"] = self.axes["Bx"].contourf(self.x, self.y, self.Bx.T, self.BxTicks, extend='both')
 #        self.cbars["Bx"] = self.figure.colorbar(self.conts["Bx"], ax=self.axes["Bx"], orientation='vertical', ticks=self.BxTicks)#, format='%0.2E'
        
-        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, cmap=cm.jet, extend='both')
+        self.conts["By"] = self.axes["By"].contourf(self.x, self.y, self.By.T, self.ByTicks, extend='both')
 #        self.cbars["By"] = self.figure.colorbar(self.conts["By"], ax=self.axes["By"], orientation='vertical', ticks=self.ByTicks)
         
-        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
+        self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, extend='both')
 #        self.cbars["Vx"] = self.figure.colorbar(self.conts["Vx"], ax=self.axes["Vx"], orientation='vertical', ticks=self.VxTicks)
         
-        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
+        self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, extend='both')
 #        self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
 
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both')
-        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
+        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, extend='both')
         
 #        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
 #        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)
@@ -442,7 +445,8 @@ class PlotMHD2D(object):
         
 #        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
 #        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, 40)
-        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
+#        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.ATicks, cmap=cm.jet)
+        self.conts["Vabs"] = self.axes["Vabs"].contour(self.x, self.y, self.A.T, self.ATicks, extend='neither')
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
         

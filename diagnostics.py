@@ -147,17 +147,17 @@ class Diagnostics(object):
         
         for i in range(0, self.nx):
             ix = self.nx-i-1
-            ixm = (ix-1+self.nx) % self.nx
+            ixp = (ix+1+self.nx) % self.nx
             
+            if  i < self.nx-1:
+                self.A[ix,0] = self.A[ixp,0] + self.hx * self.By[ix,0]
+        
             for j in range(0, self.ny):
                 iy = self.ny-j-1
                 iyp = (iy+1+self.ny) % self.ny
                 
                 self.A[ix,iy] = self.A[ix,iyp] - self.hy * self.Bx[ix,iy]  
             
-            if ixm > 0:
-                self.A[ixm,iy] = self.A[ix,iy] + self.hx * self.By[ix,iy]
-        
 #        self.A -= self.A.mean()
         self.A -= self.A.min()
         
