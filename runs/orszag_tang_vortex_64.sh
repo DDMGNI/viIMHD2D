@@ -20,7 +20,7 @@
 RUNID=orszag_tang_vortex_64
 
 
-module load intel/13.0
+module load intel/13.1
 module load mkl/11.0
 module load impi/4.1.0
 
@@ -37,5 +37,5 @@ export PYTHONPATH=$RUN_DIR/vi:$PYTHONPATH
 
 cd $RUN_DIR
 
-mpiexec -np 8 python petsc_mhd2d_nonlinear_schur_direct.py runs/$RUNID.cfg
+mpiexec -np 8 python petsc_mhd2d_nonlinear_newton_direct.py runs/$RUNID.cfg
 
