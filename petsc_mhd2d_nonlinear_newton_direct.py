@@ -59,21 +59,13 @@ class petscMHD2D(object):
         # set some PETSc options
         OptDB = PETSc.Options()
         
-        OptDB.setValue('snes_rtol', 1E-20)
-#        OptDB.setValue('snes_atol', 1E-12)
-#        OptDB.setValue('snes_atol', 1E-1)
-#        OptDB.setValue('snes_atol', 1E-3)
-#        OptDB.setValue('snes_atol', 1E-4)
-#        OptDB.setValue('snes_atol', 1E-5)
-#        OptDB.setValue('snes_atol', 1E-6)
-#        OptDB.setValue('snes_atol', 1E-10)
-        OptDB.setValue('snes_atol', 1E-12)
-        OptDB.setValue('snes_stol', 1E-14)
+        self.residual = cfg['solver']['petsc_residual']
+        
+#        OptDB.setValue('ksp_max_it',  10)
+#        OptDB.setValue('ksp_convergence_test',  'skip')
         
 #        OptDB.setValue('ksp_monitor', '')
-        OptDB.setValue('snes_monitor', '')
-#        OptDB.setValue('log_info', '')
-#        OptDB.setValue('log_summary', '')
+#        OptDB.setValue('snes_monitor', '')
 
         
         # timestep setup
@@ -252,16 +244,15 @@ class petscMHD2D(object):
         
         # create nonlinear solver
         self.snes = PETSc.SNES().create()
+        self.snes.setType('ksponly')
         self.snes.setFunction(self.petsc_function.snes_mult, self.f)
         self.snes.setJacobian(self.updateJacobian, self.J)
-#        self.snes.setUseMF()
         self.snes.setFromOptions()
         self.snes.getKSP().setType('preonly')
+#        self.snes.getKSP().setType('gmres')
         self.snes.getKSP().getPC().setType('lu')        
 #        self.snes.getKSP().getPC().setFactorSolverPackage('superlu_dist')
         self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
-        
-        print(self.snes.getTolerances())
         
         
         self.ksp = None
@@ -386,8 +377,6 @@ class petscMHD2D(object):
     
     def run(self):
         
-#        (xs, xe), (ys, ye) = self.da1.getRanges()
-            
         for itime in range(1, self.nt+1):
             if PETSc.COMM_WORLD.getRank() == 0:
                 localtime = time.asctime( time.localtime(time.time()) )
@@ -399,35 +388,24 @@ class petscMHD2D(object):
 #            self.calculate_initial_guess()
             
             # solve
-            self.snes.solve(None, self.x)
-            
-            
-#            # remove average from pressure
-#            x_arr  = self.da5.getVecArray(self.x)
-#            P_arr  = self.da1.getVecArray(self.P)
-#        
-#            P_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
-#            
-#            psum = self.P.sum()
-#            pave = psum / (self.nx * self.ny)
-#
-#            x_arr[xs:xe, ys:ye, 4] -= pave
-            
-            
-            # output some solver info
-            if PETSc.COMM_WORLD.getRank() == 0:
-                print()
-                print("  Linear Solver:  %5i iterations" % (self.snes.getLinearSolveIterations()) )
-                print("  Nonlin Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), self.snes.getFunctionNorm()) )
-                print()
-            
-            if self.snes.getConvergedReason() < 0:
+            i = 0
+            while True:
+                i += 1
+                
+                self.snes.solve(None, self.x)
+                
+                self.petsc_function.matrix_mult(self.x, self.f)
+                fnorm = self.f.norm()
+                
+                # output some solver info
                 if PETSc.COMM_WORLD.getRank() == 0:
-                    print()
-                    print("Solver not converging... quitting!")
-                    print()
-                exit()
-           
+#                    print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
+                    print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (i, fnorm) )
+                
+                if fnorm < self.residual or i >= 10:
+                    break
+                
+            
             # update history
             self.petsc_matrix.update_history(self.x)
             self.petsc_jacobian.update_history(self.x)

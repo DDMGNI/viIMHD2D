@@ -66,7 +66,7 @@ cdef class PETScFunction(object):
     def snes_mult(self, SNES snes, Vec X, Vec Y):
         self.matrix_mult(X, Y)
         
-            
+    
     @cython.boundscheck(False)
     def matrix_mult(self, Vec X, Vec Y):
         cdef np.uint64_t i, j
