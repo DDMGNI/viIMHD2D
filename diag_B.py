@@ -69,7 +69,7 @@ class PlotMHD2D(object):
         plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
         
         # set up plot title
-        self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
+        self.title = self.figure.text(0.5, 0.95, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
