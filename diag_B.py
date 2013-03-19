@@ -69,7 +69,7 @@ class PlotMHD2D(object):
         plt.subplots_adjust(left=0.05, right=0.95, top=0.93, bottom=0.05)
         
         # set up plot title
-        self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center') 
+        self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=26) 
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
@@ -89,9 +89,9 @@ class PlotMHD2D(object):
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
         
-        for tick in axes.xaxis.get_major_ticks():
+        for tick in self.axes.xaxis.get_major_ticks():
             tick.set_pad(12)
-        for tick in axes.yaxis.get_major_ticks():
+        for tick in self.axes.yaxis.get_major_ticks():
             tick.set_pad(8)
         
         
@@ -174,7 +174,7 @@ class PlotMHD2D(object):
     
     def add_timepoint(self):
         self.iTime += 1
-        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]), fontsize=26)
+        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
         
     
 
