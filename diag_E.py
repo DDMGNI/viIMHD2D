@@ -31,8 +31,8 @@ class PlotEnergy(object):
         Constructor
         '''
         
-        matplotlib.rc('text', usetex=True)
-        matplotlib.rc('font', family='sans-serif', size='24')
+#        matplotlib.rc('text', usetex=True)
+        matplotlib.rc('font', family='sans-serif', size='22')
         
         self.prefix = filename
         
@@ -85,15 +85,20 @@ class PlotEnergy(object):
         axesE = plt.subplot(1,1,1)
         axesE.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.energy[0:ntMax+1:self.nPlot])
         
-        axesE.set_xlabel('$t$', labelpad=15, fontsize=24)
+        axesE.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_energy:
-            axesE.set_ylabel('$E (t)$', labelpad=15, fontsize=24)
+            axesE.set_ylabel('$E (t)$', labelpad=15, fontsize=26)
         else:
-            axesE.set_ylabel('$(E-E_0) / E_0 (t)$', labelpad=15, fontsize=24)
+            axesE.set_ylabel('$(E-E_0) / E_0 (t)$', labelpad=15, fontsize=26)
         
         axesE.yaxis.set_major_formatter(majorFormatter)
         
+        for tick in axesE.xaxis.get_major_ticks():
+            tick.set_pad(12)
+        for tick in axesE.yaxis.get_major_ticks():
+            tick.set_pad(8)
+                
         plt.draw()
         
         filename = self.prefix + str('_energy_%06d' % self.ntMax) + '.png'
@@ -112,15 +117,20 @@ class PlotEnergy(object):
         axesH = plt.subplot(1,1,1)
         axesH.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.helicity[0:ntMax+1:self.nPlot])
         
-        axesH.set_xlabel('$t$', labelpad=15, fontsize=24)
+        axesH.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_helicity:
-            axesH.set_ylabel('$H (t)$', labelpad=15, fontsize=24)
+            axesH.set_ylabel('$H (t)$', labelpad=15, fontsize=26)
         else:
-            axesH.set_ylabel('$(H-H_0) / H_0 (t)$', labelpad=15, fontsize=24)
+            axesH.set_ylabel('$(H-H_0) / H_0 (t)$', labelpad=15, fontsize=26)
         
         axesH.yaxis.set_major_formatter(majorFormatter)
         
+        for tick in axesH.xaxis.get_major_ticks():
+            tick.set_pad(12)
+        for tick in axesH.yaxis.get_major_ticks():
+            tick.set_pad(8)
+                
         plt.draw()
         
         filename = self.prefix + str('_helicity_%06d' % self.ntMax) + '.png'
