@@ -32,7 +32,7 @@ class PlotMHD2D(object):
         '''
         
 #        matplotlib.rc('text', usetex=True)
-        matplotlib.rc('font', family='sans-serif', size='24')
+        matplotlib.rc('font', family='sans-serif', size='28')
         
         self.prefix = filename
         
@@ -66,10 +66,10 @@ class PlotMHD2D(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.05, right=0.95, top=0.93, bottom=0.05)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
         
         # set up plot title
-        self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=26) 
+        self.title = self.figure.text(0.5, 0.97, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
