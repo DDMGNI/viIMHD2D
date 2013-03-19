@@ -32,7 +32,7 @@ class PlotMHD2D(object):
         '''
         
 #        matplotlib.rc('text', usetex=True)
-        matplotlib.rc('font', family='sans-serif', size='22')
+        matplotlib.rc('font', family='sans-serif', size='24')
         
         self.prefix = filename
         
@@ -88,6 +88,12 @@ class PlotMHD2D(object):
         self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
+        
+        for tick in axes.xaxis.get_major_ticks():
+            tick.set_pad(12)
+        for tick in axes.yaxis.get_major_ticks():
+            tick.set_pad(8)
+        
         
         # plot
         self.update()
@@ -168,7 +174,7 @@ class PlotMHD2D(object):
     
     def add_timepoint(self):
         self.iTime += 1
-        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]), fontsize=26)
         
     
 
