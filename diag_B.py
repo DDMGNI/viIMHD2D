@@ -147,7 +147,7 @@ class PlotMHD2D(object):
         
         self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
 #        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31)
-        self.ATicks = np.linspace(Amin - 0.1 * Adiff, Amax + 0.1 * Adiff, 51, endpoint=True)
+        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
     
     
     def update(self):
