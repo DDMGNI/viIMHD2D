@@ -80,7 +80,7 @@ class PlotEnergy(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.15)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.2)
         
         axesE = plt.subplot(1,1,1)
         axesE.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.energy[0:ntMax+1:self.nPlot])
@@ -112,7 +112,7 @@ class PlotEnergy(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.15)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.2)
         
         axesH = plt.subplot(1,1,1)
         axesH.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.helicity[0:ntMax+1:self.nPlot])
