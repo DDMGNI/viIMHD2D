@@ -88,9 +88,9 @@ class PlotEnergy(object):
         axesE.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_energy:
-            axesE.set_ylabel('$E (t)$', labelpad=15, fontsize=26)
+            axesE.set_ylabel('$E$', labelpad=15, fontsize=26)
         else:
-            axesE.set_ylabel('$(E-E_0) / E_0 (t)$', labelpad=15, fontsize=26)
+            axesE.set_ylabel('$(E-E_0) / E_0$', labelpad=15, fontsize=26)
         
         axesE.yaxis.set_major_formatter(majorFormatter)
         
@@ -120,9 +120,9 @@ class PlotEnergy(object):
         axesH.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_helicity:
-            axesH.set_ylabel('$H (t)$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$H$', labelpad=15, fontsize=26)
         else:
-            axesH.set_ylabel('$(H-H_0) / H_0 (t)$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$(H-H_0) / H_0$', labelpad=15, fontsize=26)
         
         axesH.yaxis.set_major_formatter(majorFormatter)
         

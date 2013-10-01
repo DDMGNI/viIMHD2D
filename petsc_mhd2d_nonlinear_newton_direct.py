@@ -59,13 +59,21 @@ class petscMHD2D(object):
         # set some PETSc options
         OptDB = PETSc.Options()
         
+#        OptDB.setValue('snes_lag_preconditioner', 5)
+        
         self.residual = cfg['solver']['petsc_residual']
         
 #        OptDB.setValue('ksp_max_it',  2)
 #        OptDB.setValue('ksp_convergence_test',  'skip')
+<<<<<<< TREE
+        
+#        OptDB.setValue('ksp_monitor', '')
+        OptDB.setValue('snes_monitor', '')
+=======
 #        
         OptDB.setValue('ksp_monitor', '')
         OptDB.setValue('snes_monitor', '')
+>>>>>>> MERGE-SOURCE
 
         
         # timestep setup
