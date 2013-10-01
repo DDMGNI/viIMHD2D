@@ -261,9 +261,8 @@ class petscMHD2D(object):
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-#        coords = self.da1.getCoordinateDA().getVecArray(self.da1.getCoordinates())
-        coords = self.da1.getCoordinates()
-        
+        coords = self.da1.getCoordinatesLocal()
+
         Bx_arr = self.da1.getVecArray(self.Bx)
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
