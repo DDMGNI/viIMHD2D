@@ -64,10 +64,12 @@ class petscMHD2D(object):
         OptDB.setValue('snes_atol',   cfg['solver']['petsc_residual'])
         OptDB.setValue('snes_rtol',   1E-16)
         OptDB.setValue('snes_stol',   1E-18)
-        OptDB.setValue('snes_max_it', 20)
+        OptDB.setValue('snes_max_it', 10)
         
-        OptDB.setValue('ksp_rtol',   cfg['solver']['petsc_residual'])
-        OptDB.setValue('ksp_max_it',  100)
+        OptDB.setValue('ksp_atol',   cfg['solver']['petsc_residual'] * 1E-1)
+        OptDB.setValue('ksp_rtol',   1E-10)
+        OptDB.setValue('ksp_max_it',  10)
+#        OptDB.setValue('ksp_convergence_test',  'skip')
         
         OptDB.setValue('snes_monitor', '')
         OptDB.setValue('ksp_monitor', '')
