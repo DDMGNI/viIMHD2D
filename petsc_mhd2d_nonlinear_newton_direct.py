@@ -61,11 +61,11 @@ class petscMHD2D(object):
         
         self.residual = cfg['solver']['petsc_residual']
         
-#        OptDB.setValue('ksp_max_it',  10)
+#        OptDB.setValue('ksp_max_it',  2)
 #        OptDB.setValue('ksp_convergence_test',  'skip')
-        
-#        OptDB.setValue('ksp_monitor', '')
-#        OptDB.setValue('snes_monitor', '')
+#        
+        OptDB.setValue('ksp_monitor', '')
+        OptDB.setValue('snes_monitor', '')
 
         
         # timestep setup
@@ -333,7 +333,7 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         # update solution history
-        self.petsc_matrix.update_history(self.x)
+#        self.petsc_matrix.update_history(self.x)
         self.petsc_jacobian.update_history(self.x)
         self.petsc_function.update_history(self.x)
         
@@ -385,7 +385,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-#            self.calculate_initial_guess()
+            self.calculate_initial_guess()
             
             # solve
             i = 0
@@ -407,7 +407,7 @@ class petscMHD2D(object):
                 
             
             # update history
-            self.petsc_matrix.update_history(self.x)
+#            self.petsc_matrix.update_history(self.x)
             self.petsc_jacobian.update_history(self.x)
             self.petsc_function.update_history(self.x)
             
@@ -417,7 +417,7 @@ class petscMHD2D(object):
             
     
     def calculate_initial_guess(self):
-        
+#        pass
         self.ksp = PETSc.KSP().create()
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)

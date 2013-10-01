@@ -12,7 +12,7 @@ cimport numpy as np
 from petsc4py import  PETSc
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport DA, SNES, Mat, Vec
+from petsc4py.PETSc cimport DMDA, SNES, Mat, Vec
 
 from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives

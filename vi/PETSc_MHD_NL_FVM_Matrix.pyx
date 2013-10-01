@@ -24,7 +24,7 @@ cdef class PETScMatrix(object):
     
     '''
     
-    def __init__(self, DA da1, DA da5,
+    def __init__(self, DMDA da1, DMDA da5,
                  np.uint64_t nx, np.uint64_t ny,
                  np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''
