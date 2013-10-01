@@ -266,7 +266,8 @@ class petscMHD2D(object):
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        coords = self.da1.getCoordinateDA().getVecArray(self.da1.getCoordinates())
+#        coords = self.da1.getCoordinateDA().getVecArray(self.da1.getCoordinates())
+        coords = self.da1.getCoordinates()
         
         Bx_arr = self.da1.getVecArray(self.Bx)
         By_arr = self.da1.getVecArray(self.By)
@@ -345,11 +346,11 @@ class petscMHD2D(object):
         
         
         # create HDF5 output file
-        self.hdf5_viewer = PETSc.Viewer().createHDF5(cfg['io']['hdf5_output'],
+        self.hdf5_viewer = PETSc.ViewerHDF5().create(cfg['io']['hdf5_output'],
                                           mode=PETSc.Viewer.Mode.WRITE,
                                           comm=PETSc.COMM_WORLD)
         
-        self.hdf5_viewer.HDF5PushGroup("/")
+        self.hdf5_viewer.pushGroup("/")
         
         
         # write grid data to hdf5 file
@@ -364,7 +365,7 @@ class petscMHD2D(object):
         
         
         # write initial data to hdf5 file
-        self.hdf5_viewer.HDF5SetTimestep(0)
+        self.hdf5_viewer.setTimestep(0)
         self.save_hdf5_vectors()
         
         
@@ -487,7 +488,7 @@ class petscMHD2D(object):
         
         
         # save timestep
-        self.hdf5_viewer.HDF5SetTimestep(self.hdf5_viewer.HDF5GetTimestep() + 1)
+        self.hdf5_viewer.setTimestep(self.hdf5_viewer.getTimestep() + 1)
         
         # save data
         self.save_hdf5_vectors()
