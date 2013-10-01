@@ -93,8 +93,8 @@ if __name__ == '__main__':
     pyvp = replay(args.hdf5_file, args.np)
     
     print
-#    input('Hit any key to start replay.')
-    raw_input('Hit any key to start replay.')
+    input('Hit any key to start replay.')
+#    raw_input('Hit any key to start replay.')
     print
     
     if args.o != None:

@@ -1,0 +1,7 @@
+
+Variational Integrators in petscMHD2D
+=====================================
+
+
+.. autosummary:: vi
+

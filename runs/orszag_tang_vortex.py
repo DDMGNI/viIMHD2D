@@ -3,12 +3,13 @@ import numpy as np
 
 p0 = 1.0
 
-nx = 64
-ny = 64
+nx = 32
+ny = 32
 
 
 def magnetic_potential(x, y):
-    return np.cos(2.*y) - 2. * np.cos(x)
+#    return np.cos(2.*y) - 2. * np.cos(x)
+    return 0.
 
 def velocity_potential(x, y):
     return 2. * np.sin(y) - 2. * np.cos(x)

@@ -61,7 +61,13 @@ class PlotMHD2D(object):
         self.By      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.Vx      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.Vy      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.P       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
+        self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+                
+        self.B       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.V       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
         # set up figure/window size
         self.figure = plt.figure(num=None, figsize=(16,9))
@@ -162,6 +168,47 @@ class PlotMHD2D(object):
         self.update()
         
     
+    def read_data(self):
+        
+        self.B [0:-1, 0:-1] = self.diagnostics.B [:,:]
+        self.B [  -1, 0:-1] = self.diagnostics.B [0,:]
+        self.B [   :,   -1] = self.B[:,0]
+        
+        self.Bx[0:-1, 0:-1] = self.diagnostics.Bx[:,:]
+        self.Bx[  -1, 0:-1] = self.diagnostics.Bx[0,:]
+        self.Bx[   :,   -1] = self.Bx[:,0]
+        
+        self.By[0:-1, 0:-1] = self.diagnostics.By[:,:]
+        self.By[  -1, 0:-1] = self.diagnostics.By[0,:]
+        self.By[   :,   -1] = self.By[:,0]
+        
+        self.V [0:-1, 0:-1] = self.diagnostics.V [:,:]
+        self.V [  -1, 0:-1] = self.diagnostics.V [0,:]
+        self.V [   :,   -1] = self.V[:,0]
+        
+        self.Vx[0:-1, 0:-1] = self.diagnostics.Vx[:,:]
+        self.Vx[  -1, 0:-1] = self.diagnostics.Vx[0,:]
+        self.Vx[   :,   -1] = self.Vx[:,0]
+        
+        self.Vy[0:-1, 0:-1] = self.diagnostics.Vy[:,:]
+        self.Vy[  -1, 0:-1] = self.diagnostics.Vy[0,:]
+        self.Vy[   :,   -1] = self.Vy[:,0]
+        
+        self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
+        self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
+        self.P[   :,   -1] = self.P[:,0]
+        
+        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
+        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.PB[   :,   -1] = self.PB[:,0]
+        
+        self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
+        self.J[  -1, 0:-1] = self.diagnostics.J[0,:]
+        self.J[   :,   -1] = self.J[:,0]
+        
+        
+    
+    
     def update_boundaries(self):
         
 #        Bmin = min(self.diagnostics.Bx.min(), self.diagnostics.By.min(), -self.diagnostics.Bx.max(), -self.diagnostics.By.max())
@@ -190,6 +237,7 @@ class PlotMHD2D(object):
         if not (self.iTime == 1 or (self.iTime-1) % self.nPlot == 0 or self.iTime-1 == self.nTime):
             return
         
+        self.read_data()
 #        self.update_boundaries()
 
         for ckey, cont in self.conts.items():
@@ -220,13 +268,9 @@ class PlotMHD2D(object):
         self.conts["Vx"] = self.axes["Vx"].contourf(self.x, self.y, self.Vx.T, self.VxTicks, cmap=cm.jet, extend='both')
         self.conts["Vy"] = self.axes["Vy"].contourf(self.x, self.y, self.Vy.T, self.VyTicks, cmap=cm.jet, extend='both')
         
-#        self.axes["B"].clear()
-#        self.axes["B"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
-
         self.axes["B"].clear()
-        plt.subplot(self.gs[2:4,0:2])
-        plt.streamplot(self.x, self.y, self.Bx.T, self.By.T, density=.6, arrowstyle='-', arrowsize=.01, minlength=.2, color='b')
-        
+        self.axes["B"].quiver(self.x[::2], self.y[::2], self.Bx.T[::2,::2], self.By.T[::2,::2])
+
         
         tStart, tEnd, xStart, xEnd = self.get_timerange()
         
@@ -257,7 +301,7 @@ class PlotMHD2D(object):
         
         if self.write:
             filename = self.prefix + str('%06d' % self.iTime) + '.png'
-            plt.savefig(filename, dpi=70)
+            plt.savefig(filename, dpi=100)
 #            filename = self.prefix + str('%06d' % self.iTime) + '.pdf'
 #            plt.savefig(filename)
         else:
