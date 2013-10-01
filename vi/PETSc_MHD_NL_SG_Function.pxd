@@ -8,7 +8,7 @@ cimport numpy as np
 
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport DA, Mat, Vec
+from petsc4py.PETSc cimport DMDA, Mat, Vec
 
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
@@ -33,8 +33,8 @@ cdef class PETScFunction(object):
     cdef np.float64_t eps
     
     
-    cdef DA da1
-    cdef DA da5
+    cdef DMDA da1
+    cdef DMDA da5
     
     cdef Vec divV
     cdef Vec V

@@ -8,7 +8,7 @@ cimport numpy as np
 
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport DA, Mat, Vec
+from petsc4py.PETSc cimport DMDA, Mat, Vec
 
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
@@ -29,8 +29,8 @@ cdef class PETScSolver(object):
     cdef np.float64_t omega     # relaxation parameter
     
     
-    cdef DA da1                 # distributed array controller for 1D data (pressure)
-    cdef DA da4                 # distributed array controller for 4D data (velocity and magnetic field)
+    cdef DMDA da1                 # distributed array controller for 1D data (pressure)
+    cdef DMDA da4                 # distributed array controller for 4D data (velocity and magnetic field)
     
     cdef Vec Xh                 # last time step of V and B
     cdef Vec Xp                 # last iteration of V and B

@@ -12,7 +12,7 @@ cimport numpy as np
 from petsc4py import  PETSc
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport DA, Mat, Vec
+from petsc4py.PETSc cimport DMDA, Mat, Vec
 
 from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
@@ -24,7 +24,7 @@ cdef class PETScJacobian(object):
     
     '''
     
-    def __init__(self, DA da1, DA da4,
+    def __init__(self, DMDA da1, DMDA da4,
                  np.uint64_t nx, np.uint64_t ny,
                  np.float64_t ht, np.float64_t hx, np.float64_t hy):
         '''

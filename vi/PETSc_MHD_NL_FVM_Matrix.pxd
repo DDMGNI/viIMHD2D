@@ -8,7 +8,7 @@ cimport numpy as np
 
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport DA, Mat, Vec
+from petsc4py.PETSc cimport DMDA, Mat, Vec
 
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
@@ -36,8 +36,8 @@ cdef class PETScMatrix(object):
     cdef np.float64_t fac_divy
     
     
-    cdef DA da1                 # distributed array controller for 1D data
-    cdef DA da5                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
+    cdef DMDA da1                 # distributed array controller for 1D data
+    cdef DMDA da5                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
     
     cdef Vec Xh                 # last time step of V, B, p
     cdef Vec Xp                 # last iteration of V, B, p

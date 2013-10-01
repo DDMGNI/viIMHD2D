@@ -6,7 +6,7 @@ Created on Jul 04, 2012
 
 cimport numpy as np
 
-from petsc4py.PETSc cimport DA, Mat, Vec
+from petsc4py.PETSc cimport DMDA, Mat, Vec
 
 from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
@@ -23,8 +23,8 @@ cdef class PETScPoissonSolver(object):
     cdef np.float64_t hx
     cdef np.float64_t hy
     
-    cdef DA da1
-    cdef DA da4
+    cdef DMDA da1
+    cdef DMDA da4
     
     cdef Vec X
     cdef Vec V
