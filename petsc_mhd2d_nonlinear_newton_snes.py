@@ -213,6 +213,9 @@ class petscMHD2D(object):
         self.Vx = self.da1.createGlobalVec()
         self.Vy = self.da1.createGlobalVec()
         self.P  = self.da1.createGlobalVec()
+
+        self.xcoords = self.da1.createGlobalVec()
+        self.ycoords = self.da1.createGlobalVec()
         
         # create local vectors for initialisation of pressure
         self.localBx = self.da1.createLocalVec()
@@ -264,21 +267,32 @@ class petscMHD2D(object):
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        coords = self.da1.getCoordinatesLocal()
+#        coords = self.da1.getCoordinatesLocal()
+        
+        xc_arr = self.da1.getVecArray(self.xcoords)
+        yc_arr = self.da1.getVecArray(self.ycoords)
+        
+        for i in range(xs, xe):
+            for j in range(ys, ye):
+                xc_arr[i,j] = x1 + i*self.hx
+                yc_arr[i,j] = y1 + j*self.hy
+        
         
         Bx_arr = self.da1.getVecArray(self.Bx)
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
         
+        xc_arr = self.da1.getVecArray(self.xcoords)
+        yc_arr = self.da1.getVecArray(self.ycoords)
         
         if cfg['initial_data']['magnetic_python'] != None:
             init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Bx_arr[i,j] = init_data.magnetic_x(coords[i,j][0], coords[i,j][1] + 0.5 * self.hy, Lx, Ly) 
-                    By_arr[i,j] = init_data.magnetic_y(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1], Lx, Ly) 
+                    Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                    By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
         
         else:
             Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
@@ -290,8 +304,8 @@ class petscMHD2D(object):
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Vx_arr[i,j] = init_data.velocity_x(coords[i,j][0], coords[i,j][1] + 0.5 * self.hy, Lx, Ly) 
-                    Vy_arr[i,j] = init_data.velocity_y(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1], Lx, Ly) 
+                    Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                    Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
         
         else:
             Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
@@ -322,7 +336,7 @@ class petscMHD2D(object):
         
         for i in range(xs, xe):
             for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly)
+                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly)
 #                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
 #                           + 0.5 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
 #                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
