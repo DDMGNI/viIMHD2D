@@ -36,11 +36,21 @@ INCLUDE_DIRS += [numpy.get_include()]
 import petsc4py
 INCLUDE_DIRS += [petsc4py.get_include()]
 
-# OpenMPI
-INCLUDE_DIRS += ['/opt/local/include/openmpi']
-
 # Intel MPI
-INCLUDE_DIRS += ['/afs/@cell/common/soft/intel/impi/4.1.0/intel64/include']
+IMPI_DIR = '/afs/@cell/common/soft/intel/ics2013/impi/4.1.3/intel64'
+
+if isdir(IMPI_DIR):
+    INCLUDE_DIRS += [join(IMPI_DIR, 'include')]
+    LIBRARY_DIRS += [join(IMPI_DIR, 'lib')]
+
+# OpenMPI
+if isdir('/opt/local/include/openmpi-gcc48'):
+    INCLUDE_DIRS += ['/opt/local/include/openmpi-gcc48']
+if isdir('/opt/local/lib/openmpi-gcc48'):
+    LIBRARY_DIRS += ['/opt/local/lib/openmpi-gcc48']
+
+# MPI library
+LIBRARIES    += ['mpi']
 
 # Valgrind
 INCLUDE_DIRS += ['/opt/local/include']
