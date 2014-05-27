@@ -405,13 +405,13 @@ class petscMHD2D(object):
             # calculate initial guess
             self.calculate_initial_guess()
             
-            # solve
-            self.snes.solve(None, self.x)
+#             # solve
+#             self.snes.solve(None, self.x)
                 
             # output some solver info
-            if PETSc.COMM_WORLD.getRank() == 0:
-                print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
-                print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), self.snes.getFunctionNorm()) )
+#             if PETSc.COMM_WORLD.getRank() == 0:
+#                 print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
+#                 print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), self.snes.getFunctionNorm()) )
                 
             
             # update history

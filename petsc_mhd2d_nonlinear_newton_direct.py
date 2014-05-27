@@ -418,7 +418,6 @@ class petscMHD2D(object):
             
     
     def calculate_initial_guess(self):
-#        pass
         self.ksp = PETSc.KSP().create()
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
@@ -435,6 +434,9 @@ class petscMHD2D(object):
         
         # solve
         self.ksp.solve(self.b, self.x)
+        
+        # destroy
+        self.ksp.destroy()
         
         
             
