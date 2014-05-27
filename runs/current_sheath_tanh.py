@@ -13,9 +13,6 @@ c  = 10.
 def magnetic_x(x, y, Lx, Ly):
     return 0.0
 
-#def magnetic_y(x, y, Lx, Ly):
-#    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2)) - 1.
-    
 def magnetic_y(x, y, Lx, Ly):
     return np.tanh(np.pi * x)
     
