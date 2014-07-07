@@ -26,7 +26,8 @@ cdef class PETScFunction(object):
     
     def __init__(self, DMDA da1, DMDA da5,
                  np.uint64_t nx, np.uint64_t ny,
-                 np.float64_t ht, np.float64_t hx, np.float64_t hy):
+                 np.float64_t ht, np.float64_t hx, np.float64_t hy,
+                 np.float64_t mu, np.float64_t nu, np.float64_t eta):
         '''
         Constructor
         '''
@@ -44,6 +45,11 @@ cdef class PETScFunction(object):
         self.hy = hy
         
         self.ht_inv = 1. / self.ht
+        
+        # friction, viscosity and resistivity
+        self.mu  = mu
+        self.nu  = nu
+        self.eta = eta
         
         # create history vector
         self.Xh = self.da5.createGlobalVec()
@@ -117,7 +123,9 @@ cdef class PETScFunction(object):
                              - self.dt(Vxh, ix, jx) \
                              + self.derivatives.psix(Vx_ave,  Vy_ave,  ix, jx) \
                              - self.derivatives.psix(Bx_ave,  By_ave,  ix, jx) \
-                             + self.derivatives.divx_sg(P,  ix, jx)
+                             + self.derivatives.divx_sg(P,  ix, jx) \
+                             + 0.5 * self.mu * Vx [ix,jx] \
+                             + 0.5 * self.mu * Vxh[ix,jx]
 #                             + self.derivatives.divx_sg(P_ave,  ix, jx)
 #                             + self.derivatives.gradx_sg(P_ave,  ix, jx)
 #                             + 0.5 * self.derivatives.psix(Vx,  Vy,  ix, jx) \
@@ -134,7 +142,9 @@ cdef class PETScFunction(object):
                              - self.dt(Vyh, ix, jx) \
                              + self.derivatives.psiy(Vx_ave,  Vy_ave,  ix, jx) \
                              - self.derivatives.psiy(Bx_ave,  By_ave,  ix, jx) \
-                             + self.derivatives.divy_sg(P,  ix, jx)
+                             + self.derivatives.divy_sg(P,  ix, jx) \
+                             + 0.5 * self.mu * Vy [ix,jx] \
+                             + 0.5 * self.mu * Vyh[ix,jx]
 #                             + self.derivatives.divy_sg(P_ave,  ix, jx)
 #                             + self.derivatives.grady_sg(P_ave,  ix, jx)
 #                             + 0.5 * self.derivatives.psiy(Vx,  Vy,  ix, jx) \

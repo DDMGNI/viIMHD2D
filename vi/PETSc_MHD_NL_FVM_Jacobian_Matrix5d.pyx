@@ -26,7 +26,8 @@ cdef class PETScJacobian(object):
     
     def __init__(self, DMDA da1, DMDA da5,
                  np.uint64_t nx, np.uint64_t ny,
-                 np.float64_t ht, np.float64_t hx, np.float64_t hy):
+                 np.float64_t ht, np.float64_t hx, np.float64_t hy,
+                 np.float64_t mu, np.float64_t nu, np.float64_t eta):
         '''
         Constructor
         '''
@@ -56,6 +57,11 @@ cdef class PETScJacobian(object):
 #        self.fac_divy  = 1.0 / self.hy
         self.fac_divx  = 0.5 / self.hx
         self.fac_divy  = 0.5 / self.hy
+        
+        # friction, viscosity and resistivity
+        self.mu  = mu
+        self.nu  = nu
+        self.eta = eta
         
         
         # create history vectors
@@ -137,6 +143,7 @@ cdef class PETScJacobian(object):
 #                self.dt_x(A_arr, ix, jx)
 #                self.psix_ux(A_arr, Vxp, Vyp, ix, jx, +1)
                 self.psix_ux(A_arr, Vx_ave, Vy_ave, ix, jx, +1)
+                self.muu(A_arr, ix, jx)
                 
                 col.field = 0
                 for ia in range(0,5):
@@ -249,6 +256,7 @@ cdef class PETScJacobian(object):
 #                self.dt_y(A_arr, ix, jx)
 #                self.psiy_uy(A_arr, Vxp, Vyp, ix, jx, +1)
                 self.psiy_uy(A_arr, Vx_ave, Vy_ave, ix, jx, +1)
+                self.muu(A_arr, ix, jx)
                 
                 col.field = 1
                 for ia in range(0,5):
@@ -517,6 +525,15 @@ cdef class PETScJacobian(object):
                 
     
 
+    @cython.boundscheck(False)
+    cdef np.float64_t muu(self, np.ndarray[np.float64_t, ndim=2] A,
+                                 np.uint64_t i, np.uint64_t j):
+        
+        # (i,   j  )
+        A[2,2] += 0.5 * self.mu
+        
+    
+    
     @cython.boundscheck(False)
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] A,
                                  np.uint64_t i, np.uint64_t j):

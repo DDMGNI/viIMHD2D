@@ -109,6 +109,12 @@ class petscMHD2D(object):
         self.hy = Ly / ny                       # gridstep size in y
         
         
+        # friction, viscosity and resistivity
+        mu  = cfg['initial_data']['mu']                    # friction
+        nu  = cfg['initial_data']['nu']                    # viscosity
+        eta = cfg['initial_data']['eta']                   # resistivity
+        
+        
         if PETSc.COMM_WORLD.getRank() == 0:
             print()
             print("nt = %i" % (self.nt))
@@ -121,6 +127,10 @@ class petscMHD2D(object):
             print()
             print("Lx   = %e" % (Lx))
             print("Ly   = %e" % (Ly))
+            print()
+            print("mu   = %e" % (mu))
+            print("nu   = %e" % (nu))
+            print("eta  = %e" % (eta))
             print()
         
         
@@ -232,9 +242,9 @@ class petscMHD2D(object):
         
         
         # create Matrix object
-        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
+        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
         
 #        self.petsc_jacobian_4d = PETSc_MHD_NL_Jacobian_Matrix.PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         
@@ -409,9 +419,10 @@ class petscMHD2D(object):
             self.snes.solve(None, self.x)
                 
             # output some solver info
+            fnorm = self.snes.getFunction()[0].norm()
             if PETSc.COMM_WORLD.getRank() == 0:
                 print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
-                print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), self.snes.getFunctionNorm()) )
+                print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), fnorm) )
                 
             
             # update history

@@ -28,6 +28,10 @@ cdef class PETScFunction(object):
     
     cdef np.float64_t ht_inv
     
+    cdef np.float64_t mu
+    cdef np.float64_t nu
+    cdef np.float64_t eta
+    
     
     cdef DMDA da1
     cdef DMDA da5

@@ -35,6 +35,10 @@ cdef class PETScJacobian(object):
     cdef np.float64_t fac_divx
     cdef np.float64_t fac_divy
     
+    cdef np.float64_t mu
+    cdef np.float64_t nu
+    cdef np.float64_t eta
+    
     
     cdef DMDA da1                 # distributed array controller for 1D data
     cdef DMDA da5                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
@@ -48,6 +52,9 @@ cdef class PETScJacobian(object):
     
     cdef PETSc_MHD_Derivatives derivatives
     
+    
+    cdef np.float64_t muu(self, np.ndarray[np.float64_t, ndim=2] A,
+                                 np.uint64_t i, np.uint64_t j)
     
     cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] A,
                                np.uint64_t i, np.uint64_t j)
