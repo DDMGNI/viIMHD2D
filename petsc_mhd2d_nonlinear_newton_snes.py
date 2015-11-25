@@ -32,9 +32,9 @@ from config import Config
 #from PETSc_MHD_NL_FVG_Jacobian_Matrix5d import PETScJacobian    # Gawlik Scheme
 #from PETSc_MHD_NL_FVG_Function          import PETScFunction
 
-from PETSc_MHD_NL_FVM_Jacobian_Matrix5d import PETScJacobian     # our Scheme
-from PETSc_MHD_NL_FVM_Function          import PETScFunction
-from PETSc_MHD_NL_FVM_Matrix            import PETScMatrix
+from Ideal_MHD_NL_Jacobian_Matrix5d import PETScJacobian
+from Ideal_MHD_NL_Function          import PETScFunction
+from Ideal_MHD_NL_Matrix            import PETScMatrix
 
 
 
