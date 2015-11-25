@@ -38,6 +38,7 @@ cdef class PETScMatrix(object):
     cdef double mu
     cdef double nu
     cdef double eta
+    cdef double de
     
     
     cdef object da1                 # distributed array controller for 1D data

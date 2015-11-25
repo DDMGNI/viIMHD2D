@@ -14,7 +14,7 @@ from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
 
-cdef class PETScMatrix(object):
+cdef class PETScJacobian(object):
     '''
     
     '''
@@ -38,6 +38,7 @@ cdef class PETScMatrix(object):
     cdef double mu
     cdef double nu
     cdef double eta
+    cdef double de
     
     
     cdef object da1                 # distributed array controller for 1D data
@@ -53,20 +54,23 @@ cdef class PETScMatrix(object):
     cdef PETSc_MHD_Derivatives derivatives
     
     
-    cdef double muu(self, double[:,:] A, int i, int j)
-    cdef double dt (self, double[:,:] A, int i, int j)
+    cdef double muu (self, double[:,:] A, int i, int j)
+    cdef double dt  (self, double[:,:] A, int i, int j)
+    cdef double dt_x(self, double[:,:] A, int i, int j)
+    cdef double dt_y(self, double[:,:] A, int i, int j)
 
     cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j)
 
     cdef double psix_ux(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
+    cdef double psix_vx(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
     cdef double psix_uy(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
+    cdef double psix_vy(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
     cdef double psiy_ux(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
+    cdef double psiy_vx(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
     cdef double psiy_uy(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
+    cdef double psiy_vy(self, double[:,:] A, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)
 
     cdef double phix_ux(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
     cdef double phix_uy(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
     cdef double phiy_ux(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
     cdef double phiy_uy(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
-
-
-

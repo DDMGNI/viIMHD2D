@@ -19,7 +19,7 @@ from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
 
 
 
-cdef class PETScJacobian(object):
+cdef class PETScMatrix(object):
     '''
     
     '''
@@ -27,7 +27,7 @@ cdef class PETScJacobian(object):
     def __init__(self, object da1, object da5,
                  int nx, int ny,
                  double ht, double hx, double hy,
-                 double mu, double nu, double eta):
+                 double mu, double nu, double eta, double de):
         '''
         Constructor
         '''
@@ -46,31 +46,25 @@ cdef class PETScJacobian(object):
         self.hy = hy
         
         # factors of derivatives
-        self.fac_dt = 1.0 / 4. / self.ht
+        self.fac_dt = 1.0 / self.ht
         
-        self.fac_grdx  = 1.0 / 4. / self.hx
-        self.fac_grdy  = 1.0 / 4. / self.hy
-#        self.fac_grdx  = 0.5 / 4. / self.hx
-#        self.fac_grdy  = 0.5 / 4. / self.hy
+        self.fac_grdx  = 1.0 / self.hx
+        self.fac_grdy  = 1.0 / self.hy
         
-#        self.fac_divx  = 1.0 / self.hx
-#        self.fac_divy  = 1.0 / self.hy
-        self.fac_divx  = 0.5 / self.hx
-        self.fac_divy  = 0.5 / self.hy
+        self.fac_divx  = 1.0 / self.hx
+        self.fac_divy  = 1.0 / self.hy
         
-        # friction, viscosity and resistivity
+        # friction, viscosity, resistivity, electron skin depth
         self.mu  = mu
         self.nu  = nu
         self.eta = eta
-        
+        self.de  = de
         
         # create history vectors
         self.Xh = self.da5.createGlobalVec()
-        self.Xp = self.da5.createGlobalVec()
         
         # create local vectors
         self.localXh = da5.createLocalVec()
-        self.localXp = da5.createLocalVec()
         
         # create derivatives object
         self.derivatives = PETSc_MHD_Derivatives(nx, ny, ht, hx, hy)
@@ -80,37 +74,21 @@ cdef class PETScJacobian(object):
         X.copy(self.Xh)
         
     
-    def update_previous(self, Vec X):
-        X.copy(self.Xp)
-        
-    
     @cython.boundscheck(False)
     def formMat(self, Mat A, Mat P = None):
-        cdef np.int64_t i, j, ia, ja, ix, jx
-        cdef np.int64_t xe, xs, ye, ys
+        cdef int i, j, ia, ja, ix, jx
+        cdef int xe, xs, ye, ys
         
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        self.da5.globalToLocal(self.Xp, self.localXp)
         self.da5.globalToLocal(self.Xh, self.localXh)
         
-        cdef np.ndarray[double, ndim=3] xp = self.da5.getVecArray(self.localXp)[...]
-        cdef np.ndarray[double, ndim=3] xh = self.da5.getVecArray(self.localXh)[...]
+        xh = self.da5.getVecArray(self.localXh)
         
-        cdef np.ndarray[double, ndim=2] Vxp = xp[:,:,0]
-        cdef np.ndarray[double, ndim=2] Vyp = xp[:,:,1]
-        cdef np.ndarray[double, ndim=2] Bxp = xp[:,:,2]
-        cdef np.ndarray[double, ndim=2] Byp = xp[:,:,3]
-        
-        cdef np.ndarray[double, ndim=2] Vxh = xh[:,:,0]
-        cdef np.ndarray[double, ndim=2] Vyh = xh[:,:,1]
-        cdef np.ndarray[double, ndim=2] Bxh = xh[:,:,2]
-        cdef np.ndarray[double, ndim=2] Byh = xh[:,:,3]
-        
-        cdef double[:,:] Vx_ave = 0.5 * (Vxp + Vxh)
-        cdef double[:,:] Vy_ave = 0.5 * (Vyp + Vyh)
-        cdef double[:,:] Bx_ave = 0.5 * (Bxp + Bxh)
-        cdef double[:,:] By_ave = 0.5 * (Byp + Byh)
+        cdef double[:,:] Vxh = xh[...][:,:,0]
+        cdef double[:,:] Vyh = xh[...][:,:,1]
+        cdef double[:,:] Bxh = xh[...][:,:,2]
+        cdef double[:,:] Byh = xh[...][:,:,3]
 
         cdef double[:,:] A_arr
         
@@ -132,17 +110,15 @@ cdef class PETScJacobian(object):
                 
                 # V_x
                 row.index = (i,j)
-                row.field = 0   
+                row.field = 0
                 
                 # dt(dVx)
-                # + psix_ux(Vx, Vy )
+                # + psix_ux(Vxh, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-#                self.dt_x(A_arr, ix, jx)
-#                self.psix_ux(A_arr, Vxp, Vyp, ix, jx, +1)
-                self.psix_ux(A_arr, Vx_ave, Vy_ave, Vx_ave, Vy_ave, ix, jx, +1)
+                self.psix_ux(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 self.muu(A_arr, ix, jx)
                 
                 col.field = 0
@@ -155,12 +131,11 @@ cdef class PETScJacobian(object):
                     P.setValueStencil(row, row, 1. / A_arr[2,2])
                 
                 
-                # + psix_uy(Vx,  Vy)
+                # + psix_uy(Vxh, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psix_uy(A_arr, Vxp, Vyp, ix, jx, +1)
-                self.psix_uy(A_arr, Vx_ave, Vy_ave, Vx_ave, Vy_ave, ix, jx, +1)
+                self.psix_uy(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 
                 col.field = 1
                 for ia in range(0,5):
@@ -169,12 +144,11 @@ cdef class PETScJacobian(object):
                         A.setValueStencil(row, col, A_arr[ia,ja])
                 
                 
-                # - psix_ux(Bx, By )
+                # - psix_ux(Bxh, Byh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psix_ux(A_arr, Bxp, Byp, ix, jx, -1)
-                self.psix_ux(A_arr, Bx_ave, By_ave, Bx_ave, By_ave, ix, jx, -1)
+                self.psix_ux(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 2
                 for ia in range(0,5):
@@ -183,12 +157,11 @@ cdef class PETScJacobian(object):
                         A.setValueStencil(row, col, A_arr[ia,ja])
                 
                 
-                # - psix_uy(Bx, By)
+                # - psix_uy(Bxh, Byh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psix_uy(A_arr, Bxp, Byp, ix, jx, -1)
-                self.psix_uy(A_arr, Bx_ave, By_ave, Bx_ave, By_ave, ix, jx, -1)
+                self.psix_uy(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -200,29 +173,9 @@ cdef class PETScJacobian(object):
                 # dx(P)
                 
                 col.field = 4
-#                for index, value in [
-#                        ((i,   j-1), + 1. * self.fac_grdx),
-#                        ((i-1, j-1), - 1. * self.fac_grdx),
-#                        ((i,   j  ), + 2. * self.fac_grdx),
-#                        ((i-1, j  ), - 2. * self.fac_grdx),
-#                        ((i,   j+1), + 1. * self.fac_grdx),
-#                        ((i-1, j+1), - 1. * self.fac_grdx),
-#                    ]:
-#                for index, value in [
-#                        ((i+1, j-1), + 1. * self.fac_grdx),
-#                        ((i,   j-1), - 1. * self.fac_grdx),
-#                        ((i+1, j  ), + 2. * self.fac_grdx),
-#                        ((i,   j  ), - 2. * self.fac_grdx),
-#                        ((i+1, j+1), + 1. * self.fac_grdx),
-#                        ((i,   j+1), - 1. * self.fac_grdx),
-#                    ]:
-#                for index, value in [
-#                        ((i+1, j  ), + 4. * self.fac_grdx),
-#                        ((i,   j  ), - 4. * self.fac_grdx),
-#                    ]:
                 for index, value in [
-                        ((i,   j  ), + 4. * self.fac_grdx),
-                        ((i-1, j  ), - 4. * self.fac_grdx),
+                        ((i,   j  ), + self.fac_grdx),
+                        ((i-1, j  ), - self.fac_grdx),
                     ]:
                     
                     col.index = index
@@ -233,12 +186,11 @@ cdef class PETScJacobian(object):
                 row.index = (i,j)
                 row.field = 1
                 
-                # + psiy_ux(Vx, Vy)
+                # + psiy_ux(Vxh, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psiy_ux(A_arr, Vxp, Vyp, ix, jx, +1)
-                self.psiy_ux(A_arr, Vx_ave, Vy_ave, Vx_ave, Vy_ave, ix, jx, +1)
+                self.psiy_ux(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 
                 col.field = 0
                 for ia in range(0,5):
@@ -248,14 +200,12 @@ cdef class PETScJacobian(object):
                 
                 
                 # dt(Vy)
-                # + psiy_uy(Vx, Vy)
+                # + psiy_uy(Vxh, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-#                self.dt_y(A_arr, ix, jx)
-#                self.psiy_uy(A_arr, Vxp, Vyp, ix, jx, +1)
-                self.psiy_uy(A_arr, Vx_ave, Vy_ave, Vx_ave, Vy_ave, ix, jx, +1)
+                self.psiy_uy(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 self.muu(A_arr, ix, jx)
                 
                 col.field = 1
@@ -268,12 +218,11 @@ cdef class PETScJacobian(object):
                     P.setValueStencil(row, row, 1. / A_arr[2,2])
                 
                 
-                # - psiy_ux(Bx, By)
+                # - psiy_ux(Bxh, Byh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psiy_ux(A_arr, Bxp, Byp, ix, jx, -1)
-                self.psiy_ux(A_arr, Bx_ave, By_ave, Bx_ave, By_ave, ix, jx, -1)
+#                self.psiy_ux(A_arr, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 2
                 for ia in range(0,5):
@@ -282,12 +231,11 @@ cdef class PETScJacobian(object):
                         A.setValueStencil(row, col, A_arr[ia,ja])
                 
                 
-                # - psiy_uy(Bx, By)
+                # - psiy_uy(Bxh, Byh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.psiy_uy(A_arr, Bxp, Byp, ix, jx, -1)
-                self.psiy_uy(A_arr, Bx_ave, By_ave, Bx_ave, By_ave, ix, jx, -1)
+                self.psiy_uy(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -298,29 +246,9 @@ cdef class PETScJacobian(object):
                 
                 # dy(P)
                 col.field = 4
-#                for index, value in [
-#                        ((i-1, j  ), + 1. * self.fac_grdy),
-#                        ((i-1, j-1), - 1. * self.fac_grdy),
-#                        ((i,   j  ), + 2. * self.fac_grdy),
-#                        ((i,   j-1), - 2. * self.fac_grdy),
-#                        ((i+1, j  ), + 1. * self.fac_grdy),
-#                        ((i+1, j-1), - 1. * self.fac_grdy),
-#                    ]:
-#                for index, value in [
-#                        ((i-1, j+1), + 1. * self.fac_grdy),
-#                        ((i-1, j  ), - 1. * self.fac_grdy),
-#                        ((i,   j+1), + 2. * self.fac_grdy),
-#                        ((i,   j  ), - 2. * self.fac_grdy),
-#                        ((i+1, j+1), + 1. * self.fac_grdy),
-#                        ((i+1, j  ), - 1. * self.fac_grdy),
-#                    ]:
-#                for index, value in [
-#                        ((i,   j+1), + 4. * self.fac_grdy),
-#                        ((i,   j  ), - 4. * self.fac_grdy),
-#                    ]:
                 for index, value in [
-                        ((i,   j  ), + 4. * self.fac_grdy),
-                        ((i,   j-1), - 4. * self.fac_grdy),
+                        ((i,   j  ), + self.fac_grdy),
+                        ((i,   j-1), - self.fac_grdy),
                     ]:
                     
                     col.index = index
@@ -332,13 +260,11 @@ cdef class PETScJacobian(object):
                 row.index = (i,j)
                 row.field = 2
 
-                # + phix(By,  dVx)
                 # + phix(Byh, dVx)
 
                 A_arr = np.zeros((5,5))
                 
-#                self.phix_ux(A_arr, Byp, ix, jx, +1)
-                self.phix_ux(A_arr, By_ave, ix, jx, +1)
+                self.phix_ux(A_arr, Byh, ix, jx, +1)
                 
                 col.field = 0
                 for ia in range(0,5):
@@ -350,13 +276,11 @@ cdef class PETScJacobian(object):
                     P.setValueStencil(row, row, 1. / A_arr[2,2])
                 
                 
-                # - phix(Bx,  dVy)
                 # - phix(Bxh, dVy)
 
                 A_arr = np.zeros((5,5))
                 
-#                self.phix_uy(A_arr, Bxp, ix, jx, -1)
-                self.phix_uy(A_arr, Bx_ave, ix, jx, -1)
+#                self.phix_uy(A_arr, Bxh, ix, jx, -1)
                 
                 col.field = 1
                 for ia in range(0,5):
@@ -369,16 +293,12 @@ cdef class PETScJacobian(object):
                 
                 
                 # dt(dBx)
-                # - phix(dBx, Vy )
                 # - phix(dBx, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-#                self.dt_x(A_arr, ix, jx)
-#                self.phix_ux(A_arr, Vyp, ix, jx, -1)
-#                self.phix_ux(A_arr, Vyh, ix, jx, -1)
-                self.phix_ux(A_arr, Vy_ave, ix, jx, -1)
+                self.phix_ux(A_arr, Vyh, ix, jx, -1)
                 
                 col.field = 2
                 for ia in range(0,5):
@@ -390,14 +310,11 @@ cdef class PETScJacobian(object):
                     P.setValueStencil(row, row, 1. / A_arr[2,2])
                 
                 
-                # + phix(Vx,  dBy)
                 # + phix(Vxh, dBy)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.phix_uy(A_arr, Vxp, ix, jx, +1)
-#                self.phix_uy(A_arr, Vxh, ix, jx, +1)
-                self.phix_uy(A_arr, Vx_ave, ix, jx, +1)
+                self.phix_uy(A_arr, Vxh, ix, jx, +1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -410,13 +327,11 @@ cdef class PETScJacobian(object):
                 row.index = (i,j)
                 row.field = 3
                 
-                # + phiy(dVx, By )
                 # + phiy(dVx, Byh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.phiy_ux(A_arr, Byp, ix, jx, +1)
-                self.phiy_ux(A_arr, By_ave, ix, jx, +1)
+#                self.phiy_ux(A_arr, Byh, ix, jx, +1)
                 
                 col.field = 0
                 for ia in range(0,5):
@@ -425,13 +340,11 @@ cdef class PETScJacobian(object):
                         A.setValueStencil(row, col, A_arr[ia,ja])
                 
                 
-                # - phiy(Bx,  dVy)
                 # - phiy(Bxh, dVy)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.phiy_uy(A_arr, Bxp, ix, jx, -1)
-                self.phiy_uy(A_arr, Bx_ave, ix, jx, -1)
+#                self.phiy_uy(A_arr, Bxh, ix, jx, -1)
                 
                 col.field = 1
                 for ia in range(0,5):
@@ -440,14 +353,11 @@ cdef class PETScJacobian(object):
                         A.setValueStencil(row, col, A_arr[ia,ja])
                 
                 
-                # - phiy(dBx, Vy )
                 # - phiy(dBx, Vyh)
                 
                 A_arr = np.zeros((5,5))
                 
-#                self.phiy_ux(A_arr, Vyp, ix, jx, -1)
-#                self.phiy_ux(A_arr, Vyh, ix, jx, -1)
-                self.phiy_ux(A_arr, Vy_ave, ix, jx, -1)
+                self.phiy_ux(A_arr, Vyh, ix, jx, -1)
                 
                 col.field = 2
                 for ia in range(0,5):
@@ -457,16 +367,12 @@ cdef class PETScJacobian(object):
                 
                 
                 # dt(dBy)
-                # + phiy(Vx,  dBy)
                 # + phiy(Vxh, dBy)
 
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-#                self.dt_y(A_arr, ix, jx)
-#                self.phiy_uy(A_arr, Vxp, ix, jx, +1)
-#                self.phiy_uy(A_arr, Vxh, ix, jx, +1)
-                self.phiy_uy(A_arr, Vx_ave, ix, jx, +1)
+                self.phiy_uy(A_arr, Vxh, ix, jx, +1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -485,10 +391,6 @@ cdef class PETScJacobian(object):
                 # dx(Vx)
                 
                 col.field = 0
-#                for index, value in [
-#                        ((i,   j), + self.fac_divx),
-#                        ((i-1, j), - self.fac_divx),
-#                    ]:
                 for index, value in [
                         ((i+1, j), + self.fac_divx),
                         ((i,   j), - self.fac_divx),
@@ -501,10 +403,6 @@ cdef class PETScJacobian(object):
                 # dy(Vy)
                 
                 col.field = 1
-#                for index, value in [
-#                        ((i, j  ), + self.fac_divy),
-#                        ((i, j-1), - self.fac_divy),
-#                    ]:
                 for index, value in [
                         ((i, j+1), + self.fac_divy),
                         ((i, j  ), - self.fac_divy),
@@ -519,11 +417,64 @@ cdef class PETScJacobian(object):
         if P != None:
             P.assemble()
         
-#        if PETSc.COMM_WORLD.getRank() == 0:
-#            print("     Matrix")
-        
                 
     
+    @cython.boundscheck(False)
+    def formRHS(self, Vec B):
+        cdef int i, j
+        cdef int ix, iy, jx, jy
+        cdef int xe, xs, ye, ys
+        
+        (xs, xe), (ys, ye) = self.da1.getRanges()
+        
+        cdef np.ndarray[double, ndim=3] y = self.da5.getVecArray(B)[...]
+
+        self.da5.globalToLocal(self.Xh, self.localXh)
+        
+        xh = self.da5.getVecArray(self.localXh)
+        
+        cdef double[:,:] Vxh = xh[...][:,:,0]
+        cdef double[:,:] Vyh = xh[...][:,:,1]
+        cdef double[:,:] Bxh = xh[...][:,:,2]
+        cdef double[:,:] Byh = xh[...][:,:,3]
+        cdef double[:,:] Ph  = xh[...][:,:,4]
+
+        
+        for i in range(xs, xe):
+            ix = i-xs+2
+            iy = i-xs
+            
+            for j in range(ys, ye):
+                jx = j-ys+2
+                jy = j-ys
+                
+                # V_x
+                y[iy, jy, 0] = self.dt(Vxh, ix, jx) #\
+#                             - 0.5 * self.derivatives.psix(Vxh, Vyh, ix, jx) #\
+#                             + self.derivatives.psix(Bxh, Byh, ix, jx)
+                
+                # V_y
+                y[iy, jy, 1] = self.dt(Vyh, ix, jx) #\
+#                             - 0.5 * self.derivatives.psix(Vxh, Vyh, ix, jx) #\
+#                             + self.derivatives.psix(Bxh, Byh, ix, jx)
+                              
+                # B_x
+                y[iy, jy, 2] = self.dt(Bxh, ix, jx) #\
+#                             - 0.5 * self.derivatives.phix(Vxh, Byh, ix, jx) \
+#                             + 0.5 * self.derivatives.phix(Bxh, Vyh, ix, jx)
+                    
+                # B_y
+                y[iy, jy, 3] = self.dt(Byh, ix, jx) #\
+#                             - 0.5 * self.derivatives.phiy(Vxh, Byh, ix, jx) \
+#                             + 0.5 * self.derivatives.phiy(Bxh, Vyh, ix, jx)
+                
+                # P
+                y[iy, jy, 4] = 0. #- 0.5 * self.derivatives.gradx_simple(Vxh, ix, jx) \
+#                               - 0.5 * self.derivatives.grady_simple(Vyh, ix, jx)
+                             
+
+
+
 
     @cython.boundscheck(False)
     cdef double muu(self, double[:,:] A,
@@ -539,43 +490,10 @@ cdef class PETScJacobian(object):
                                  int i, int j):
         
         # (i,   j  )
-        A[2,2] += 4. * self.fac_dt
+        A[2,2] += self.fac_dt
         
     
     
-    @cython.boundscheck(False)
-    cdef double dt_x(self, double[:,:] A,
-                                 int i, int j):
-        
-        # (i,   j-1)
-        A[2,1] += 1. * self.fac_dt
-        
-        # (i,   j  )
-        A[2,2] += 2. * self.fac_dt
-        
-        # (i,   j+1)
-        A[2,3] += 1. * self.fac_dt
-        
-    
-    
-    @cython.boundscheck(False)
-    cdef double dt_y(self, double[:,:] A,
-                                 int i, int j):
-        
-        # (i-1, j  )
-        A[1,2] += 1. * self.fac_dt
-        
-        # (i,   j  )
-        A[2,2] += 2. * self.fac_dt
-        
-        # (i+1, j  )
-        A[3,2] += 1. * self.fac_dt
-        
-    
-    
-
-
-
     @cython.boundscheck(False)
     cdef double rot(self, double[:,:] Ux,
                                 double[:,:] Uy,
@@ -593,113 +511,102 @@ cdef class PETScJacobian(object):
 
 
     cdef double psix_ux(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    double[:,:] Vx,
-                                    double[:,:] Vy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
         
         cdef double fac = sign * 0.25 * 0.5
         
-        # Ux[i,   j-1]
-        A[2, 1] -= ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hy
-        
-        # Ux[i,   j  ]
-        A[2, 2] += ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hy
-        A[2, 2] -= ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hy
-        
-        # Ux[i,   j+1]
-        A[2, 3] += ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hy
+#        # Ux[i,   j-1]
+#        A[2, 1] -= ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hy
+#        
+#        # Ux[i,   j  ]
+#        A[2, 2] += ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hy
+#        A[2, 2] -= ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hy
+#        
+#        # Ux[i,   j+1]
+#        A[2, 3] += ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hy
         
         
 
     cdef double psix_uy(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    double[:,:] Vx,
-                                    double[:,:] Vy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
-        cdef double fac = sign * 0.25 * 0.5
+        cdef double fac = sign * 0.25
+#        cdef double fac = sign * 0.25 * 0.5
         
         # Uy[i-1, j  ]
-        A[1, 2] += ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
+#        A[1, 2] += ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
         A[1, 2] -= self.rot(Vx, Vy, i,   j  ) * fac
 
         # Uy[i-1, j+1]
-        A[1, 3] += ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
-        A[1, 3] -= self.rot(Vx, Vy, i,   j+1) * fac 
+#        A[1, 3] += ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
+        A[1, 3] -= self.rot(Vx, Vy, i,   j+1) * fac
         
  
         # Uy[i,   j  ]
-        A[2, 2] -= ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
+#        A[2, 2] -= ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
         A[2, 2] -= self.rot(Vx, Vy, i,   j  ) * fac
         
         # Uy[i,   j+1]
-        A[2, 3] -= ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
-        A[2, 3] -= self.rot(Vx, Vy, i,   j+1) * fac 
+#        A[2, 3] -= ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
+        A[2, 3] -= self.rot(Vx, Vy, i,   j+1) * fac
         
 
     cdef double psiy_ux(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    double[:,:] Vx,
-                                    double[:,:] Vy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
-        cdef double fac = sign * 0.25 * 0.5
+        cdef double fac = sign * 0.25
+#        cdef double fac = sign * 0.25 * 0.5
 
         # Ux[i,   j-1]
-        A[2, 1] += ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
+#        A[2, 1] += ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
         A[2, 1] += self.rot(Vx, Vy, i,   j  ) * fac
 
         # Ux[i,   j  ]
-        A[2, 2] -= ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
-        A[2, 2] += self.rot(Vx, Vy, i,   j  ) * fac 
+#        A[2, 2] -= ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
+        A[2, 2] += self.rot(Vx, Vy, i,   j  ) * fac
         
         
         # Ux[i+1, j-1]
-        A[3, 1] += ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
-        A[3, 1] += self.rot(Vx, Vy, i+1, j  ) * fac 
+#        A[3, 1] += ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
+        A[3, 1] += self.rot(Vx, Vy, i+1, j  ) * fac
 
         # Ux[i+1, j  ]
-        A[3, 2] -= ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
-        A[3, 2] += self.rot(Vx, Vy, i+1, j  ) * fac 
+#        A[3, 2] -= ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
+        A[3, 2] += self.rot(Vx, Vy, i+1, j  ) * fac
 
 
     cdef double psiy_uy(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    double[:,:] Vx,
-                                    double[:,:] Vy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25 * 0.5
         
-        # Uy[i-1, j  ]
-        A[1, 2] -= ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hx
+#        # Uy[i-1, j  ]
+#        A[1, 2] -= ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hx
+#
+#        # Ux[i,   j  ]
+#        A[2, 2] += ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hx
+#        A[2, 2] -= ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hx
+#        
+#        
+#        # Ux[i+1, j  ]
+#        A[3, 2] += ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hx
 
-        # Ux[i,   j  ]
-        A[2, 2] += ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hx
-        A[2, 2] -= ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hx
+
+
+
+    cdef double phix_ux(self, double[:,:] A, double[:,:] Fy,
+                              int i, int j, double sign):
         
-        
-        # Ux[i+1, j  ]
-        A[3, 2] += ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hx
-
-
-
-
-    cdef double phix_ux(self, double[:,:] A,
-                                    double[:,:] Fy,
-                                    int i, int j,
-                                    double sign):
-        
-        cdef double fac = sign * 0.25 * 0.5 / self.hy
+        cdef double fac = sign * 0.25 / self.hy
+#        cdef double fac = sign * 0.25 * 0.5 / self.hy
         
         # Ux[i,   j-1]
         A[2, 1] += ( Fy[i-1, j  ] + Fy[i, j  ] ) * fac
@@ -713,12 +620,11 @@ cdef class PETScJacobian(object):
         
         
 
-    cdef double phix_uy(self, double[:,:] A,
-                                    double[:,:] Fx,
-                                    int i, int j,
-                                    double sign):
+    cdef double phix_uy(self, double[:,:] A, double[:,:] Fx,
+                              int i, int j, double sign):
 
-        cdef double fac = sign * 0.25 * 0.5 / self.hy
+        cdef double fac = sign * 0.25 / self.hy
+#        cdef double fac = sign * 0.25 * 0.5 / self.hy
         
         # Uy[i-1, j  ]
         A[1, 2] += ( Fx[i,   j-1] + Fx[i,   j  ] ) * fac
@@ -735,12 +641,11 @@ cdef class PETScJacobian(object):
         
 
 
-    cdef double phiy_ux(self, double[:,:] A,
-                                    double[:,:] Fy,
-                                    int i, int j,
-                                    double sign):
+    cdef double phiy_ux(self, double[:,:] A, double[:,:] Fy,
+                              int i, int j, double sign):
 
-        cdef double fac = sign * 0.25 * 0.5 / self.hx
+        cdef double fac = sign * 0.25 / self.hx
+#        cdef double fac = sign * 0.25 * 0.5 / self.hx
         
         # Ux[i,   j-1]
         A[2, 1] -= ( Fy[i-1, j  ] + Fy[i,   j  ] ) * fac
@@ -756,12 +661,12 @@ cdef class PETScJacobian(object):
         A[3, 2] += ( Fy[i,   j  ] + Fy[i+1, j  ] ) * fac
         
 
-    cdef double phiy_uy(self, double[:,:] A,
-                                    double[:,:] Fx,
-                                    int i, int j,
-                                    double sign):
 
-        cdef double fac = sign * 0.25 * 0.5 / self.hx
+    cdef double phiy_uy(self, double[:,:] A, double[:,:] Fx,
+                              int i, int j, double sign):
+
+        cdef double fac = sign * 0.25 / self.hx
+#        cdef double fac = sign * 0.25 * 0.5 / self.hx
         
         # Uy[i-1, j  ]
         A[1, 2] -= ( Fx[i,   j-1] + Fx[i,   j  ] ) * fac
@@ -772,5 +677,6 @@ cdef class PETScJacobian(object):
         
         # Uy[i+1, j  ]
         A[3, 2] += ( Fx[i+1, j-1] + Fx[i+1, j  ] ) * fac
+
 
 

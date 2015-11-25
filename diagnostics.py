@@ -24,7 +24,7 @@ class Diagnostics(object):
         assert self.hdf5 != None
         
         
-        self.tGrid = self.hdf5['t'][:,0,0]
+        self.tGrid = self.hdf5['t'][:,0]
         self.xGrid = self.hdf5['x'][:]
         self.yGrid = self.hdf5['y'][:]
         
@@ -76,6 +76,8 @@ class Diagnostics(object):
         self.By = np.zeros((self.nx, self.ny))
         self.Vx = np.zeros((self.nx, self.ny))
         self.Vy = np.zeros((self.nx, self.ny))
+        self.Bix = None
+        self.Biy = None
         
         self.P  = np.zeros((self.nx, self.ny))
         self.J  = np.zeros((self.nx, self.ny))
@@ -86,6 +88,7 @@ class Diagnostics(object):
         self.A  = np.zeros((self.nx, self.ny))
         self.B  = np.zeros((self.nx, self.ny))
         self.V  = np.zeros((self.nx, self.ny))
+        self.Ai = np.zeros((self.nx, self.ny))
         
         self.divB = np.zeros((self.nx, self.ny))
         self.divV = np.zeros((self.nx, self.ny))
@@ -134,6 +137,11 @@ class Diagnostics(object):
         self.By = self.hdf5['By'][iTime,:,:].T
         self.Vx = self.hdf5['Vx'][iTime,:,:].T
         self.Vy = self.hdf5['Vy'][iTime,:,:].T
+
+        if 'Bix' in self.hdf5:
+            self.Bix = self.hdf5['Bix'][iTime,:,:].T
+        if 'Biy' in self.hdf5:
+            self.Biy = self.hdf5['Biy'][iTime,:,:].T
         
         self.P  = self.hdf5['P'][iTime,:,:].T
         
@@ -170,24 +178,50 @@ class Diagnostics(object):
 #         self.A -= self.A.min()
         
         
-        self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
-        self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
-        
-        
-        for ix in range(0, self.nx):
-            ixm = (ix-1 + self.nx) % self.nx
+        if self.Bix is not None and self.Biy is not None: 
+            self.Ai[-1,-1] = 0.0
             
-            for iy in range(0, self.ny):
-                iym = (iy-1 + self.ny) % self.ny
+            for i in range(0, self.nx):
+                ix = self.nx-i-1
+                ixm = (ix-1+self.nx) % self.nx
+                ixp = (ix+1+self.nx) % self.nx
                 
-                self.e_magnetic[ix,iy] = (self.Bx[ix,iy] + self.Bx[ix,iym])**2 \
-                                       + (self.By[ix,iy] + self.By[ixm,iy])**2
-                                
-                self.e_velocity[ix,iy] = (self.Vx[ix,iy] + self.Vx[ix,iym])**2 \
-                                       + (self.Vy[ix,iy] + self.Vy[ixm,iy])**2
+                if  i < self.nx-1:
+                    self.Ai[ix,0] = self.Ai[ixp,0] + self.hx * self.Biy[ix,0]
+            
+                for j in range(0, self.ny):
+                    iy = self.ny-j-1
+                    iym = (iy-1+self.ny) % self.ny
+                    iyp = (iy+1+self.ny) % self.ny
+                    
+                    self.Ai[ix,iy] = self.Ai[ix,iyp] - self.hy * self.Bix[ix,iy]  
+                
+            self.Ai -= self.Ai.mean()
         
-        self.e_magnetic *= 0.5 * 0.25
-        self.e_velocity *= 0.5 * 0.25
+        
+        
+        if self.Bix is not None and self.Biy is not None:
+            self.E_magnetic = 0.5 * (self.Bx*self.Bix + self.By*self.Biy).sum() * self.hx * self.hy
+            self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
+        else:
+            self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
+            self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
+        
+        
+#         for ix in range(0, self.nx):
+#             ixm = (ix-1 + self.nx) % self.nx
+#             
+#             for iy in range(0, self.ny):
+#                 iym = (iy-1 + self.ny) % self.ny
+#                 
+#                 self.e_magnetic[ix,iy] = (self.Bx[ix,iy] + self.Bx[ix,iym])**2 \
+#                                        + (self.By[ix,iy] + self.By[ixm,iy])**2
+#                                 
+#                 self.e_velocity[ix,iy] = (self.Vx[ix,iy] + self.Vx[ix,iym])**2 \
+#                                        + (self.Vy[ix,iy] + self.Vy[ixm,iy])**2
+#         
+#         self.e_magnetic *= 0.5 * 0.25
+#         self.e_velocity *= 0.5 * 0.25
         
         
 #        self.E_magnetic = 0.0

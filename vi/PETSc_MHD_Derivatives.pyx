@@ -857,9 +857,7 @@ cdef class PETSc_MHD_Derivatives(object):
 
 
     @cython.boundscheck(False)
-    cdef double rot(self, double[:,:] Ux,
-                                double[:,:] Uy,
-                                int i, int j):
+    cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j):
 
         cdef double result
         
@@ -904,9 +902,7 @@ cdef class PETSc_MHD_Derivatives(object):
     
     
     @cython.boundscheck(False)
-    cdef double phix(self, double[:,:] Fx,
-                                 double[:,:] Uy,
-                                 int i, int j):
+    cdef double phix(self, double[:,:] Fx, double[:,:] Uy, int i, int j):
 
         cdef double result
         
@@ -919,10 +915,7 @@ cdef class PETSc_MHD_Derivatives(object):
 
 
     @cython.boundscheck(False)
-    cdef double phiy(self, double[:,:] Fx,
-                                 double[:,:] Uy,
-                                 int i, int j):
-
+    cdef double phiy(self, double[:,:] Fx, double[:,:] Uy, int i, int j):
 
         cdef double result
         
@@ -932,3 +925,31 @@ cdef class PETSc_MHD_Derivatives(object):
                  ) * self.hx_inv
         
         return result
+
+
+
+    @cython.boundscheck(False)
+    cpdef double Bix(self, double[:,:] Bx, double[:,:] By, int i, int j, double de):
+
+        cdef double result
+        
+        result = Bx[i,j] \
+               + de*de * ( (By[i, j+1] - By[i-1, j+1])
+                         - (By[i, j  ] - By[i-1, j  ]) ) * self.hx_inv * self.hy_inv \
+               - de*de * ( Bx[i, j+1] - 2. * Bx[i,   j  ] + Bx[i, j-1] ) * self.hy_inv * self.hy_inv
+        
+        return result
+
+
+    @cython.boundscheck(False)
+    cpdef double Biy(self, double[:,:] Bx, double[:,:] By, int i, int j, double de):
+
+        cdef double result
+        
+        result = By[i,j] \
+               + de*de * ( (Bx[i+1, j] - Bx[i+1, j-1])
+                         - (Bx[i,   j] - Bx[i,   j-1]) ) * self.hx_inv * self.hy_inv \
+               - de*de * ( By[i+1, j] - 2. * By[i,   j  ] + By[i-1, j] ) * self.hx_inv * self.hx_inv
+        
+        return result
+    

@@ -294,7 +294,7 @@ ext_modules = [
                   extra_compile_args=CARGS,
                   extra_link_args=LARGS
                  ),
-        Extension("Ideal_MHD_NL_Matrix",
+        Extension("Ideal_MHD_NL_Jacobian_Matrix",
                   sources=["Ideal_MHD_NL_Jacobian_Matrix.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,

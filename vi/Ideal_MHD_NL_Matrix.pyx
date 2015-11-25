@@ -118,7 +118,7 @@ cdef class PETScMatrix(object):
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-                self.psix_ux(A_arr, Vxh, Vyh, ix, jx, +1)
+                self.psix_ux(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 self.muu(A_arr, ix, jx)
                 
                 col.field = 0
@@ -135,7 +135,7 @@ cdef class PETScMatrix(object):
                 
                 A_arr = np.zeros((5,5))
                 
-                self.psix_uy(A_arr, Vxh, Vyh, ix, jx, +1)
+                self.psix_uy(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 
                 col.field = 1
                 for ia in range(0,5):
@@ -148,7 +148,7 @@ cdef class PETScMatrix(object):
                 
                 A_arr = np.zeros((5,5))
                 
-                self.psix_ux(A_arr, Bxh, Byh, ix, jx, -1)
+                self.psix_ux(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 2
                 for ia in range(0,5):
@@ -161,7 +161,7 @@ cdef class PETScMatrix(object):
                 
                 A_arr = np.zeros((5,5))
                 
-                self.psix_uy(A_arr, Bxh, Byh, ix, jx, -1)
+                self.psix_uy(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -190,7 +190,7 @@ cdef class PETScMatrix(object):
                 
                 A_arr = np.zeros((5,5))
                 
-                self.psiy_ux(A_arr, Vxh, Vyh, ix, jx, +1)
+                self.psiy_ux(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 
                 col.field = 0
                 for ia in range(0,5):
@@ -205,7 +205,7 @@ cdef class PETScMatrix(object):
                 A_arr = np.zeros((5,5))
                 
                 self.dt(A_arr, ix, jx)
-                self.psiy_uy(A_arr, Vxh, Vyh, ix, jx, +1)
+                self.psiy_uy(A_arr, Vxh, Vyh, Vxh, Vyh, ix, jx, +1)
                 self.muu(A_arr, ix, jx)
                 
                 col.field = 1
@@ -235,7 +235,7 @@ cdef class PETScMatrix(object):
                 
                 A_arr = np.zeros((5,5))
                 
-                self.psiy_uy(A_arr, Bxh, Byh, ix, jx, -1)
+                self.psiy_uy(A_arr, Bxh, Byh, Bxh, Byh, ix, jx, -1)
                 
                 col.field = 3
                 for ia in range(0,5):
@@ -511,10 +511,9 @@ cdef class PETScMatrix(object):
 
 
     cdef double psix_ux(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
         
         cdef double fac = sign * 0.25 * 0.5
         
@@ -531,64 +530,61 @@ cdef class PETScMatrix(object):
         
 
     cdef double psix_uy(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25
 #        cdef double fac = sign * 0.25 * 0.5
         
         # Uy[i-1, j  ]
 #        A[1, 2] += ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
-        A[1, 2] -= self.rot(Ux, Uy, i,   j  ) * fac
+        A[1, 2] -= self.rot(Vx, Vy, i,   j  ) * fac
 
         # Uy[i-1, j+1]
 #        A[1, 3] += ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
-        A[1, 3] -= self.rot(Ux, Uy, i,   j+1) * fac
+        A[1, 3] -= self.rot(Vx, Vy, i,   j+1) * fac
         
  
         # Uy[i,   j  ]
 #        A[2, 2] -= ( Uy[i-1, j  ] + Uy[i,   j  ] ) * fac / self.hx
-        A[2, 2] -= self.rot(Ux, Uy, i,   j  ) * fac
+        A[2, 2] -= self.rot(Vx, Vy, i,   j  ) * fac
         
         # Uy[i,   j+1]
 #        A[2, 3] -= ( Uy[i-1, j+1] + Uy[i,   j+1] ) * fac / self.hx
-        A[2, 3] -= self.rot(Ux, Uy, i,   j+1) * fac
+        A[2, 3] -= self.rot(Vx, Vy, i,   j+1) * fac
         
 
     cdef double psiy_ux(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25
 #        cdef double fac = sign * 0.25 * 0.5
 
         # Ux[i,   j-1]
 #        A[2, 1] += ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
-        A[2, 1] += self.rot(Ux, Uy, i,   j  ) * fac
+        A[2, 1] += self.rot(Vx, Vy, i,   j  ) * fac
 
         # Ux[i,   j  ]
 #        A[2, 2] -= ( Ux[i,   j-1] + Ux[i,   j  ] ) * fac / self.hy
-        A[2, 2] += self.rot(Ux, Uy, i,   j  ) * fac
+        A[2, 2] += self.rot(Vx, Vy, i,   j  ) * fac
         
         
         # Ux[i+1, j-1]
 #        A[3, 1] += ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
-        A[3, 1] += self.rot(Ux, Uy, i+1, j  ) * fac
+        A[3, 1] += self.rot(Vx, Vy, i+1, j  ) * fac
 
         # Ux[i+1, j  ]
 #        A[3, 2] -= ( Ux[i+1, j-1] + Ux[i+1, j  ] ) * fac / self.hy
-        A[3, 2] += self.rot(Ux, Uy, i+1, j  ) * fac
+        A[3, 2] += self.rot(Vx, Vy, i+1, j  ) * fac
 
 
     cdef double psiy_uy(self, double[:,:] A,
-                                    double[:,:] Ux,
-                                    double[:,:] Uy,
-                                    int i, int j,
-                                    double sign):
+                              double[:,:] Ux, double[:,:] Uy,
+                              double[:,:] Vx, double[:,:] Vy,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25 * 0.5
         
@@ -606,10 +602,8 @@ cdef class PETScMatrix(object):
 
 
 
-    cdef double phix_ux(self, double[:,:] A,
-                                    double[:,:] Fy,
-                                    int i, int j,
-                                    double sign):
+    cdef double phix_ux(self, double[:,:] A, double[:,:] Fy,
+                              int i, int j, double sign):
         
         cdef double fac = sign * 0.25 / self.hy
 #        cdef double fac = sign * 0.25 * 0.5 / self.hy
@@ -626,10 +620,8 @@ cdef class PETScMatrix(object):
         
         
 
-    cdef double phix_uy(self, double[:,:] A,
-                                    double[:,:] Fx,
-                                    int i, int j,
-                                    double sign):
+    cdef double phix_uy(self, double[:,:] A, double[:,:] Fx,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25 / self.hy
 #        cdef double fac = sign * 0.25 * 0.5 / self.hy
@@ -649,10 +641,8 @@ cdef class PETScMatrix(object):
         
 
 
-    cdef double phiy_ux(self, double[:,:] A,
-                                    double[:,:] Fy,
-                                    int i, int j,
-                                    double sign):
+    cdef double phiy_ux(self, double[:,:] A, double[:,:] Fy,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25 / self.hx
 #        cdef double fac = sign * 0.25 * 0.5 / self.hx
@@ -671,10 +661,9 @@ cdef class PETScMatrix(object):
         A[3, 2] += ( Fy[i,   j  ] + Fy[i+1, j  ] ) * fac
         
 
-    cdef double phiy_uy(self, double[:,:] A,
-                                    double[:,:] Fx,
-                                    int i, int j,
-                                    double sign):
+
+    cdef double phiy_uy(self, double[:,:] A, double[:,:] Fx,
+                              int i, int j, double sign):
 
         cdef double fac = sign * 0.25 / self.hx
 #        cdef double fac = sign * 0.25 * 0.5 / self.hx

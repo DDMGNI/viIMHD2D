@@ -127,3 +127,7 @@ cdef class PETSc_MHD_Derivatives(object):
     cdef double phix(self, double[:,:] F, double[:,:] U, int i, int j)
     cdef double phiy(self, double[:,:] F, double[:,:] U, int i, int j)
 
+    cpdef double Bix(self, double[:,:] Bx, double[:,:] By, int i, int j, double de)
+    cpdef double Biy(self, double[:,:] Bx, double[:,:] By, int i, int j, double de)
+    
+    
