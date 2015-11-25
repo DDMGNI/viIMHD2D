@@ -12,130 +12,118 @@ cdef class PETSc_MHD_Derivatives(object):
     Cython Implementation of MHD Discretisation
     '''
     
-    cdef np.uint64_t  nx
-    cdef np.uint64_t  ny
+    cdef int  nx
+    cdef int  ny
     
-    cdef np.float64_t ht
-    cdef np.float64_t hx
-    cdef np.float64_t hy
+    cdef double ht
+    cdef double hx
+    cdef double hy
     
-    cdef np.float64_t ht_inv
-    cdef np.float64_t hx_inv
-    cdef np.float64_t hy_inv
+    cdef double ht_inv
+    cdef double hx_inv
+    cdef double hy_inv
     
-    cdef np.float64_t hx_inv2
-    cdef np.float64_t hy_inv2
+    cdef double hx_inv2
+    cdef double hy_inv2
     
     
         
-    cdef np.float64_t dx(self, np.ndarray[np.float64_t, ndim=2] B,
-                               np.ndarray[np.float64_t, ndim=2] V,
-                               np.uint64_t i, np.uint64_t j)
+    cdef double dx(self, double[:,:] B,
+                               double[:,:] V,
+                               int i, int j)
     
-    cdef np.float64_t dy(self, np.ndarray[np.float64_t, ndim=2] B,
-                               np.ndarray[np.float64_t, ndim=2] V,
-                               np.uint64_t i, np.uint64_t j)
+    cdef double dy(self, double[:,:] B,
+                               double[:,:] V,
+                               int i, int j)
 
-    cdef np.float64_t fdudx(self, np.ndarray[np.float64_t, ndim=2] F,
-                                  np.ndarray[np.float64_t, ndim=2] U,
-                                  np.uint64_t i, np.uint64_t j)
+    cdef double fdudx(self, double[:,:] F,
+                                  double[:,:] U,
+                                  int i, int j)
 
-    cdef np.float64_t fdudy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                  np.ndarray[np.float64_t, ndim=2] U,
-                                  np.uint64_t i, np.uint64_t j)
+    cdef double fdudy(self, double[:,:] F,
+                                  double[:,:] U,
+                                  int i, int j)
     
-    cdef np.float64_t fx_dx_ux(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double fx_dx_ux(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
-    cdef np.float64_t fx_dx_uy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double fx_dx_uy(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
-    cdef np.float64_t fy_dy_ux(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double fy_dy_ux(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
-    cdef np.float64_t fy_dy_uy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double fy_dy_uy(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
-    cdef np.float64_t dx_fx_uy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double dx_fx_uy(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
-    cdef np.float64_t dy_fx_uy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                     np.ndarray[np.float64_t, ndim=2] U,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double dy_fx_uy(self, double[:,:] F,
+                                     double[:,:] U,
+                                     int i, int j)
     
 
-    cdef np.float64_t gradx(self, np.ndarray[np.float64_t, ndim=2] x,
-                                  np.uint64_t i, np.uint64_t j)
+    cdef double gradx(self, double[:,:] x,
+                                  int i, int j)
     
-    cdef np.float64_t grady(self, np.ndarray[np.float64_t, ndim=2] x,
-                                  np.uint64_t i, np.uint64_t j)
+    cdef double grady(self, double[:,:] x,
+                                  int i, int j)
     
-    cdef np.float64_t gradx_sg(self, np.ndarray[np.float64_t, ndim=2] x,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double gradx_sg(self, double[:,:] x,
+                                     int i, int j)
 
-    cdef np.float64_t grady_sg(self, np.ndarray[np.float64_t, ndim=2] x,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double grady_sg(self, double[:,:] x,
+                                     int i, int j)
 
-    cdef np.float64_t gradx_fv(self, np.ndarray[np.float64_t, ndim=2] x,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double gradx_fv(self, double[:,:] x,
+                                     int i, int j)
     
-    cdef np.float64_t grady_fv(self, np.ndarray[np.float64_t, ndim=2] x,
-                                     np.uint64_t i, np.uint64_t j)
+    cdef double grady_fv(self, double[:,:] x,
+                                     int i, int j)
 
-    cdef np.float64_t gradx_simple(self, np.ndarray[np.float64_t, ndim=2] x,
-                                         np.uint64_t i, np.uint64_t j)
+    cdef double gradx_simple(self, double[:,:] x,
+                                         int i, int j)
     
-    cdef np.float64_t grady_simple(self, np.ndarray[np.float64_t, ndim=2] x,
-                                         np.uint64_t i, np.uint64_t j)
+    cdef double grady_simple(self, double[:,:] x,
+                                         int i, int j)
 
-    cdef np.float64_t divx(self, np.ndarray[np.float64_t, ndim=2] x,
-                                 np.uint64_t i, np.uint64_t j)
+    cdef double divx(self, double[:,:] x,
+                                 int i, int j)
     
-    cdef np.float64_t divy(self, np.ndarray[np.float64_t, ndim=2] x,
-                                 np.uint64_t i, np.uint64_t j)
+    cdef double divy(self, double[:,:] x,
+                                 int i, int j)
 
-    cdef np.float64_t divx_sg(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j)
+    cdef double divx_sg(self, double[:,:] x,
+                                    int i, int j)
 
-    cdef np.float64_t divy_sg(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j)
+    cdef double divy_sg(self, double[:,:] x,
+                                    int i, int j)
 
-    cdef np.float64_t laplace(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j)
+    cdef double laplace(self, double[:,:] x,
+                                    int i, int j)
 
-    cdef np.float64_t laplace_fd(self, np.ndarray[np.float64_t, ndim=2] x,
-                                       np.uint64_t i, np.uint64_t j)
+    cdef double laplace_fd(self, double[:,:] x,
+                                       int i, int j)
 
 
-    cdef np.float64_t dt(self, np.ndarray[np.float64_t, ndim=2] x,
-                               np.uint64_t i, np.uint64_t j)
+    cdef double dt(self, double[:,:] x,
+                               int i, int j)
     
-    cdef np.float64_t dt_diag(self, np.ndarray[np.float64_t, ndim=2] x,
-                                    np.uint64_t i, np.uint64_t j)
+    cdef double dt_diag(self, double[:,:] x,
+                                    int i, int j)
 
 
-    cdef np.float64_t rot(self, np.ndarray[np.float64_t, ndim=2] Ux,
-                                np.ndarray[np.float64_t, ndim=2] Uy,
-                                np.uint64_t i, np.uint64_t j)
+    cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j)
 
-    cdef np.float64_t psix(self, np.ndarray[np.float64_t, ndim=2] Ux,
-                                 np.ndarray[np.float64_t, ndim=2] Uy,
-                                 np.uint64_t i, np.uint64_t j)
+    cdef double psix(self, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j)
+    cdef double psiy(self, double[:,:] Ux, double[:,:] Uy, double[:,:] Vx, double[:,:] Vy, int i, int j)
 
-    cdef np.float64_t psiy(self, np.ndarray[np.float64_t, ndim=2] Ux,
-                                 np.ndarray[np.float64_t, ndim=2] Uy,
-                                 np.uint64_t i, np.uint64_t j)
-
-    cdef np.float64_t phix(self, np.ndarray[np.float64_t, ndim=2] F,
-                                 np.ndarray[np.float64_t, ndim=2] U,
-                                 np.uint64_t i, np.uint64_t j)
-
-    cdef np.float64_t phiy(self, np.ndarray[np.float64_t, ndim=2] F,
-                                 np.ndarray[np.float64_t, ndim=2] U,
-                                 np.uint64_t i, np.uint64_t j)
+    cdef double phix(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double phiy(self, double[:,:] F, double[:,:] U, int i, int j)
 
