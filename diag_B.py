@@ -33,6 +33,7 @@ class PlotMHD2D(object):
         
 #        matplotlib.rc('text', usetex=True)
         matplotlib.rc('font', family='sans-serif', size='28')
+        matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
         
         self.prefix = filename
         
@@ -85,7 +86,7 @@ class PlotMHD2D(object):
         self.update_boundaries()
         
         # create contour plot
-        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
+        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b', linestyle='solid')
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
         
@@ -145,8 +146,8 @@ class PlotMHD2D(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adiff = Amax - Amin
         
-        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
-#        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31)
+#        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
+        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31, endpoint=True)
         self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
     
     
@@ -166,8 +167,8 @@ class PlotMHD2D(object):
         
         plt.draw()
         
-        filename = self.prefix + str('_B_%06d' % self.iTime) + '.png'
-        plt.savefig(filename, dpi=300)
+#        filename = self.prefix + str('_B_%06d' % self.iTime) + '.png'
+#        plt.savefig(filename, dpi=300)
         filename = self.prefix + str('_B_%06d' % self.iTime) + '.pdf'
         plt.savefig(filename)
     

@@ -12,6 +12,8 @@ from os.path import join, isdir
 INCLUDE_DIRS = []
 LIBRARY_DIRS = []
 LIBRARIES    = []
+CARGS        = ['-O3', '-axavx', '-march=corei7-avx', '-std=c99', '-Wno-unused-function', '-Wno-unneeded-internal-declaration']
+LARGS        = []
 
 # PETSc
 PETSC_DIR  = os.environ['PETSC_DIR']
@@ -63,203 +65,261 @@ ext_modules = [
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_Poisson",
                   sources=["PETSc_MHD_Poisson.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Function",
                   sources=["PETSc_MHD_NL_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Jacobian_Matrix5d_dofs",
                   sources=["PETSc_MHD_NL_Jacobian_Matrix5d_dofs.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Jacobian_Matrix_diag",
                   sources=["PETSc_MHD_NL_Jacobian_Matrix_diag.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Jacobian_Matrix",
                   sources=["PETSc_MHD_NL_Jacobian_Matrix.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Matrix",
                   sources=["PETSc_MHD_NL_Matrix.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_Solver",
                   sources=["PETSc_MHD_NL_Solver.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Function",
                   sources=["PETSc_MHD_NL_DF_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Jacobian",
                   sources=["PETSc_MHD_NL_DF_Jacobian.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Jacobian_Matrix",
                   sources=["PETSc_MHD_NL_DF_Jacobian_Matrix.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Jacobian_Matrix4d",
                   sources=["PETSc_MHD_NL_DF_Jacobian_Matrix4d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Jacobian_Matrix_dofs",
                   sources=["PETSc_MHD_NL_DF_Jacobian_Matrix_dofs.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_Solver",
                   sources=["PETSc_MHD_NL_DF_Solver.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_DIAG_Poisson",
                   sources=["PETSc_MHD_NL_DF_DIAG_Poisson.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_DIAG_Solver",
                   sources=["PETSc_MHD_NL_DF_DIAG_Solver.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_DF_SPLIT_Solver",
                   sources=["PETSc_MHD_NL_DF_SPLIT_Solver.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FV_Function",
                   sources=["PETSc_MHD_NL_FV_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FV_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_FV_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVD_Function",
                   sources=["PETSc_MHD_NL_FVD_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVD_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_FVD_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVG_Function",
                   sources=["PETSc_MHD_NL_FVG_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVG_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_FVG_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVM_Matrix",
                   sources=["PETSc_MHD_NL_FVM_Matrix.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVM_Function",
                   sources=["PETSc_MHD_NL_FVM_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_FVM_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_FVM_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_SG_Function",
                   sources=["PETSc_MHD_NL_SG_Function.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  ),
         Extension("PETSc_MHD_NL_SG_Jacobian_Matrix5d",
                   sources=["PETSc_MHD_NL_SG_Jacobian_Matrix5d.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS
+                  runtime_library_dirs=LIBRARY_DIRS,
+                  extra_compile_args=CARGS,
+                  extra_link_args=LARGS
                  )
               ]
                 

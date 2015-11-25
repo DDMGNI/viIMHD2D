@@ -48,6 +48,7 @@ class PlotEnergy(object):
         
         self.energy      = np.zeros(self.ntMax+1)
         self.helicity    = np.zeros(self.ntMax+1)
+        self.magnetic    = np.zeros(self.ntMax+1)
         
         
         print("")
@@ -67,6 +68,11 @@ class PlotEnergy(object):
             else:
                 self.helicity[i] = self.diagnostics.H_error
             
+            if self.diagnostics.plot_magnetic:
+                self.magnetic[i] = self.diagnostics.magnetic
+            else:
+                self.magnetic[i] = self.diagnostics.M_error
+            
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
@@ -76,16 +82,17 @@ class PlotEnergy(object):
 
 
         # set up figure for energy plot
-        self.figure1 = plt.figure(num=1, figsize=(16,5))
+        self.figure1 = plt.figure(num=1, figsize=(16,4))
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.2)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
         
         axesE = plt.subplot(1,1,1)
         axesE.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.energy[0:ntMax+1:self.nPlot])
         
         axesE.set_xlabel('$t$', labelpad=15, fontsize=26)
+        axesE.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
         
         if self.diagnostics.plot_energy:
             axesE.set_ylabel('$E$', labelpad=15, fontsize=26)
@@ -108,21 +115,22 @@ class PlotEnergy(object):
         
         
         # set up figure for helicity plot
-        self.figure2 = plt.figure(num=2, figsize=(16,5))
+        self.figure2 = plt.figure(num=2, figsize=(16,4))
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.2)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
         
         axesH = plt.subplot(1,1,1)
         axesH.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.helicity[0:ntMax+1:self.nPlot])
+        axesH.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
         
         axesH.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_helicity:
-            axesH.set_ylabel('$H$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$H_{c}$', labelpad=15, fontsize=26)
         else:
-            axesH.set_ylabel('$(H-H_0) / H_0$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$(H_{c}-H_{c,0}) / H_{c,0}$', labelpad=15, fontsize=26)
         
         axesH.yaxis.set_major_formatter(majorFormatter)
         
@@ -133,9 +141,43 @@ class PlotEnergy(object):
                 
         plt.draw()
         
-        filename = self.prefix + str('_helicity_%06d' % self.ntMax) + '.png'
+        filename = self.prefix + str('_c_helicity_%06d' % self.ntMax) + '.png'
         plt.savefig(filename, dpi=300)
-        filename = self.prefix + str('_helicity_%06d' % self.ntMax) + '.pdf'
+        filename = self.prefix + str('_c_helicity_%06d' % self.ntMax) + '.pdf'
+        plt.savefig(filename)
+        
+        
+
+        # set up figure for helicity plot
+        self.figure3 = plt.figure(num=3, figsize=(16,4))
+        
+        # set up plot margins
+        plt.subplots_adjust(hspace=0.25, wspace=0.2)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
+        
+        axesM = plt.subplot(1,1,1)
+        axesM.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.magnetic[0:ntMax+1:self.nPlot])
+        
+        axesM.set_xlabel('$t$', labelpad=15, fontsize=26)
+        axesM.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
+        
+        if self.diagnostics.plot_helicity:
+            axesM.set_ylabel('$H_{m}$', labelpad=15, fontsize=26)
+        else:
+            axesM.set_ylabel('$(H_{m}-H_{m,0}) / H_{m,0}$', labelpad=15, fontsize=26)
+        
+        axesM.yaxis.set_major_formatter(majorFormatter)
+        
+        for tick in axesM.xaxis.get_major_ticks():
+            tick.set_pad(12)
+        for tick in axesM.yaxis.get_major_ticks():
+            tick.set_pad(8)
+                
+        plt.draw()
+        
+        filename = self.prefix + str('_m_helicity_%06d' % self.ntMax) + '.png'
+        plt.savefig(filename, dpi=300)
+        filename = self.prefix + str('_m_helicity_%06d' % self.ntMax) + '.pdf'
         plt.savefig(filename)
         
         

@@ -95,6 +95,7 @@ class Diagnostics(object):
         
         self.energy   = 0.0
         self.helicity = 0.0
+        self.magnetic = 0.0
         
         self.L1_magnetic = 0.0
         self.L1_velocity = 0.0
@@ -103,6 +104,7 @@ class Diagnostics(object):
         
         self.E0       = 0.0
         self.H0       = 0.0
+        self.M0       = 0.0
         
         self.L1_magnetic_0 = 0.0
         self.L1_velocity_0 = 0.0
@@ -111,6 +113,7 @@ class Diagnostics(object):
         
         self.E_error  = 0.0
         self.H_error  = 0.0
+        self.M_error  = 0.0
         
         self.L1_magnetic_error = 0.0
         self.L1_velocity_error = 0.0
@@ -119,6 +122,7 @@ class Diagnostics(object):
         
         self.plot_energy   = False
         self.plot_helicity = False
+        self.plot_magnetic = False
         
         self.read_from_hdf5(0)
         self.update_invariants(0)
@@ -147,19 +151,23 @@ class Diagnostics(object):
         
         for i in range(0, self.nx):
             ix = self.nx-i-1
+            ixm = (ix-1+self.nx) % self.nx
             ixp = (ix+1+self.nx) % self.nx
             
             if  i < self.nx-1:
                 self.A[ix,0] = self.A[ixp,0] + self.hx * self.By[ix,0]
+#                self.A[ix,0] = self.A[ixp,0] + self.hx * (self.By[ixm,0] + 4*self.By[ix,0] + self.By[ixp,0])/6.
         
             for j in range(0, self.ny):
                 iy = self.ny-j-1
+                iym = (iy-1+self.ny) % self.ny
                 iyp = (iy+1+self.ny) % self.ny
                 
                 self.A[ix,iy] = self.A[ix,iyp] - self.hy * self.Bx[ix,iy]  
+#                self.A[ix,iy] = self.A[ix,iyp] - self.hy * (self.Bx[ix,iym] + 4.*self.Bx[ix,iy] + self.Bx[ix,iyp])/6.
             
-#        self.A -= self.A.mean()
-        self.A -= self.A.min()
+        self.A -= self.A.mean()
+#         self.A -= self.A.min()
         
         
         self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
@@ -228,11 +236,13 @@ class Diagnostics(object):
         
         self.energy   = self.E_magnetic + self.E_velocity 
         self.helicity = (self.Bx * self.Vx + self.By * self.Vy).sum() * self.hx * self.hy
+        self.magnetic = self.A.sum() * self.hx * self.hy
     
         
         if iTime == 0:
             self.E0 = self.energy
             self.H0 = self.helicity
+            self.M0 = self.magnetic
             
 #            if self.E0 == 0:
             if np.abs(self.E0) < 1E-15:
@@ -242,6 +252,10 @@ class Diagnostics(object):
             if np.abs(self.H0) < 1E-15:
                 self.plot_helicity = True
             
+#            if self.M0 == 0:
+            if np.abs(self.M0) < 1E-15:
+                self.plot_magnetic = True
+            
             
             self.L1_magnetic_0 = self.L1_magnetic
             self.L1_velocity_0 = self.L1_velocity 
@@ -250,6 +264,7 @@ class Diagnostics(object):
         
             self.E_error  = 0.0
             self.H_error  = 0.0
+            self.M_error  = 0.0
             
             self.L1_magnetic_error = 0.0
             self.L1_velocity_error = 0.0
@@ -257,15 +272,20 @@ class Diagnostics(object):
             self.L2_velocity_error = 0.0
         
         else:
-            if self.E0 == 0:
-                self.E_error = (self.energy   - self.E0)
+            if self.plot_energy:
+                self.E_error = (self.energy)
             else:
                 self.E_error = (self.energy   - self.E0) / self.E0
                 
-            if self.H0 == 0:
-                self.H_error = (self.helicity - self.H0)
+            if self.plot_helicity:
+                self.H_error = (self.helicity)
             else:
                 self.H_error = (self.helicity - self.H0) / self.H0
+            
+            if self.plot_magnetic:
+                self.M_error = (self.magnetic)
+            else:
+                self.M_error = (self.magnetic - self.M0) / self.M0
             
             
             self.L1_magnetic_error = (self.L1_magnetic - self.L1_magnetic_0) #/ self.L1_magnetic_0

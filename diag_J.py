@@ -162,9 +162,9 @@ class PlotMHD2D(object):
         
         plt.draw()
         
-        filename = self.prefix + str('_B_%06d' % self.iTime) + '.png'
+        filename = self.prefix + str('_J_%06d' % self.iTime) + '.png'
         plt.savefig(filename, dpi=300)
-        filename = self.prefix + str('_B_%06d' % self.iTime) + '.pdf'
+        filename = self.prefix + str('_J_%06d' % self.iTime) + '.pdf'
         plt.savefig(filename)
     
     

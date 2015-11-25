@@ -10,10 +10,10 @@ def magnetic_x(x, y, Lx, Ly):
     return 0.0
 
 def magnetic_y(x, y, Lx, Ly):
-    return B0 / np.cosh(np.pi * x)**2
+    return B0 / np.cosh(2.*np.pi * (x-1.))**2 - 0.5 * B0
     
 def velocity_x(x, y, Lx, Ly):
-    return u0 * np.sin(2. * np.pi * y)
+    return u0 * np.sin(np.pi * y)
 
 def velocity_y(x, y, Lx, Ly):
     return 0.0

@@ -59,13 +59,18 @@ class petscMHD2D(object):
         # set some PETSc options
         OptDB = PETSc.Options()
         
-        self.residual = cfg['solver']['petsc_residual']
+#        OptDB.setValue('snes_lag_preconditioner', 5)
         
-        OptDB.setValue('ksp_max_it',  2)
-        OptDB.setValue('ksp_convergence_test',  'skip')
+        OptDB.setValue('snes_atol',   cfg['solver']['petsc_residual'])
+        OptDB.setValue('snes_rtol',   1E-16)
+        OptDB.setValue('snes_stol',   1E-18)
+        OptDB.setValue('snes_max_it', 20)
         
-#        OptDB.setValue('ksp_monitor', '')
-#        OptDB.setValue('snes_monitor', '')
+        OptDB.setValue('ksp_rtol',   1E-8)
+        OptDB.setValue('ksp_max_it',  100)
+        
+        OptDB.setValue('snes_monitor', '')
+        OptDB.setValue('ksp_monitor', '')
 
         
         # timestep setup
@@ -104,6 +109,14 @@ class petscMHD2D(object):
         self.hy = Ly / ny                       # gridstep size in y
         
         
+        # friction, viscosity and resistivity
+        mu  = cfg['initial_data']['mu']                    # friction
+        nu  = cfg['initial_data']['nu']                    # viscosity
+        eta = cfg['initial_data']['eta']                   # resistivity
+        
+        
+#         self.update_jacobian = True
+        
         if PETSc.COMM_WORLD.getRank() == 0:
             print()
             print("nt = %i" % (self.nt))
@@ -116,6 +129,10 @@ class petscMHD2D(object):
             print()
             print("Lx   = %e" % (Lx))
             print("Ly   = %e" % (Ly))
+            print()
+            print("mu   = %e" % (mu))
+            print("nu   = %e" % (nu))
+            print("eta  = %e" % (eta))
             print()
         
         
@@ -208,6 +225,9 @@ class petscMHD2D(object):
         self.Vx = self.da1.createGlobalVec()
         self.Vy = self.da1.createGlobalVec()
         self.P  = self.da1.createGlobalVec()
+
+        self.xcoords = self.da1.createGlobalVec()
+        self.ycoords = self.da1.createGlobalVec()
         
         # create local vectors for initialisation of pressure
         self.localBx = self.da1.createLocalVec()
@@ -224,9 +244,9 @@ class petscMHD2D(object):
         
         
         # create Matrix object
-        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
-        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
+        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
         
 #        self.petsc_jacobian_4d = PETSc_MHD_NL_Jacobian_Matrix.PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
         
@@ -244,16 +264,16 @@ class petscMHD2D(object):
         
         # create nonlinear solver
         self.snes = PETSc.SNES().create()
-        self.snes.setType('ksponly')
         self.snes.setFunction(self.petsc_function.snes_mult, self.f)
         self.snes.setJacobian(self.updateJacobian, self.J)
         self.snes.setFromOptions()
-#        self.snes.getKSP().setType('preonly')
         self.snes.getKSP().setType('gmres')
-        self.snes.getKSP().getPC().setType('none')
-#         self.snes.getKSP().getPC().setType('lu')
+#         self.snes.getKSP().setType('preonly')
+#         self.snes.getKSP().getPC().setType('none')
+        self.snes.getKSP().getPC().setType('lu')
 #        self.snes.getKSP().getPC().setFactorSolverPackage('superlu_dist')
-#         self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
+        self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
+        self.snes.getKSP().getPC().setReusePreconditioner(True)
         
         
         self.ksp = None
@@ -261,21 +281,32 @@ class petscMHD2D(object):
         # set initial data
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        coords = self.da1.getCoordinatesLocal()
+#        coords = self.da1.getCoordinatesLocal()
+        
+        xc_arr = self.da1.getVecArray(self.xcoords)
+        yc_arr = self.da1.getVecArray(self.ycoords)
+        
+        for i in range(xs, xe):
+            for j in range(ys, ye):
+                xc_arr[i,j] = x1 + i*self.hx
+                yc_arr[i,j] = y1 + j*self.hy
+        
         
         Bx_arr = self.da1.getVecArray(self.Bx)
         By_arr = self.da1.getVecArray(self.By)
         Vx_arr = self.da1.getVecArray(self.Vx)
         Vy_arr = self.da1.getVecArray(self.Vy)
         
+        xc_arr = self.da1.getVecArray(self.xcoords)
+        yc_arr = self.da1.getVecArray(self.ycoords)
         
         if cfg['initial_data']['magnetic_python'] != None:
             init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Bx_arr[i,j] = init_data.magnetic_x(coords[i,j][0], coords[i,j][1] + 0.5 * self.hy, Lx, Ly) 
-                    By_arr[i,j] = init_data.magnetic_y(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1], Lx, Ly) 
+                    Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                    By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
         
         else:
             Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
@@ -287,8 +318,8 @@ class petscMHD2D(object):
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Vx_arr[i,j] = init_data.velocity_x(coords[i,j][0], coords[i,j][1] + 0.5 * self.hy, Lx, Ly) 
-                    Vy_arr[i,j] = init_data.velocity_y(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1], Lx, Ly) 
+                    Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                    Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
         
         else:
             Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
@@ -319,7 +350,7 @@ class petscMHD2D(object):
         
         for i in range(xs, xe):
             for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly)
+                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly)
 #                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
 #                           + 0.5 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
 #                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
@@ -365,15 +396,30 @@ class petscMHD2D(object):
         
     
     def __del__(self):
-#        if self.hdf5_viewer != None:
-#            del self.hdf5_viewer
-        pass
+        self.hdf5_viewer.destroy()
+        self.snes.destroy()
+        
+        self.A.destroy()
+        self.J.destroy()
+        
+        self.da1.destroy()
+        self.da4.destroy()
+        self.da5.destroy()
+        self.dax.destroy()
+        self.day.destroy()
         
     
     
     def updateJacobian(self, snes, X, J, P):
         self.petsc_jacobian.update_previous(X)
         self.petsc_jacobian.formMat(J)
+ 
+#         if self.update_jacobian:
+#             self.petsc_jacobian.update_previous(X)
+#             self.petsc_jacobian.formMat(J)
+#             self.update_jacobian = False
+#         else:
+#             return PETSc.Mat().Structure.SAME_PRECONDITIONER
     
     
     def run(self):
@@ -386,25 +432,19 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-#            self.calculate_initial_guess()
+            self.calculate_initial_guess()
+            
+            # update Jacobian
+            self.update_jacobian = True
             
             # solve
-            i = 0
-            while True:
-                i += 1
+            self.snes.solve(None, self.x)
                 
-                self.snes.solve(None, self.x)
-                
-                self.petsc_function.matrix_mult(self.x, self.f)
-                fnorm = self.f.norm()
-                
-                # output some solver info
-                if PETSc.COMM_WORLD.getRank() == 0:
-#                    print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
-                    print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (i, fnorm) )
-                
-                if fnorm < self.residual or i >= 10:
-                    break
+            # output some solver info
+            fnorm = self.snes.getFunction()[0].norm()
+            if PETSc.COMM_WORLD.getRank() == 0:
+                print("  Linear Solver:     %5i iterations" % (self.snes.getLinearSolveIterations()) )
+                print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (self.snes.getIterationNumber(), fnorm) )
                 
             
             # update history
@@ -422,10 +462,12 @@ class petscMHD2D(object):
         self.ksp = PETSc.KSP().create()
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
-        self.ksp.setType('preonly')
-        self.ksp.getPC().setType('lu')
-#        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
-        self.ksp.getPC().setFactorSolverPackage('mumps')
+        self.ksp.setType('gmres')
+        self.ksp.getPC().setType('none')
+#         self.ksp.setType('preonly')
+#         self.ksp.getPC().setType('lu')
+# #        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
+#         self.ksp.getPC().setFactorSolverPackage('mumps')
     
         # build matrix
         self.petsc_matrix.formMat(self.A)
@@ -435,6 +477,9 @@ class petscMHD2D(object):
         
         # solve
         self.ksp.solve(self.b, self.x)
+        
+        # destroy
+        self.ksp.destroy()
         
         
             

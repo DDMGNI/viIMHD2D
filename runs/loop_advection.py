@@ -5,10 +5,10 @@ A0 = 1E-3
 R0 = 0.3
 p0 = 1.0
 u0 = np.sqrt(5.)
-th = 0.5
+th = np.arctan(0.5)
 
-vx = u0 * np.cos(np.arctan(th))
-vy = u0 * np.sin(np.arctan(th))
+vx = u0 * np.cos(th)
+vy = u0 * np.sin(th)
 
 nx = 128
 ny = 64
@@ -36,16 +36,37 @@ def magnetic_potential(x, y):
 
 
 def magnetic_x(x, y, Lx, Ly):
+#     r = np.sqrt(x**2 + y**2)
+    
     A1 = magnetic_potential(x, y-0.5*hy)
     A2 = magnetic_potential(x, y+0.5*hy)
     
-    return + (A2 - A1) / hy
+    B = + (A2 - A1) / hy
+    
+#     if r < R0 and r > 0:
+# #         B = - A0 * y / r
+#         B = + (A2 - A1) / hy
+#     else:
+#         B = 0.
+     
+    return B
+    
 
 def magnetic_y(x, y, Lx, Ly):
+#     r = np.sqrt(x**2 + y**2)
+    
     A1 = magnetic_potential(x-0.5*hx, y)
     A2 = magnetic_potential(x+0.5*hx, y)
     
-    return - (A2 - A1) / hx
+    B = - (A2 - A1) / hx
+    
+#     if r < R0 and r > 0:
+# #         B = + A0 * x / r
+#         B = - (A2 - A1) / hx
+#     else:
+#         B = 0.
+     
+    return B
 
 def velocity_x(x, y, Lx, Ly):
     return vx

@@ -365,7 +365,7 @@ class PlotMHD2D(object):
 #        self.cbars["Vy"] = self.figure.colorbar(self.conts["Vy"], ax=self.axes["Vy"], orientation='vertical', ticks=self.VyTicks)
 
 #        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both')
-        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, extend='both')
+        self.conts["P"] = self.axes["P"].contourf(self.x, self.y, self.P.T, self.PTicks, cmap=cm.jet, extend='both', ticks=self.PTicks)
         
 #        self.conts["Babs"] = self.axes["Babs"].contourf(self.x, self.y, self.divV.T, self.divVTicks, cmap=cm.jet)
 #        self.cbars["Babs"] = self.figure.colorbar(self.conts["Babs"], ax=self.axes["Babs"], orientation='vertical', ticks=self.divVTicks)

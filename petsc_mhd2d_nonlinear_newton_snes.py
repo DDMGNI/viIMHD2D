@@ -392,9 +392,17 @@ class petscMHD2D(object):
         
     
     def __del__(self):
-#        if self.hdf5_viewer != None:
-#            del self.hdf5_viewer
-        pass
+        self.hdf5_viewer.destroy()
+        self.snes.destroy()
+        
+        self.A.destroy()
+        self.J.destroy()
+        
+        self.da1.destroy()
+        self.da4.destroy()
+        self.da5.destroy()
+        self.dax.destroy()
+        self.day.destroy()
         
     
     
