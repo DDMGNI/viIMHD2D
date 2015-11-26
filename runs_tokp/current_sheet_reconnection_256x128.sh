@@ -41,8 +41,7 @@ export LD_PRELOAD=/afs/@cell/common/soft/intel/ics2013/14.0/compiler/lib/intel64
 
 
 export RUN_DIR=/u/mkraus/Codes/viIMHD2D
-export PYTHONPATH=$RUN_DIR/vi:$PYTHONPATH
 cd $RUN_DIR
 
-mpiexec -perhost 16 -l -n 16 python3.3 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs/$RUNID.cfg 
+mpiexec -perhost 16 -l -n 16 python3.3 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs_tokp/$RUNID.cfg 
 
