@@ -8,7 +8,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-from matplotlib import cm, gridspec
+from matplotlib import cm, colors, gridspec
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter
 
 
@@ -154,6 +154,7 @@ class PlotMHD2Dbase(object):
         self.update_boundaries_velocity()
         self.update_boundaries_pressure()
         self.update_boundaries_potential()
+        self.update_boundaries_current()
         
         
     def update_boundaries_magnetic(self):
@@ -188,6 +189,7 @@ class PlotMHD2Dbase(object):
     
     
     def update_boundaries_pressure(self):
+        
         Pmin = min(self.diagnostics.P.min(), -self.diagnostics.P.max())
         Pmax = max(self.diagnostics.P.max(), -self.diagnostics.P.min())
         
@@ -196,6 +198,18 @@ class PlotMHD2Dbase(object):
             Pmax += 1.
         
         self.PTicks = np.linspace(Pmin, Pmax, 11, endpoint=True)
+
+
+        PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
+        PBmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        PBdiff = (PBmax - PBmin)
+        
+        if PBmin == PBmax:
+            PBmin -= .1 * PBmin
+            PBmax += .1 * PBmax
+        
+        self.PBnorm = colors.Normalize(vmin=PBmin - 0.2*PBdiff, vmax=PBmax + 0.2*PBdiff)
+        self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
 
         
     def update_boundaries_potential(self):
@@ -207,6 +221,20 @@ class PlotMHD2Dbase(object):
         self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
         
         # TODO add Ai
+        
+        
+    def update_boundaries_current(self):
+        Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
+        Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
+        Jdiff = (Jmax - Jmin)
+        
+        if Jmin == Jmax:
+            Jmin -= 1.
+            Jmax += 1.
+        
+#        self.Jnorm = colors.Normalize(vmin=Jmin, vmax=Jmax)
+        self.Jnorm = colors.Normalize(vmin=Jmin - 0.2*Jdiff, vmax=Jmax + 0.2*Jdiff)
+        self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
         
     
     def get_timerange(self, iTime):
@@ -227,7 +255,49 @@ class PlotMHD2Dbase(object):
     
     
     def update(self, iTime, final=False, draw=True):
-        pass
+        '''
+        Update plot.
+        '''
+        
+        self.E_magnetic[iTime] = self.diagnostics.E_magnetic
+        self.E_velocity[iTime] = self.diagnostics.E_velocity
+        
+        if self.diagnostics.plot_energy:
+            self.energy     [iTime] = self.diagnostics.energy
+        else:
+            self.energy     [iTime] = self.diagnostics.E_error
+        
+        if self.diagnostics.plot_helicity:
+            self.helicity   [iTime] = self.diagnostics.helicity
+        else:
+            self.helicity   [iTime] = self.diagnostics.H_error
+        
+        
+        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[iTime]))
+        
+        
+        if not (iTime == 0 or iTime % self.nPlot == 0 or iTime == self.nTime):
+            return
+        
+        
+        self.load_data()
+
+        self.update_sub(iTime)
+        
+        
+        if self.write:
+            filename = self.prefix + str('%06d' % iTime) + '.png'
+            plt.savefig(filename, dpi=100)
+#            filename = self.prefix + str('%06d' % self.iTime) + '.pdf'
+#            plt.savefig(filename)
+        elif draw:
+            self.figure.canvas.draw()
+#             self.figure.show()
+#             plt.draw()
+            plt.show(block=final)
+            plt.pause(1)
+
+            return self.figure
 
 
     def update_sub(self, iTime):

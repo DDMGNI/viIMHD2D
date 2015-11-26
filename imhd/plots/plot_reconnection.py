@@ -36,5 +36,7 @@ class PlotMHD2D(PlotMHD2DbaseReplay):
         Update plot.
         '''
         
+        super().update_sub(iTime)
+        
         self.conts["M1"] = self.axes["M1"].contour(self.x, self.y, self.A.T,  self.ATicks, extend='neither')
         self.conts["M2"] = self.axes["M2"].contour(self.x, self.y, self.Ai.T, self.ATicks, extend='neither')

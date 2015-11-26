@@ -126,33 +126,11 @@ class PlotMHD2DbaseMovie(PlotMHD2Dbase):
         
         
     
-    def update(self, iTime, final=False, draw=True):
+    def update_sub(self, iTime):
         '''
         Update plot.
         '''
         
-        self.E_magnetic[iTime] = self.diagnostics.E_magnetic
-        self.E_velocity[iTime] = self.diagnostics.E_velocity
-        
-        if self.diagnostics.plot_energy:
-            self.energy     [iTime] = self.diagnostics.energy
-        else:
-            self.energy     [iTime] = self.diagnostics.E_error
-        
-        if self.diagnostics.plot_helicity:
-            self.helicity   [iTime] = self.diagnostics.helicity
-        else:
-            self.helicity   [iTime] = self.diagnostics.H_error
-        
-        
-        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[iTime]))
-        
-        
-        if not (iTime == 0 or (iTime-1) % self.nPlot == 0 or iTime-1 == self.nTime):
-            return
-
-        
-        self.load_data()
         self.update_boundaries_pressure()
         
         
@@ -193,16 +171,4 @@ class PlotMHD2DbaseMovie(PlotMHD2Dbase):
         self.axes ["H"].autoscale_view()
         self.axes ["H"].set_xlim((xStart,xEnd)) 
         
-        
-        self.update_sub(iTime)
-        
-        
-        if self.write:
-            filename = self.prefix + str('%06d' % iTime) + '.png'
-            plt.savefig(filename, dpi=100)
-#            filename = self.prefix + str('%06d' % self.iTime) + '.pdf'
-#            plt.savefig(filename)
-        elif draw:
-            plt.draw()
-            plt.show(block=final)
 
