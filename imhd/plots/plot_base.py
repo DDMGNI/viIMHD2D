@@ -18,15 +18,21 @@ class PlotMHD2Dbase(object):
     data reading functions. 
     '''
 
-    def __init__(self, diagnostics, nTime=0, nPlot=1):
+    def __init__(self, diagnostics, nTime=0, nPlot=1, ntMax=0, write=False, prefix='viIMHD2D_'):
         '''
-        Create all data arrays.
+        Set some control variables and create all data arrays.
         '''
         
-        if nTime > 0 and nTime < diagnostics.nt:
+        self.write  = write
+        self.prefix = prefix
+        
+        if ntMax == 0:
+            ntMax = diagnostics.nt
+        
+        if nTime > 0 and nTime < ntMax:
             self.nTime = nTime
         else:
-            self.nTime = diagnostics.nt
+            self.nTime = ntMax
         
         self.nPlot = nPlot
         
@@ -119,6 +125,10 @@ class PlotMHD2Dbase(object):
         self.P[0:-1, 0:-1] = self.diagnostics.P[:,:]
         self.P[  -1, 0:-1] = self.diagnostics.P[0,:]
         self.P[   :,   -1] = self.P[:,0]
+        
+        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
+        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
+        self.PB[   :,   -1] = self.PB[:,0]
         
         
         if self.diagnostics.inertial_mhd:
@@ -215,3 +225,10 @@ class PlotMHD2Dbase(object):
         
         return tStart, tEnd, xStart, xEnd
     
+    
+    def update(self, iTime, final=False, draw=True):
+        pass
+
+
+    def update_sub(self, iTime):
+        pass

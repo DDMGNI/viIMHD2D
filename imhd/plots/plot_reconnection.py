@@ -31,19 +31,10 @@ class PlotMHD2D(PlotMHD2DbaseReplay):
         
         
     
-    def update(self, iTime, final=False):
+    def update_sub(self, iTime):
         '''
         Update plot.
         '''
         
-        super().update(iTime, final=final, draw=False)
-        
         self.conts["M1"] = self.axes["M1"].contour(self.x, self.y, self.A.T,  self.ATicks, extend='neither')
         self.conts["M2"] = self.axes["M2"].contour(self.x, self.y, self.Ai.T, self.ATicks, extend='neither')
-        
-        
-        self.figure.canvas.draw()
-        plt.show(block=final)
-        plt.pause(1)
-        
-        return self.figure

@@ -38,8 +38,7 @@ class replay(object):
         self.init()
     
     def init(self):
-        pass
-#         self.update(0)
+        self.update(0)
     
     
     def update(self, itime, final=False):
