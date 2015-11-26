@@ -60,8 +60,8 @@ LIBRARY_DIRS += ['/opt/local/lib']
 
 
 ext_modules = [
-        Extension("PETSc_MHD_Derivatives",
-                  sources=["PETSc_MHD_Derivatives.pyx"],
+        Extension("MHD_Derivatives",
+                  sources=["MHD_Derivatives.pyx"],
                   include_dirs=INCLUDE_DIRS + [os.curdir],
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
@@ -126,7 +126,7 @@ ext_modules = [
               ]
                 
 setup(
-    name = 'PETSc Matrix-Free MHD Solver',
+    name = 'PETSc Ideal and Inertial MHD Solver',
     cmdclass = {'build_ext': build_ext},
     ext_modules = ext_modules
 )
