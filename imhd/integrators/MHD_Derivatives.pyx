@@ -10,7 +10,7 @@ import  numpy as np
 cimport numpy as np
 
 
-cdef class PETSc_MHD_Derivatives(object):
+cdef class MHD_Derivatives(object):
     '''
     Cython Implementation of MHD Discretisation
     '''

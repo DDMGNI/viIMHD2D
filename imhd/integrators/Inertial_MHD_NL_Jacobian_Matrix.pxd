@@ -10,7 +10,7 @@ from petsc4py cimport PETSc
 
 from petsc4py.PETSc cimport Mat, Vec
 
-from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
+from MHD_Derivatives cimport MHD_Derivatives
 
 
 
@@ -51,7 +51,7 @@ cdef class PETScJacobian(object):
     cdef Vec localXp            # 
     
     
-    cdef PETSc_MHD_Derivatives derivatives
+    cdef MHD_Derivatives derivatives
     
     
     cdef double muu (self, double[:,:] A, int i, int j)

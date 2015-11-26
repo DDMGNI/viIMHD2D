@@ -14,8 +14,8 @@ from petsc4py cimport PETSc
 
 from petsc4py.PETSc cimport SNES, Mat, Vec
 
-from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
-from PETSc_MHD_Derivatives cimport PETSc_MHD_Derivatives
+from MHD_Derivatives import  MHD_Derivatives
+from MHD_Derivatives cimport MHD_Derivatives
 
 
 
@@ -60,7 +60,7 @@ cdef class PETScFunction(object):
         self.localXh = da5.createLocalVec()
         
         # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(nx, ny, ht, hx, hy)
+        self.derivatives = MHD_Derivatives(nx, ny, ht, hx, hy)
         
     
     def update_history(self, Vec X):

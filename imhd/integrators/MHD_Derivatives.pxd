@@ -7,7 +7,7 @@ Created on May 24, 2012
 cimport numpy as np
 
 
-cdef class PETSc_MHD_Derivatives(object):
+cdef class MHD_Derivatives(object):
     '''
     Cython Implementation of MHD Discretisation
     '''
