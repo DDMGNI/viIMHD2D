@@ -18,8 +18,7 @@ from config import Config
 from imhd.integrators.Inertial_MHD_NL_Jacobian import PETScJacobian
 from imhd.integrators.Inertial_MHD_NL_Function import PETScFunction
 from imhd.integrators.Inertial_MHD_NL_Matrix   import PETScMatrix
-
-from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
+from imhd.integrators.MHD_Derivatives          import MHD_Derivatives
 
 
 class petscMHD2D(object):
@@ -38,32 +37,7 @@ class petscMHD2D(object):
         
         # load run config file
         cfg = Config(cfgfile)
-        
-        
-        # set some PETSc options
-        OptDB = PETSc.Options()
-        
-        OptDB.setValue('snes_atol',   cfg['solver']['petsc_snes_atol'])
-        OptDB.setValue('snes_rtol',   cfg['solver']['petsc_snes_rtol'])
-        OptDB.setValue('snes_stol',   cfg['solver']['petsc_snes_stol'])
-        OptDB.setValue('snes_max_it', cfg['solver']['petsc_snes_max_iter'])
-        OptDB.setValue('ksp_atol',    cfg['solver']['petsc_ksp_atol'])
-        OptDB.setValue('ksp_rtol',    cfg['solver']['petsc_ksp_rtol'])
-        OptDB.setValue('ksp_max_it',  cfg['solver']['petsc_ksp_max_iter'])
-        
-        OptDB.setValue('snes_ls', 'basic')
-#         OptDB.setValue('snes_ls', 'quadratic')
-#        OptDB.setValue('snes_lag_preconditioner', 5)
-
-        OptDB.setValue('pc_asm_type',  'restrict')
-        OptDB.setValue('pc_asm_overlap', 3)
-        OptDB.setValue('sub_ksp_type', 'preonly')
-        OptDB.setValue('sub_pc_type', 'lu')
-        OptDB.setValue('sub_pc_factor_mat_solver_package', 'mumps')
-        
-        OptDB.setValue('snes_monitor', '')
-#         OptDB.setValue('ksp_monitor', '')
-
+        cfg.set_petsc_options()
         
         # timestep setup
         self.ht    = cfg['grid']['ht']              # timestep size
@@ -136,7 +110,7 @@ class petscMHD2D(object):
         
         
         # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(nx, ny, self.ht, self.hx, self.hy)
+        self.derivatives = MHD_Derivatives(nx, ny, self.ht, self.hx, self.hy)
         
         
         # create DA with single dof
@@ -254,13 +228,6 @@ class petscMHD2D(object):
         self.snes.setFunction(self.petsc_function.snes_mult, self.f)
         self.snes.setJacobian(self.updateJacobian, self.J)
         self.snes.setFromOptions()
-        self.snes.getKSP().setType('gmres')
-#         self.snes.getKSP().setType('preonly')
-#         self.snes.getKSP().getPC().setType('none')
-        self.snes.getKSP().getPC().setType('asm')
-#         self.snes.getKSP().getPC().setType('lu')
-#        self.snes.getKSP().getPC().setFactorSolverPackage('superlu_dist')
-#         self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
 #         self.snes.getKSP().getPC().setReusePreconditioner(True)
         
         
@@ -452,9 +419,7 @@ class petscMHD2D(object):
         self.ksp.getPC().setType('none')
 #         self.ksp.setType('preonly')
 #         self.ksp.getPC().setType('lu')
-# #        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
-#         self.ksp.getPC().setFactorSolverPackage('mumps')
-    
+        
         # build matrix
         self.petsc_matrix.formMat(self.A)
         

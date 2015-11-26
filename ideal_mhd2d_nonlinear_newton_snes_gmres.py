@@ -57,31 +57,13 @@ class petscMHD2D(object):
         
         # load run config file
         cfg = Config(cfgfile)
-        
+        cfg.set_petsc_options()
         
         # set some PETSc options
-        OptDB = PETSc.Options()
-        
-        OptDB.setValue('snes_atol',   cfg['solver']['petsc_snes_atol'])
-        OptDB.setValue('snes_rtol',   cfg['solver']['petsc_snes_rtol'])
-        OptDB.setValue('snes_stol',   cfg['solver']['petsc_snes_stol'])
-        OptDB.setValue('snes_max_it', cfg['solver']['petsc_snes_max_iter'])
-        OptDB.setValue('ksp_atol',    cfg['solver']['petsc_ksp_atol'])
-        OptDB.setValue('ksp_rtol',    cfg['solver']['petsc_ksp_rtol'])
-        OptDB.setValue('ksp_max_it',  cfg['solver']['petsc_ksp_max_iter'])
-        
-        OptDB.setValue('snes_ls', 'basic')
-#         OptDB.setValue('snes_ls', 'quadratic')
+#         OptDB = PETSc.Options()
+#         
 #        OptDB.setValue('snes_lag_preconditioner', 5)
-
-        OptDB.setValue('pc_asm_type',  'restrict')
-        OptDB.setValue('pc_asm_overlap', 3)
-        OptDB.setValue('sub_ksp_type', 'preonly')
-        OptDB.setValue('sub_pc_type', 'lu')
-        OptDB.setValue('sub_pc_factor_mat_solver_package', 'mumps')
-        
-        OptDB.setValue('snes_monitor', '')
-#         OptDB.setValue('ksp_monitor', '')
+#         self.snes.getKSP().getPC().setReusePreconditioner(True)
 
         
         # timestep setup
@@ -278,13 +260,7 @@ class petscMHD2D(object):
         self.snes.setFunction(self.petsc_function.snes_mult, self.f)
         self.snes.setJacobian(self.updateJacobian, self.J)
         self.snes.setFromOptions()
-        self.snes.getKSP().setType('gmres')
-#         self.snes.getKSP().setType('preonly')
-#         self.snes.getKSP().getPC().setType('none')
-        self.snes.getKSP().getPC().setType('lu')
-#        self.snes.getKSP().getPC().setFactorSolverPackage('superlu_dist')
-        self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
-        self.snes.getKSP().getPC().setReusePreconditioner(True)
+#         self.snes.getKSP().getPC().setReusePreconditioner(True)
         
         
         self.ksp = None
