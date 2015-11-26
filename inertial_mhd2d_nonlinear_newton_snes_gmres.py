@@ -15,9 +15,9 @@ import numpy as np
 
 from config import Config
 
-from imhd.integrators.Inertial_MHD_NL_Jacobian_Matrix import PETScJacobian
-from imhd.integrators.Inertial_MHD_NL_Function        import PETScFunction
-from imhd.integrators.Inertial_MHD_NL_Matrix          import PETScMatrix
+from imhd.integrators.Inertial_MHD_NL_Jacobian import PETScJacobian
+from imhd.integrators.Inertial_MHD_NL_Function import PETScFunction
+from imhd.integrators.Inertial_MHD_NL_Matrix   import PETScMatrix
 
 from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
 

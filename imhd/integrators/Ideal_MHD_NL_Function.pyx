@@ -21,7 +21,7 @@ from MHD_Derivatives cimport MHD_Derivatives
 
 cdef class PETScFunction(object):
     '''
-    
+    Formal Lagrangian Variational Integrator with Finite Difference Exterior Calculus
     '''
     
     def __init__(self, object da1, object da5,

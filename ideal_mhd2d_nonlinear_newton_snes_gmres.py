@@ -29,12 +29,15 @@ from config import Config
 #from PETSc_MHD_NL_FVD_Jacobian_Matrix5d import PETScJacobian
 #from PETSc_MHD_NL_FVD_Function          import PETScFunction
 
-#from PETSc_MHD_NL_FVG_Jacobian_Matrix5d import PETScJacobian    # Gawlik Scheme
-#from PETSc_MHD_NL_FVG_Function          import PETScFunction
 
-from imhd.integrators.Ideal_MHD_NL_Jacobian_Matrix import PETScJacobian
-from imhd.integrators.Ideal_MHD_NL_Function        import PETScFunction
-from imhd.integrators.Ideal_MHD_NL_Matrix          import PETScMatrix
+# Discrete Euler-Poincaré Reduction by Gawlik
+# from imhd.integrators.Ideal_MHD_NL_EPG_Jacobian import PETScJacobian
+# from imhd.integrators.Ideal_MHD_NL_EPG_Function import PETScFunction
+
+# Formal Lagrangian Variational Integrator with Finite Difference Exterior Calculus
+from imhd.integrators.Ideal_MHD_NL_Jacobian import PETScJacobian
+from imhd.integrators.Ideal_MHD_NL_Function import PETScFunction
+from imhd.integrators.Ideal_MHD_NL_Matrix   import PETScMatrix
 
 
 
