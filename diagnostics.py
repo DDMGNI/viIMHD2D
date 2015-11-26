@@ -155,6 +155,7 @@ class Diagnostics(object):
     
     def update_invariants(self, iTime):
         
+        # reconstruction of vector potential
         self.A[-1,-1] = 0.0
         
         for i in range(0, self.nx):
@@ -178,10 +179,11 @@ class Diagnostics(object):
 #         self.A -= self.A.min()
         
         
+        # reconstruction of generalised vector potential
         if self.Bix is not None and self.Biy is not None: 
             self.Ai[-1,-1] = 0.0
             
-            for i in range(0, self.nx):
+            for i in range(self.nx):
                 ix = self.nx-i-1
                 ixm = (ix-1+self.nx) % self.nx
                 ixp = (ix+1+self.nx) % self.nx
@@ -189,7 +191,7 @@ class Diagnostics(object):
                 if  i < self.nx-1:
                     self.Ai[ix,0] = self.Ai[ixp,0] + self.hx * self.Biy[ix,0]
             
-                for j in range(0, self.ny):
+                for j in range(self.ny):
                     iy = self.ny-j-1
                     iym = (iy-1+self.ny) % self.ny
                     iyp = (iy+1+self.ny) % self.ny
@@ -199,67 +201,25 @@ class Diagnostics(object):
             self.Ai -= self.Ai.mean()
         
         
+        # reconstruction of current density
+        for ix in range(0, self.nx):
+            ixm = (ix-1 + self.nx) % self.nx
+            
+            for iy in range(0, self.ny):
+                iym = (iy-1 + self.ny) % self.ny
+                
+                self.J[ix,iy] = (self.By[ixm,iy] - self.By[ix,iy]) / self.hx \
+                              - (self.Bx[ix,iym] - self.Bx[ix,iy]) / self.hy
+        
         
         if self.Bix is not None and self.Biy is not None:
             self.E_magnetic = 0.5 * (self.Bx*self.Bix + self.By*self.Biy).sum() * self.hx * self.hy
             self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
+            self.helicity = (self.Bix * self.Vx + self.Biy * self.Vy).sum() * self.hx * self.hy
         else:
             self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
             self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
-        
-        
-#         for ix in range(0, self.nx):
-#             ixm = (ix-1 + self.nx) % self.nx
-#             
-#             for iy in range(0, self.ny):
-#                 iym = (iy-1 + self.ny) % self.ny
-#                 
-#                 self.e_magnetic[ix,iy] = (self.Bx[ix,iy] + self.Bx[ix,iym])**2 \
-#                                        + (self.By[ix,iy] + self.By[ixm,iy])**2
-#                                 
-#                 self.e_velocity[ix,iy] = (self.Vx[ix,iy] + self.Vx[ix,iym])**2 \
-#                                        + (self.Vy[ix,iy] + self.Vy[ixm,iy])**2
-#         
-#         self.e_magnetic *= 0.5 * 0.25
-#         self.e_velocity *= 0.5 * 0.25
-        
-        
-#        self.E_magnetic = 0.0
-#        self.E_velocity = 0.0
-#        
-#        for ix in range(0, self.nx):
-#            ixp = (ix+1) % self.nx
-#            
-#            for iy in range(0, self.ny):
-#                iyp = (iy+1) % self.ny
-#                
-#                self.E_magnetic += (self.Bx[ix,iy]**2 + self.Bx[ixp,iy]**2 + self.Bx[ixp,iyp]**2 + self.Bx[ix,iyp]**2) \
-#                                +  (self.By[ix,iy]**2 + self.By[ixp,iy]**2 + self.By[ixp,iyp]**2 + self.By[ix,iyp]**2)
-#                                
-#                self.E_velocity += (self.Vx[ix,iy]**2 + self.Vx[ixp,iy]**2 + self.Vx[ixp,iyp]**2 + self.Vx[ix,iyp]**2) \
-#                                +  (self.Vy[ix,iy]**2 + self.Vy[ixp,iy]**2 + self.Vy[ixp,iyp]**2 + self.Vy[ix,iyp]**2)
-#
-#        self.E_magnetic *= 0.5 * self.hx * self.hy / 4.
-#        self.E_velocity *= 0.5 * self.hx * self.hy / 4.
-
-
-#        self.E_magnetic = 0.0
-#        self.E_velocity = 0.0
-#        
-#        for ix in range(0, self.nx):
-#            ixm = (ix-1 + self.nx) % self.nx
-#            
-#            for iy in range(0, self.ny):
-#                iym = (iy-1 + self.ny) % self.ny
-#                
-#                self.E_magnetic += (self.Bx[ix,iy] + self.Bx[ix,iym])**2 \
-#                                +  (self.By[ix,iy] + self.By[ixm,iy])**2
-#                                
-#                self.E_velocity += (self.Vx[ix,iy] + self.Vx[ix,iym])**2 \
-#                                +  (self.Vy[ix,iy] + self.Vy[ixm,iy])**2
-#
-#        self.E_magnetic *= 0.25 * 0.5 * self.hx * self.hy
-#        self.E_velocity *= 0.25 * 0.5 * self.hx * self.hy
+            self.helicity = (self.Bx * self.Vx + self.By * self.Vy).sum() * self.hx * self.hy
         
         
         self.L1_magnetic = self.B.sum() * self.hx * self.hy
@@ -269,9 +229,8 @@ class Diagnostics(object):
         self.L2_velocity = 0.5 * (self.V**2).sum() * self.hx * self.hy
         
         self.energy   = self.E_magnetic + self.E_velocity 
-        self.helicity = (self.Bx * self.Vx + self.By * self.Vy).sum() * self.hx * self.hy
         self.magnetic = self.A.sum() * self.hx * self.hy
-    
+
         
         if iTime == 0:
             self.E0 = self.energy
@@ -326,20 +285,6 @@ class Diagnostics(object):
             self.L1_velocity_error = (self.L1_velocity - self.L1_velocity_0) #/ self.L1_velocity_0
             self.L2_magnetic_error = (self.L2_magnetic - self.L2_magnetic_0) #/ self.L2_magnetic_0
             self.L2_velocity_error = (self.L2_velocity - self.L2_velocity_0) #/ self.L2_velocity_0
-        
-        
-        # current
-        for ix in range(0, self.nx):
-            ixm = (ix-1 + self.nx) % self.nx
-            
-            for iy in range(0, self.ny):
-                iym = (iy-1 + self.ny) % self.ny
-                
-                self.J[ix,iy] = (self.By[ixm,iy] - self.By[ix,iy]) / self.hx \
-                              - (self.Bx[ix,iym] - self.Bx[ix,iy]) / self.hy
-                                
-        
-        
         
         
     
