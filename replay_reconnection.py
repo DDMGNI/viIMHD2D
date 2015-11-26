@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.animation as animation
 
 from imhd.diagnostics import Diagnostics 
-from imhd.plots.plot_reconnection import PlotMHD2D
+from imhd.plots.replay_plot_reconnection import PlotMHD2D
 
 
 class replay(object):

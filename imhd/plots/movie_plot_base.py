@@ -15,7 +15,7 @@ from .plot_base import PlotMHD2Dbase
 
 class PlotMHD2DbaseMovie(PlotMHD2Dbase):
     '''
-    Basic plotting class for movie plots.
+    Basic plotting class for movie_reconnection plots.
     '''
 
     def __init__(self, diagnostics, nTime=0, nPlot=1, ntMax=0, write=False, prefix='viIMHD2D_'):

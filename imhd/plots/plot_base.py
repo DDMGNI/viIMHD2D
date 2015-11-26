@@ -273,12 +273,11 @@ class PlotMHD2Dbase(object):
             self.helicity   [iTime] = self.diagnostics.H_error
         
         
-        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[iTime]))
-        
-        
         if not (iTime == 0 or iTime % self.nPlot == 0 or iTime == self.nTime):
             return
         
+        
+        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[iTime]))
         
         self.load_data()
 
