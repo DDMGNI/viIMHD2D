@@ -15,11 +15,27 @@ import numpy as np
 
 from config import Config
 
-from imhd.integrators.Inertial_MHD_NL_Jacobian_Matrix import PETScJacobian
-from imhd.integrators.Inertial_MHD_NL_Function        import PETScFunction
-from imhd.integrators.Inertial_MHD_NL_Matrix          import PETScMatrix
+#import PETSc_MHD_NL_Jacobian_Matrix
 
-from PETSc_MHD_Derivatives import  PETSc_MHD_Derivatives
+#from PETSc_MHD_NL_Jacobian_Matrix5d_dofs import PETScJacobian
+#from PETSc_MHD_NL_Function               import PETScFunction
+
+#from PETSc_MHD_NL_SG_Jacobian_Matrix5d import PETScJacobian
+#from PETSc_MHD_NL_SG_Function          import PETScFunction
+
+#from PETSc_MHD_NL_FV_Jacobian_Matrix5d import PETScJacobian
+#from PETSc_MHD_NL_FV_Function          import PETScFunction
+
+#from PETSc_MHD_NL_FVD_Jacobian_Matrix5d import PETScJacobian
+#from PETSc_MHD_NL_FVD_Function          import PETScFunction
+
+#from PETSc_MHD_NL_FVG_Jacobian_Matrix5d import PETScJacobian    # Gawlik Scheme
+#from PETSc_MHD_NL_FVG_Function          import PETScFunction
+
+from imhd.integrators.Ideal_MHD_NL_Jacobian_Matrix import PETScJacobian
+from imhd.integrators.Ideal_MHD_NL_Function        import PETScFunction
+from imhd.integrators.Ideal_MHD_NL_Matrix          import PETScMatrix
+
 
 
 class petscMHD2D(object):
@@ -105,7 +121,7 @@ class petscMHD2D(object):
         mu  = cfg['initial_data']['mu']                    # friction
         nu  = cfg['initial_data']['nu']                    # viscosity
         eta = cfg['initial_data']['eta']                   # resistivity
-        de  = cfg['initial_data']['de']                    # electron skin depth
+        
         
 #         self.update_jacobian = True
         
@@ -135,10 +151,6 @@ class petscMHD2D(object):
             self.time.setValue(0, 0.0)
         
         
-        # create derivatives object
-        self.derivatives = PETSc_MHD_Derivatives(nx, ny, self.ht, self.hx, self.hy)
-        
-        
         # create DA with single dof
         self.da1 = PETSc.DA().create(dim=2, dof=1,
                                     sizes=[nx, ny],
@@ -148,8 +160,17 @@ class petscMHD2D(object):
                                     stencil_type='box')
         
         
+        # create DA (dof = 4 for Bx, By, Vx, Vy)
+        self.da4 = PETSc.DA().create(dim=2, dof=4,
+                                     sizes=[nx, ny],
+                                     proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
+                                     boundary_type=('periodic', 'periodic'),
+                                     stencil_width=stencil,
+                                     stencil_type='box')
+        
+        
         # create DA (dof = 5 for Bx, By, Vx, Vy, P)
-        self.da7 = PETSc.DA().create(dim=2, dof=7,
+        self.da5 = PETSc.DA().create(dim=2, dof=5,
                                      sizes=[nx, ny],
                                      proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
                                      boundary_type=('periodic', 'periodic'),
@@ -174,7 +195,10 @@ class petscMHD2D(object):
         self.da1.setUniformCoordinates(xmin=x1, xmax=x2,
                                        ymin=y1, ymax=y2)
         
-        self.da7.setUniformCoordinates(xmin=x1, xmax=x2,
+        self.da4.setUniformCoordinates(xmin=x1, xmax=x2,
+                                       ymin=y1, ymax=y2)
+        
+        self.da5.setUniformCoordinates(xmin=x1, xmax=x2,
                                        ymin=y1, ymax=y2)
         
         self.dax.setUniformCoordinates(xmin=x1, xmax=x2)
@@ -183,49 +207,43 @@ class petscMHD2D(object):
         
         
         # create solution and RHS vector
-        self.f  = self.da7.createGlobalVec()
-        self.x  = self.da7.createGlobalVec()
-        self.b  = self.da7.createGlobalVec()
+        self.f  = self.da5.createGlobalVec()
+        self.x  = self.da5.createGlobalVec()
+        self.b  = self.da5.createGlobalVec()
         
         # create global RK4 vectors
-        self.Y  = self.da7.createGlobalVec()
-        self.X0 = self.da7.createGlobalVec()
-        self.X1 = self.da7.createGlobalVec()
-        self.X2 = self.da7.createGlobalVec()
-        self.X3 = self.da7.createGlobalVec()
-        self.X4 = self.da7.createGlobalVec()
+        self.Y  = self.da5.createGlobalVec()
+        self.X0 = self.da5.createGlobalVec()
+        self.X1 = self.da5.createGlobalVec()
+        self.X2 = self.da5.createGlobalVec()
+        self.X3 = self.da5.createGlobalVec()
+        self.X4 = self.da5.createGlobalVec()
         
         # create local RK4 vectors
-        self.localX0 = self.da7.createLocalVec()
-        self.localX1 = self.da7.createLocalVec()
-        self.localX2 = self.da7.createLocalVec()
-        self.localX3 = self.da7.createLocalVec()
-        self.localX4 = self.da7.createLocalVec()
+        self.localX0 = self.da5.createLocalVec()
+        self.localX1 = self.da5.createLocalVec()
+        self.localX2 = self.da5.createLocalVec()
+        self.localX3 = self.da5.createLocalVec()
+        self.localX4 = self.da5.createLocalVec()
 #        self.localP  = self.da1.createLocalVec()
         
         # create vectors for magnetic and velocity field
-        self.Bix = self.da1.createGlobalVec()
-        self.Biy = self.da1.createGlobalVec()
-        self.Bx  = self.da1.createGlobalVec()
-        self.By  = self.da1.createGlobalVec()
-        self.Vx  = self.da1.createGlobalVec()
-        self.Vy  = self.da1.createGlobalVec()
-        self.P   = self.da1.createGlobalVec()
+        self.Bx = self.da1.createGlobalVec()
+        self.By = self.da1.createGlobalVec()
+        self.Vx = self.da1.createGlobalVec()
+        self.Vy = self.da1.createGlobalVec()
+        self.P  = self.da1.createGlobalVec()
 
         self.xcoords = self.da1.createGlobalVec()
         self.ycoords = self.da1.createGlobalVec()
         
         # create local vectors for initialisation of pressure
-        self.localBix = self.da1.createLocalVec()
-        self.localBiy = self.da1.createLocalVec()
-        self.localBx  = self.da1.createLocalVec()
-        self.localBy  = self.da1.createLocalVec()
-        self.localVx  = self.da1.createLocalVec()
-        self.localVy  = self.da1.createLocalVec()
+        self.localBx = self.da1.createLocalVec()
+        self.localBy = self.da1.createLocalVec()
+        self.localVx = self.da1.createLocalVec()
+        self.localVy = self.da1.createLocalVec()
         
         # set variable names
-        self.Bix.setName('Bix')
-        self.Biy.setName('Biy')
         self.Bx.setName('Bx')
         self.By.setName('By')
         self.Vx.setName('Vx')
@@ -234,17 +252,20 @@ class petscMHD2D(object):
         
         
         # create Matrix object
-        self.petsc_matrix   = PETScMatrix  (self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
-        self.petsc_function = PETScFunction(self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
+        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+        
+#        self.petsc_jacobian_4d = PETSc_MHD_NL_Jacobian_Matrix.PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
+        
         
         # initialise matrix
-        self.A = self.da7.createMat()
+        self.A = self.da5.createMat()
         self.A.setOption(self.A.Option.NEW_NONZERO_ALLOCATION_ERR, False)
         self.A.setUp()
 
         # create jacobian
-        self.J = self.da7.createMat()
+        self.J = self.da5.createMat()
         self.J.setOption(self.J.Option.NEW_NONZERO_ALLOCATION_ERR, False)
         self.J.setUp()
         
@@ -257,11 +278,10 @@ class petscMHD2D(object):
         self.snes.getKSP().setType('gmres')
 #         self.snes.getKSP().setType('preonly')
 #         self.snes.getKSP().getPC().setType('none')
-        self.snes.getKSP().getPC().setType('asm')
-#         self.snes.getKSP().getPC().setType('lu')
+        self.snes.getKSP().getPC().setType('lu')
 #        self.snes.getKSP().getPC().setFactorSolverPackage('superlu_dist')
-#         self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
-#         self.snes.getKSP().getPC().setReusePreconditioner(True)
+        self.snes.getKSP().getPC().setFactorSolverPackage('mumps')
+        self.snes.getKSP().getPC().setReusePreconditioner(True)
         
         
         self.ksp = None
@@ -318,38 +338,39 @@ class petscMHD2D(object):
             init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
         
         
-        x_arr = self.da7.getVecArray(self.x)
+        x_arr = self.da5.getVecArray(self.x)
         x_arr[xs:xe, ys:ye, 0] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 1] = Vy_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 2] = Bx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = By_arr[xs:xe, ys:ye]
+        
         
         self.da1.globalToLocal(self.Bx, self.localBx)
         self.da1.globalToLocal(self.By, self.localBy)
         self.da1.globalToLocal(self.Vx, self.localVx)
         self.da1.globalToLocal(self.Vy, self.localVy)
         
-        Bx_arr  = self.da1.getVecArray(self.localBx)
-        By_arr  = self.da1.getVecArray(self.localBy)
-        Vx_arr  = self.da1.getVecArray(self.localVx)
-        Vy_arr  = self.da1.getVecArray(self.localVy)
-        
-        Bix_arr = self.da1.getVecArray(self.Bix)
-        Biy_arr = self.da1.getVecArray(self.Biy)
-        P_arr   = self.da1.getVecArray(self.P)
+        Bx_arr = self.da1.getVecArray(self.localBx)
+        By_arr = self.da1.getVecArray(self.localBy)
+        Vx_arr = self.da1.getVecArray(self.localVx)
+        Vy_arr = self.da1.getVecArray(self.localVy)
+        P_arr  = self.da1.getVecArray(self.P)
         
         for i in range(xs, xe):
             for j in range(ys, ye):
                 P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly)
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+#                           + 0.5 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+#                           + 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2)
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+#                           + 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2) \
+#                           - 1.0 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
         
-                Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
-                Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
         
         # copy distribution function to solution vector
-        x_arr = self.da7.getVecArray(self.x)
-        x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 6] = P_arr  [xs:xe, ys:ye]
+        x_arr = self.da5.getVecArray(self.x)
+        x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         # update solution history
         self.petsc_matrix.update_history(self.x)
@@ -390,7 +411,8 @@ class petscMHD2D(object):
         self.J.destroy()
         
         self.da1.destroy()
-        self.da7.destroy()
+        self.da4.destroy()
+        self.da5.destroy()
         self.dax.destroy()
         self.day.destroy()
         
@@ -418,7 +440,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-#             self.calculate_initial_guess()
+            self.calculate_initial_guess()
             
             # update Jacobian
             self.update_jacobian = True
@@ -471,32 +493,32 @@ class petscMHD2D(object):
             
     def rk4(self, X, Y, fac=1.0):
         
-        self.da7.globalToLocal(X, self.localX0)
-        x0  = self.da7.getVecArray(self.localX0)[...]
-        x1 = self.da7.getVecArray(self.X1)[...]
+        self.da5.globalToLocal(X, self.localX0)
+        x0  = self.da5.getVecArray(self.localX0)[...]
+        x1 = self.da5.getVecArray(self.X1)[...]
         self.petsc_function.timestep(x0, x1)
         
-        self.da7.globalToLocal(self.X1, self.localX1)
-        x1 = self.da7.getVecArray(self.localX1)[...]
-        x2 = self.da7.getVecArray(self.X2)[...]
+        self.da5.globalToLocal(self.X1, self.localX1)
+        x1 = self.da5.getVecArray(self.localX1)[...]
+        x2 = self.da5.getVecArray(self.X2)[...]
         self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x1, x2)
         
-        self.da7.globalToLocal(self.X2, self.localX2)
-        x2 = self.da7.getVecArray(self.localX2)[...]
-        x3 = self.da7.getVecArray(self.X3)[...]
+        self.da5.globalToLocal(self.X2, self.localX2)
+        x2 = self.da5.getVecArray(self.localX2)[...]
+        x3 = self.da5.getVecArray(self.X3)[...]
         self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x2, x3)
         
-        self.da7.globalToLocal(self.X3, self.localX3)
-        x3 = self.da7.getVecArray(self.localX3)[...]
-        x4 = self.da7.getVecArray(self.X4)[...]
+        self.da5.globalToLocal(self.X3, self.localX3)
+        x3 = self.da5.getVecArray(self.localX3)[...]
+        x4 = self.da5.getVecArray(self.X4)[...]
         self.petsc_function.timestep(x0 + 1.0 * fac * self.ht * x3, x4)
         
-        y  = self.da7.getVecArray(Y)[...]
-        x0 = self.da7.getVecArray(X)[...]
-        x1 = self.da7.getVecArray(self.X1)[...]
-        x2 = self.da7.getVecArray(self.X2)[...]
-        x3 = self.da7.getVecArray(self.X3)[...]
-        x4 = self.da7.getVecArray(self.X4)[...]
+        y  = self.da5.getVecArray(Y)[...]
+        x0 = self.da5.getVecArray(X)[...]
+        x1 = self.da5.getVecArray(self.X1)[...]
+        x2 = self.da5.getVecArray(self.X2)[...]
+        x3 = self.da5.getVecArray(self.X3)[...]
+        x4 = self.da5.getVecArray(self.X4)[...]
         
         y[:,:,:] = x0 + fac * self.ht * (x1 + 2.*x2 + 2.*x3 + x4) / 6.
 
@@ -508,22 +530,18 @@ class petscMHD2D(object):
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
         # copy solution to B and V vectors
-        x_arr   = self.da7.getVecArray(self.x)
-        Bix_arr = self.da1.getVecArray(self.Bix)
-        Biy_arr = self.da1.getVecArray(self.Biy)
-        Bx_arr  = self.da1.getVecArray(self.Bx)
-        By_arr  = self.da1.getVecArray(self.By)
-        Vx_arr  = self.da1.getVecArray(self.Vx)
-        Vy_arr  = self.da1.getVecArray(self.Vy)
-        P_arr   = self.da1.getVecArray(self.P)
+        x_arr  = self.da5.getVecArray(self.x)
+        Bx_arr = self.da1.getVecArray(self.Bx)
+        By_arr = self.da1.getVecArray(self.By)
+        Vx_arr = self.da1.getVecArray(self.Vx)
+        Vy_arr = self.da1.getVecArray(self.Vy)
+        P_arr  = self.da1.getVecArray(self.P)
         
-        Vx_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 0]
-        Vy_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 1]
-        Bx_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 2]
-        By_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
-        Bix_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
-        Biy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 5]
-        P_arr  [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 6]
+        Vx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 0]
+        Vy_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 1]
+        Bx_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 2]
+        By_arr[xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 3]
+        P_arr [xs:xe, ys:ye] = x_arr[xs:xe, ys:ye, 4]
         
         
         # save timestep
@@ -535,108 +553,105 @@ class petscMHD2D(object):
     
     def save_hdf5_vectors(self):
         self.hdf5_viewer(self.time)
-        self.hdf5_viewer(self.Bix)
-        self.hdf5_viewer(self.Biy)
         self.hdf5_viewer(self.Bx)
         self.hdf5_viewer(self.By)
         self.hdf5_viewer(self.Vx)
         self.hdf5_viewer(self.Vy)
         self.hdf5_viewer(self.P)
         
-
     def check_jacobian(self):
-         
+        
         (xs, xe), (ys, ye) = self.da1.getRanges()
-         
+        
         eps = 1.E-7
-         
+        
         # calculate initial guess
 #        self.calculate_initial_guess()
-         
+        
         # update previous iteration
         self.petsc_jacobian.update_previous(self.x)
-         
+        
         # calculate jacobian
         self.petsc_jacobian.formMat(self.J)
-         
+        
         # create working vectors
-        Jx  = self.da7.createGlobalVec()
-        dJ  = self.da7.createGlobalVec()
-        ex  = self.da7.createGlobalVec()
-        dx  = self.da7.createGlobalVec()
-        dF  = self.da7.createGlobalVec()
-        Fxm = self.da7.createGlobalVec()
-        Fxp = self.da7.createGlobalVec()
-         
-         
+        Jx  = self.da5.createGlobalVec()
+        dJ  = self.da5.createGlobalVec()
+        ex  = self.da5.createGlobalVec()
+        dx  = self.da5.createGlobalVec()
+        dF  = self.da5.createGlobalVec()
+        Fxm = self.da5.createGlobalVec()
+        Fxp = self.da5.createGlobalVec()
+        
+        
 #        sx = -2
 #        sx = -1
         sx =  0
 #        sx = +1
 #        sx = +2
- 
+
 #        sy = -2
 #        sy = -1
         sy =  0
 #        sy = +1
 #        sy = +2
-         
-        nfield=7
-         
+        
+        nfield=5
+        
         for ifield in range(0, nfield):
             for ix in range(xs, xe):
                 for iy in range(ys, ye):
                     for tfield in range(0, nfield):
-                         
+                        
                         # compute ex
-                        ex_arr = self.da7.getVecArray(ex)
+                        ex_arr = self.da5.getVecArray(ex)
                         ex_arr[:] = 0.
                         ex_arr[(ix+sx) % self.nx, (iy+sy) % self.ny, ifield] = 1.
-                         
-                         
+                        
+                        
                         # compute J.e
                         self.J.mult(ex, dJ)
-                         
-                        dJ_arr = self.da7.getVecArray(dJ)
-                        Jx_arr = self.da7.getVecArray(Jx)
+                        
+                        dJ_arr = self.da5.getVecArray(dJ)
+                        Jx_arr = self.da5.getVecArray(Jx)
                         Jx_arr[ix, iy, tfield] = dJ_arr[ix, iy, tfield]
-                         
-                         
+                        
+                        
                         # compute F(x - eps ex)
                         self.x.copy(dx)
-                        dx_arr = self.da7.getVecArray(dx)
+                        dx_arr = self.da5.getVecArray(dx)
                         dx_arr[(ix+sx) % self.nx, (iy+sy) % self.ny, ifield] -= eps
-                         
+                        
                         self.petsc_function.matrix_mult(dx, Fxm)
-                         
-                         
+                        
+                        
                         # compute F(x + eps ex)
                         self.x.copy(dx)
-                        dx_arr = self.da7.getVecArray(dx)
+                        dx_arr = self.da5.getVecArray(dx)
                         dx_arr[(ix+sx) % self.nx, (iy+sy) % self.ny, ifield] += eps
-                         
+                        
                         self.petsc_function.matrix_mult(dx, Fxp)
-                         
-                         
+                        
+                        
                         # compute dF = [F(x + eps ex) - F(x - eps ex)] / (2 eps)
-                        Fxm_arr = self.da7.getVecArray(Fxm)
-                        Fxp_arr = self.da7.getVecArray(Fxp)
-                        dF_arr  = self.da7.getVecArray(dF)
-                         
+                        Fxm_arr = self.da5.getVecArray(Fxm)
+                        Fxp_arr = self.da5.getVecArray(Fxp)
+                        dF_arr  = self.da5.getVecArray(dF)
+                        
                         dF_arr[ix, iy, tfield] = ( Fxp_arr[ix, iy, tfield] - Fxm_arr[ix, iy, tfield] ) / (2. * eps)
-                         
-             
+                        
+            
             diff = np.zeros(nfield)
-             
+            
             for tfield in range(0,nfield):
 #                print()
 #                print("Fields: (%5i, %5i)" % (ifield, tfield))
 #                print()
-                 
-                Jx_arr = self.da7.getVecArray(Jx)[...][:, :, tfield]
-                dF_arr = self.da7.getVecArray(dF)[...][:, :, tfield]
-                 
-                 
+                
+                Jx_arr = self.da5.getVecArray(Jx)[...][:, :, tfield]
+                dF_arr = self.da5.getVecArray(dF)[...][:, :, tfield]
+                
+                
 #                print("Jacobian:")
 #                print(Jx_arr)
 #                print()
@@ -648,8 +663,8 @@ class petscMHD2D(object):
 #                print("Difference:")
 #                print(Jx_arr - dF_arr)
 #                print()
-                 
-                 
+                
+                
 #                if ifield == 3 and tfield == 2:
 #                    print("Jacobian:")
 #                    print(Jx_arr)
@@ -658,15 +673,15 @@ class petscMHD2D(object):
 #                    print("[F(x+dx) - F(x-dx)] / [2 eps]:")
 #                    print(dF_arr)
 #                    print()
-                 
-                 
+                
+                
                 diff[tfield] = (Jx_arr - dF_arr).max()
-             
+            
             print()
-         
+        
             for tfield in range(0,nfield):
                 print("max(difference)[fields=%i,%i] = %16.8E" % ( ifield, tfield, diff[tfield] ))
-             
+            
             print()
     
 
@@ -682,5 +697,5 @@ if __name__ == '__main__':
     
     petscvp = petscMHD2D(args.runfile)
     petscvp.run()
-#     petscvp.check_jacobian()
+#    petscvp.check_jacobian()
     
