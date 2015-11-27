@@ -285,6 +285,68 @@ class petscMHD2D(object):
             init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
         
         
+        # Fourier Filtering
+        from scipy.fftpack import rfft, irfft
+        
+        nfourier = cfg['initial_data']['nfourier_Bx']
+          
+        if nfourier >= 0:
+            print("Fourier Filtering Bx")
+            
+            # obtain whole Bx vector everywhere
+            scatter, Xglobal = PETSc.Scatter.toAll(self.Bx)
+            
+            scatter.begin(self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+            scatter.end  (self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+            
+            petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+            
+            Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+            
+            scatter.destroy()
+            Xglobal.destroy()
+            
+            # compute FFT, cut, compute inverse FFT
+            Xfft = rfft(Xinit, axis=1)
+            
+            Xfft[:,nfourier+1:] = 0.
+            
+            Bx_arr = self.da1.getVecArray(self.Bx)
+            Bx_arr[:,:] = irfft(Xfft, axis=1)[xs:xe, ys:ye]
+            
+        
+        nfourier = cfg['initial_data']['nfourier_By']
+          
+        if nfourier >= 0:
+            print("Fourier Filtering By")
+            
+            # obtain whole By vector everywhere
+            scatter, Xglobal = PETSc.Scatter.toAll(self.By)
+            
+            scatter.begin(self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+            scatter.end  (self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+            
+            petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+            
+            Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+            
+            scatter.destroy()
+            Xglobal.destroy()
+            
+            # compute FFT, cut, compute inverse FFT
+            Xfft = rfft(Xinit, axis=0)
+            
+            Xfft[nfourier+1:,:] = 0.
+            
+            By_arr = self.da1.getVecArray(self.By)
+            By_arr[:,:] = irfft(Xfft, axis=0)[xs:xe, ys:ye]
+            
+        
+        Bx_arr = self.da1.getVecArray(self.Bx)
+        By_arr = self.da1.getVecArray(self.By)
+        Vx_arr = self.da1.getVecArray(self.Vx)
+        Vy_arr = self.da1.getVecArray(self.Vy)
+        
         x_arr = self.da7.getVecArray(self.x)
         x_arr[xs:xe, ys:ye, 0] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 1] = Vy_arr[xs:xe, ys:ye]
@@ -305,12 +367,15 @@ class petscMHD2D(object):
         Biy_arr = self.da1.getVecArray(self.Biy)
         P_arr   = self.da1.getVecArray(self.P)
         
+        
         for i in range(xs, xe):
             for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly)
+                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) \
+                           - 0.5 * Bx_arr[i,j]**2 - 0.5 * By_arr[i,j]**2
         
                 Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
                 Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
+        
         
         # copy distribution function to solution vector
         x_arr = self.da7.getVecArray(self.x)
@@ -535,13 +600,13 @@ class petscMHD2D(object):
          
          
 #        sx = -2
-#        sx = -1
+#         sx = -1
         sx =  0
-#        sx = +1
+#         sx = +1
 #        sx = +2
  
 #        sy = -2
-#        sy = -1
+#         sy = -1
         sy =  0
 #        sy = +1
 #        sy = +2
