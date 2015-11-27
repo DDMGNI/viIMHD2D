@@ -44,10 +44,10 @@ class Config(ConfigObj):
         
         OptDB = PETSc.Options()
         
-        if self['solver']['petsc_snes_type'] is 'newton_basic':
+        if self['solver']['petsc_snes_type'] == 'newton_basic':
             OptDB.setValue('snes_ls', 'basic')
             
-        elif self['solver']['petsc_snes_type'] is 'newton_quadratic':
+        elif self['solver']['petsc_snes_type'] == 'newton_quadratic':
             OptDB.setValue('snes_ls', 'quadratic')
 #         else:
 #             raise Exception("Invalid SNES type.")
@@ -68,10 +68,10 @@ class Config(ConfigObj):
         if self['solver']['petsc_ksp_monitor']:
             OptDB.setValue('ksp_monitor', '')
         
-        if self['solver']['petsc_pc_type'] is 'lu':
+        if self['solver']['petsc_pc_type'] == 'lu':
             OptDB.setValue('pc_factor_solver_package', self['solver']['petsc_lu_package'])
             
-        elif self['solver']['petsc_pc_type'] is 'asm':
+        elif self['solver']['petsc_pc_type'] == 'asm':
             OptDB.setValue('pc_asm_type',  'restrict')
             OptDB.setValue('pc_asm_overlap', 3)
             OptDB.setValue('sub_ksp_type', 'preonly')
