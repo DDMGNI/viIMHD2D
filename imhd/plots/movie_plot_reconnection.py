@@ -37,6 +37,6 @@ class PlotMHD2D(PlotMHD2DbaseMovie):
 #         self.conts["M"] = self.axes["M"].contour(self.x, self.y, self.Ai.T, self.ATicks, extend='neither')
         
         self.axes["M"].cla()
-        self.axes["M"].pcolormesh(self.x, self.y, self.Ai.T, norm=self.AiNorm)
+        self.axes["M"].pcolormesh(self.x, self.y, self.Ai.T, norm=self.AiNorm, cmap=cm.Paired)
         self.axes["M"].set_xlim((self.x[0], self.x[-1]))
         self.axes["M"].set_ylim((self.y[0], self.y[-1])) 
