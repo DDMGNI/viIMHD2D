@@ -41,6 +41,8 @@ class movie(object):
         self.nPlot = nPlot
         self.plot  = PlotMHD2D(self.diagnostics, self.diagnostics.nt, self.nt, nPlot, write)
         
+        self.init()
+        
     
     def init(self):
         self.update(0)
@@ -50,10 +52,7 @@ class movie(object):
         self.diagnostics.read_from_hdf5(itime)
         self.diagnostics.update_invariants(itime)
         
-        if itime > 0:
-            self.plot.add_timepoint()
-        
-        return self.plot.update(final=final)
+        return self.plot.update(itime, final=final)
     
     
     def run(self, write=False):
