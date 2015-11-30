@@ -217,10 +217,16 @@ class PlotMHD2Dbase(object):
         Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
         Adif = Amax - Amin
         
-#        self.ATicks = np.linspace(Amin + 0.3 * Adif, Amax + 0.2 * Adif, 21, endpoint=True)
         self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
+        self.ANorm  = colors.Normalize(vmin=Amin + 0.01 * Adif, vmax=Amax - 0.01 * Adif)
         
-        # TODO add Ai
+        if self.diagnostics.inertial_mhd:
+            Aimin = min(self.diagnostics.Ai.min(), -self.diagnostics.Ai.max())
+            Aimax = max(self.diagnostics.Ai.max(), -self.diagnostics.Ai.min())
+            Aidif = Aimax - Aimin
+            
+            self.AiTicks = np.linspace(Aimin + 0.01 * Aidif, Aimax - 0.01 * Aidif, 31)
+            self.AiNorm  = colors.Normalize(vmin=Aimin + 0.01 * Aidif, vmax=Aimax - 0.01 * Aidif)
         
         
     def update_boundaries_current(self):
