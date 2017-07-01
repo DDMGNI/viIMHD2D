@@ -353,6 +353,7 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 2] = Bx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 3] = By_arr[xs:xe, ys:ye]
         
+        # compure generalised magnetic induction
         self.da1.globalToLocal(self.Bx, self.localBx)
         self.da1.globalToLocal(self.By, self.localBy)
         self.da1.globalToLocal(self.Vx, self.localVx)
@@ -365,22 +366,36 @@ class petscMHD2D(object):
         
         Bix_arr = self.da1.getVecArray(self.Bix)
         Biy_arr = self.da1.getVecArray(self.Biy)
-        P_arr   = self.da1.getVecArray(self.P)
         
+        for i in range(xs, xe):
+            for j in range(ys, ye):
+                Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
+                Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
+        
+        # copy modified magnetic induction to solution vector
+        x_arr = self.da7.getVecArray(self.x)
+        x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
+        x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
+        
+        # compute pressure
+        self.da1.globalToLocal(self.Bix, self.localBix)
+        self.da1.globalToLocal(self.Biy, self.localBiy)
+        
+        Bix_arr  = self.da1.getVecArray(self.localBix)
+        Biy_arr  = self.da1.getVecArray(self.localBiy)
+        
+        P_arr   = self.da1.getVecArray(self.P)
         
         for i in range(xs, xe):
             for j in range(ys, ye):
                 P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) \
-                           - 0.5 * Bx_arr[i,j]**2 - 0.5 * By_arr[i,j]**2
+                           - 0.5 * 0.25 * (Bix_arr[i,j] + Bix_arr[i+1,j]) * (Bx_arr[i,j] + Bx_arr[i+1,j]) \
+                           - 0.5 * 0.25 * (Biy_arr[i,j] + Biy_arr[i,j+1]) * (By_arr[i,j] + By_arr[i,j+1]) \
+#                            - 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2)
         
-                Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
-                Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
         
-        
-        # copy distribution function to solution vector
+        # copy pressure to solution vector
         x_arr = self.da7.getVecArray(self.x)
-        x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 6] = P_arr  [xs:xe, ys:ye]
         
         # update solution history

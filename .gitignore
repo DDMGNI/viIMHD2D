@@ -1,8 +1,11 @@
 *.hdf5
 *.pdf
 *.png
+*.pyc
+*.c
+*.so
 petscMHD2D.o*
 petscMHD2D.po*
 vi/*.c
 vi/*.so
-vi/build
+*/build/

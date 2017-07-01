@@ -9,7 +9,7 @@ import numpy as np
 
 import matplotlib.animation as animation
 
-from diagnostics import Diagnostics 
+from imhd.diagnostics import Diagnostics 
 from plot_B import PlotMHD2D
 #from plot_chaco import PlotMHD2D
 

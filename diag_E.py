@@ -18,7 +18,7 @@ from matplotlib import cm, colors, gridspec
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter
 
 
-from diagnostics import Diagnostics 
+from imhd.diagnostics import Diagnostics 
 
 
 class PlotEnergy(object):
