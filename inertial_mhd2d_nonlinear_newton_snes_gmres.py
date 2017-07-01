@@ -12,6 +12,7 @@ from petsc4py import PETSc
 import argparse
 import time
 import numpy as np 
+import h5py
 
 from config import Config
 
@@ -37,6 +38,7 @@ class petscMHD2D(object):
         
         # load run config file
         cfg = Config(cfgfile)
+        self.cfg = cfg
         cfg.set_petsc_options()
         
         # timestep setup
@@ -247,156 +249,215 @@ class petscMHD2D(object):
                 yc_arr[i,j] = y1 + j*self.hy
         
         
-        Bx_arr = self.da1.getVecArray(self.Bx)
-        By_arr = self.da1.getVecArray(self.By)
-        Vx_arr = self.da1.getVecArray(self.Vx)
-        Vy_arr = self.da1.getVecArray(self.Vy)
-        
-        xc_arr = self.da1.getVecArray(self.xcoords)
-        yc_arr = self.da1.getVecArray(self.ycoords)
-        
-        if cfg['initial_data']['magnetic_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
+        if cfg['io']['hdf5_input'] != None:
+            hdf5_filename = self.cfg["io"]["hdf5_input"]
             
-            for i in range(xs, xe):
-                for j in range(ys, ye):
-                    Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
-                    By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
+            if PETSc.COMM_WORLD.getRank() == 0:
+                print("  Input:  %s" % hdf5_filename)
+                
+            hdf5in = h5py.File(hdf5_filename, "r", driver="mpio", comm=PETSc.COMM_WORLD.tompi4py())
+            
+#             assert self.nx == hdf5in.attrs["grid.nx"]
+#             assert self.ny == hdf5in.attrs["grid.ny"]
+#             assert self.hx == hdf5in.attrs["grid.hx"]
+#             assert self.hy == hdf5in.attrs["grid.hy"]
+#             assert self.Lx == hdf5in.attrs["grid.Lx"]
+#             assert self.Ly == hdf5in.attrs["grid.Ly"]
+#             
+#             assert self.de == hdf5in.attrs["initial_data.skin_depth"]
+            
+            timestep = len(hdf5in["t"][...].flatten()) - 1
+            
+            hdf5in.close()
+            
+            hdf5_viewer = PETSc.ViewerHDF5().create(cfg['io']['hdf5_input'],
+                                              mode=PETSc.Viewer.Mode.READ,
+                                              comm=PETSc.COMM_WORLD)
+            
+            hdf5_viewer.setTimestep(timestep)
+
+            self.Bix.load(hdf5_viewer)
+            self.Biy.load(hdf5_viewer)
+            self.Bx.load(hdf5_viewer)
+            self.By.load(hdf5_viewer)
+            self.Vx.load(hdf5_viewer)
+            self.Vy.load(hdf5_viewer)
+            self.P.load(hdf5_viewer)
+            
+            hdf5_viewer.destroy()
+
+
+            # copy modified magnetic induction to solution vector
+            Bx_arr  = self.da1.getVecArray(self.Bx)
+            By_arr  = self.da1.getVecArray(self.By)
+            Vx_arr  = self.da1.getVecArray(self.Vx)
+            Vy_arr  = self.da1.getVecArray(self.Vy)
+            Bix_arr = self.da1.getVecArray(self.Bix)
+            Biy_arr = self.da1.getVecArray(self.Biy)
+            P_arr   = self.da1.getVecArray(self.P)
         
+            x_arr = self.da7.getVecArray(self.x)
+            x_arr[xs:xe, ys:ye, 0] = Vx_arr [xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 1] = Vy_arr [xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 2] = Bx_arr [xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 3] = By_arr [xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 6] = P_arr  [xs:xe, ys:ye]
+            
         else:
-            Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
-            By_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
-            
-            
-        if cfg['initial_data']['velocity_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity_x', 'velocity_y'], 0)
-            
-            for i in range(xs, xe):
-                for j in range(ys, ye):
-                    Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
-                    Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
         
-        else:
-            Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
-            Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
-            
+            Bx_arr = self.da1.getVecArray(self.Bx)
+            By_arr = self.da1.getVecArray(self.By)
+            Vx_arr = self.da1.getVecArray(self.Vx)
+            Vy_arr = self.da1.getVecArray(self.Vy)
         
-        if cfg['initial_data']['pressure_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+            xc_arr = self.da1.getVecArray(self.xcoords)
+            yc_arr = self.da1.getVecArray(self.ycoords)
+            
+            if cfg['initial_data']['magnetic_python'] != None:
+                init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
+                
+                for i in range(xs, xe):
+                    for j in range(ys, ye):
+                        Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                        By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
+            
+            else:
+                Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
+                By_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
+                
+                
+            if cfg['initial_data']['velocity_python'] != None:
+                init_data = __import__("runs." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity_x', 'velocity_y'], 0)
+                
+                for i in range(xs, xe):
+                    for j in range(ys, ye):
+                        Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
+                        Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
+            
+            else:
+                Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
+                Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
+                
+            
+            if cfg['initial_data']['pressure_python'] != None:
+                init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
         
         
-        # Fourier Filtering
-        from scipy.fftpack import rfft, irfft
-        
-        nfourier = cfg['initial_data']['nfourier_Bx']
-          
-        if nfourier >= 0:
-            print("Fourier Filtering Bx")
+            # Fourier Filtering
+            from scipy.fftpack import rfft, irfft
             
-            # obtain whole Bx vector everywhere
-            scatter, Xglobal = PETSc.Scatter.toAll(self.Bx)
+            nfourier = cfg['initial_data']['nfourier_Bx']
+              
+            if nfourier >= 0:
+                print("Fourier Filtering Bx")
+                
+                # obtain whole Bx vector everywhere
+                scatter, Xglobal = PETSc.Scatter.toAll(self.Bx)
+                
+                scatter.begin(self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                scatter.end  (self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                
+                petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+                
+                Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                
+                scatter.destroy()
+                Xglobal.destroy()
+                
+                # compute FFT, cut, compute inverse FFT
+                Xfft = rfft(Xinit, axis=1)
+                
+                Xfft[:,nfourier+1:] = 0.
+                
+                Bx_arr = self.da1.getVecArray(self.Bx)
+                Bx_arr[:,:] = irfft(Xfft, axis=1)[xs:xe, ys:ye]
+                
             
-            scatter.begin(self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
-            scatter.end  (self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
-            
-            petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
-            
-            Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
-            
-            scatter.destroy()
-            Xglobal.destroy()
-            
-            # compute FFT, cut, compute inverse FFT
-            Xfft = rfft(Xinit, axis=1)
-            
-            Xfft[:,nfourier+1:] = 0.
+            nfourier = cfg['initial_data']['nfourier_By']
+              
+            if nfourier >= 0:
+                print("Fourier Filtering By")
+                
+                # obtain whole By vector everywhere
+                scatter, Xglobal = PETSc.Scatter.toAll(self.By)
+                
+                scatter.begin(self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                scatter.end  (self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                
+                petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+                
+                Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                
+                scatter.destroy()
+                Xglobal.destroy()
+                
+                # compute FFT, cut, compute inverse FFT
+                Xfft = rfft(Xinit, axis=0)
+                
+                Xfft[nfourier+1:,:] = 0.
+                
+                By_arr = self.da1.getVecArray(self.By)
+                By_arr[:,:] = irfft(Xfft, axis=0)[xs:xe, ys:ye]
+                
             
             Bx_arr = self.da1.getVecArray(self.Bx)
-            Bx_arr[:,:] = irfft(Xfft, axis=1)[xs:xe, ys:ye]
-            
-        
-        nfourier = cfg['initial_data']['nfourier_By']
-          
-        if nfourier >= 0:
-            print("Fourier Filtering By")
-            
-            # obtain whole By vector everywhere
-            scatter, Xglobal = PETSc.Scatter.toAll(self.By)
-            
-            scatter.begin(self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
-            scatter.end  (self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
-            
-            petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
-            
-            Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
-            
-            scatter.destroy()
-            Xglobal.destroy()
-            
-            # compute FFT, cut, compute inverse FFT
-            Xfft = rfft(Xinit, axis=0)
-            
-            Xfft[nfourier+1:,:] = 0.
-            
             By_arr = self.da1.getVecArray(self.By)
-            By_arr[:,:] = irfft(Xfft, axis=0)[xs:xe, ys:ye]
+            Vx_arr = self.da1.getVecArray(self.Vx)
+            Vy_arr = self.da1.getVecArray(self.Vy)
             
+            x_arr = self.da7.getVecArray(self.x)
+            x_arr[xs:xe, ys:ye, 0] = Vx_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 1] = Vy_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 2] = Bx_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 3] = By_arr[xs:xe, ys:ye]
+            
+            # compure generalised magnetic induction
+            self.da1.globalToLocal(self.Bx, self.localBx)
+            self.da1.globalToLocal(self.By, self.localBy)
+            self.da1.globalToLocal(self.Vx, self.localVx)
+            self.da1.globalToLocal(self.Vy, self.localVy)
+            
+            Bx_arr  = self.da1.getVecArray(self.localBx)
+            By_arr  = self.da1.getVecArray(self.localBy)
+            Vx_arr  = self.da1.getVecArray(self.localVx)
+            Vy_arr  = self.da1.getVecArray(self.localVy)
+            
+            Bix_arr = self.da1.getVecArray(self.Bix)
+            Biy_arr = self.da1.getVecArray(self.Biy)
+            
+            for i in range(xs, xe):
+                for j in range(ys, ye):
+                    Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
+                    Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
+            
+            # copy modified magnetic induction to solution vector
+            x_arr = self.da7.getVecArray(self.x)
+            x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
+            x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
+            
+            # compute pressure
+            self.da1.globalToLocal(self.Bix, self.localBix)
+            self.da1.globalToLocal(self.Biy, self.localBiy)
+            
+            Bix_arr  = self.da1.getVecArray(self.localBix)
+            Biy_arr  = self.da1.getVecArray(self.localBiy)
+            
+            P_arr   = self.da1.getVecArray(self.P)
+            
+            for i in range(xs, xe):
+                for j in range(ys, ye):
+                    P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) \
+                               - 0.5 * 0.25 * (Bix_arr[i,j] + Bix_arr[i+1,j]) * (Bx_arr[i,j] + Bx_arr[i+1,j]) \
+                               - 0.5 * 0.25 * (Biy_arr[i,j] + Biy_arr[i,j+1]) * (By_arr[i,j] + By_arr[i,j+1]) \
+    #                            - 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2)
+            
+            
+            # copy pressure to solution vector
+            x_arr = self.da7.getVecArray(self.x)
+            x_arr[xs:xe, ys:ye, 6] = P_arr  [xs:xe, ys:ye]
         
-        Bx_arr = self.da1.getVecArray(self.Bx)
-        By_arr = self.da1.getVecArray(self.By)
-        Vx_arr = self.da1.getVecArray(self.Vx)
-        Vy_arr = self.da1.getVecArray(self.Vy)
-        
-        x_arr = self.da7.getVecArray(self.x)
-        x_arr[xs:xe, ys:ye, 0] = Vx_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 1] = Vy_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 2] = Bx_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 3] = By_arr[xs:xe, ys:ye]
-        
-        # compure generalised magnetic induction
-        self.da1.globalToLocal(self.Bx, self.localBx)
-        self.da1.globalToLocal(self.By, self.localBy)
-        self.da1.globalToLocal(self.Vx, self.localVx)
-        self.da1.globalToLocal(self.Vy, self.localVy)
-        
-        Bx_arr  = self.da1.getVecArray(self.localBx)
-        By_arr  = self.da1.getVecArray(self.localBy)
-        Vx_arr  = self.da1.getVecArray(self.localVx)
-        Vy_arr  = self.da1.getVecArray(self.localVy)
-        
-        Bix_arr = self.da1.getVecArray(self.Bix)
-        Biy_arr = self.da1.getVecArray(self.Biy)
-        
-        for i in range(xs, xe):
-            for j in range(ys, ye):
-                Bix_arr[i,j] = self.derivatives.Bix(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
-                Biy_arr[i,j] = self.derivatives.Biy(Bx_arr[...], By_arr[...], i-xs+2, j-ys+2, de)
-        
-        # copy modified magnetic induction to solution vector
-        x_arr = self.da7.getVecArray(self.x)
-        x_arr[xs:xe, ys:ye, 4] = Bix_arr[xs:xe, ys:ye]
-        x_arr[xs:xe, ys:ye, 5] = Biy_arr[xs:xe, ys:ye]
-        
-        # compute pressure
-        self.da1.globalToLocal(self.Bix, self.localBix)
-        self.da1.globalToLocal(self.Biy, self.localBiy)
-        
-        Bix_arr  = self.da1.getVecArray(self.localBix)
-        Biy_arr  = self.da1.getVecArray(self.localBiy)
-        
-        P_arr   = self.da1.getVecArray(self.P)
-        
-        for i in range(xs, xe):
-            for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) \
-                           - 0.5 * 0.25 * (Bix_arr[i,j] + Bix_arr[i+1,j]) * (Bx_arr[i,j] + Bx_arr[i+1,j]) \
-                           - 0.5 * 0.25 * (Biy_arr[i,j] + Biy_arr[i,j+1]) * (By_arr[i,j] + By_arr[i,j+1]) \
-#                            - 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2)
-        
-        
-        # copy pressure to solution vector
-        x_arr = self.da7.getVecArray(self.x)
-        x_arr[xs:xe, ys:ye, 6] = P_arr  [xs:xe, ys:ye]
         
         # update solution history
         self.petsc_matrix.update_history(self.x)
@@ -404,8 +465,34 @@ class petscMHD2D(object):
         self.petsc_function.update_history(self.x)
         
         
+        hdf5_filename = cfg['io']['hdf5_output']
+        
+        if PETSc.COMM_WORLD.getRank() == 0:
+            print("  Output: %s" % hdf5_filename)
+        
+        hdf5out = h5py.File(hdf5_filename, "w", driver="mpio", comm=PETSc.COMM_WORLD.tompi4py())
+        
+        for cfg_group in self.cfg:
+            for cfg_item in self.cfg[cfg_group]:
+                if self.cfg[cfg_group][cfg_item] != None:
+                    value = self.cfg[cfg_group][cfg_item]
+                else:
+                    value = ""
+                    
+                hdf5out.attrs[cfg_group + "." + cfg_item] = value
+        
+#         if self.cfg["initial_data"]["python"] != None and self.cfg["initial_data"]["python"] != "":
+#             python_input = open("runs/" + self.cfg['initial_data']['python'] + ".py", 'r')
+#             python_file = python_input.read()
+#             python_input.close()
+#         else:
+#             python_file = ""
+            
+#         hdf5out.attrs["initial_data.python_file"] = python_file
+        hdf5out.close()
+        
         # create HDF5 output file
-        self.hdf5_viewer = PETSc.ViewerHDF5().create(cfg['io']['hdf5_output'],
+        self.hdf5_viewer = PETSc.ViewerHDF5().create(hdf5_filename,
                                           mode=PETSc.Viewer.Mode.WRITE,
                                           comm=PETSc.COMM_WORLD)
         
