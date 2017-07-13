@@ -18,7 +18,7 @@
 #$ -N viMHD2D
 #
 
-RUNID=current_sheet_reconnection_1024x512_part2
+RUNID=current_sheet_reconnection_1024x512_part3
 
 export MODULEPATH=/u/mkraus/Python/modules:${MODULEPATH}
 

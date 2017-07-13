@@ -2,13 +2,13 @@
 #
 #$ -cwd
 #
-#$ -l h_rt=48:00:00
+#$ -l h_rt=12:00:00
 #
 #$ -P  tokp
-#$ -pe impi_hydra 64
+#$ -pe impi_hydra 16
 #
-#$ -o /tokp/scratch/mkraus/viIMHD2D/current_sheet_reconnection_1024x512.$JOB_ID.out
-#$ -e /tokp/scratch/mkraus/viIMHD2D/current_sheet_reconnection_1024x512.$JOB_ID.err
+#$ -o /tokp/scratch/mkraus/viIMHD2D/current_sheet_reconnection_512x256.$JOB_ID.out
+#$ -e /tokp/scratch/mkraus/viIMHD2D/current_sheet_reconnection_512x256.$JOB_ID.err
 #
 #$ -m e
 #$ -M michael.kraus@ipp.mpg.de
@@ -18,9 +18,8 @@
 #$ -N viMHD2D
 #
 
-RUNID=current_sheet_reconnection_1024x512_part2
+RUNID=current_sheet_reconnection_512x256_part2
 
-export MODULEPATH=/u/mkraus/Python/modules:${MODULEPATH}
 
 module load intel/14.0
 module load mkl/11.1
@@ -45,5 +44,5 @@ export LD_PRELOAD=/afs/@cell/common/soft/intel/ics2013/14.0/compiler/lib/intel64
 export RUN_DIR=/u/mkraus/Codes/viIMHD2D
 cd $RUN_DIR
 
-mpiexec -perhost 16 -l -n 64 python3.3 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs_tokp/$RUNID.cfg 
+mpiexec -perhost 16 -l -n 16 python3.3 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs_tokp/$RUNID.cfg 
 

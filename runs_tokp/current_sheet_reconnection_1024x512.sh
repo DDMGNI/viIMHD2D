@@ -20,6 +20,7 @@
 
 RUNID=current_sheet_reconnection_1024x512
 
+export MODULEPATH=/u/mkraus/Python/modules:${MODULEPATH}
 
 module load intel/14.0
 module load mkl/11.1
@@ -31,6 +32,7 @@ module load py33-cython
 module load py33-numpy
 module load py33-scipy
 module load py33-configobj
+module load py33-h5py
 module load py33-mpi4py
 module load py33-petsc4py
 
