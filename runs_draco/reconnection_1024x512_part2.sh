@@ -4,8 +4,8 @@
 # Initial working directory:
 #SBATCH -D /u/mkraus/Codes/viIMHD2D
 # Standard output and error:
-#SBATCH -o /ptmp/mkraus/viIMHD2D/reconnection_1024x512.out.%j
-#SBATCH -e /ptmp/mkraus/viIMHD2D/reconnection_1024x512.err.%j
+#SBATCH -o /ptmp/mkraus/viIMHD2D/reconnection_1024x512_part2.out.%j
+#SBATCH -e /ptmp/mkraus/viIMHD2D/reconnection_1024x512_part2.err.%j
 # Queue (Partition):
 #SBATCH --partition=general
 # Number of nodes and MPI tasks per node:
@@ -19,4 +19,4 @@
 #SBATCH --time=00:24:00
 
 # Run the program:
-srun python3.6 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs_draco/reconnection_1024x512.cfg
+srun python3.6 inertial_mhd2d_nonlinear_newton_snes_gmres.py runs_draco/reconnection_1024x512_part2.cfg
