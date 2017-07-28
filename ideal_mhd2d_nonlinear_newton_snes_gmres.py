@@ -317,6 +317,72 @@ class petscMHD2D(object):
             init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
         
         
+            # Fourier Filtering
+            from scipy.fftpack import rfft, irfft
+            
+            nfourier_x = cfg['initial_data']['nfourier_Bx']
+            nfourier_y = cfg['initial_data']['nfourier_By']
+              
+            if nfourier_x >= 0 or nfourier_y >= 0:
+                print("Fourier Filtering B")
+                
+                # obtain whole Bx vector everywhere
+                scatter, Xglobal = PETSc.Scatter.toAll(self.Bx)
+                
+                scatter.begin(self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                scatter.end  (self.Bx, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                
+                petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+                
+                BxTmp = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                
+                scatter.destroy()
+                Xglobal.destroy()
+                
+                # obtain whole By vector everywhere
+                scatter, Xglobal = PETSc.Scatter.toAll(self.By)
+                
+                scatter.begin(self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                scatter.end  (self.By, Xglobal, PETSc.InsertMode.INSERT, PETSc.ScatterMode.FORWARD)
+                
+                petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
+                
+                ByTmp = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                
+                scatter.destroy()
+                Xglobal.destroy()
+                
+                
+                if nfourier_x >= 0:
+                    # compute FFT, cut, compute inverse FFT
+                    BxFft = rfft(BxTmp, axis=1)
+                    ByFft = rfft(ByTmp, axis=1)
+                
+                    BxFft[:,nfourier_x+1:] = 0.
+                    ByFft[:,nfourier_x+1:] = 0.
+                    
+                    BxTmp = irfft(BxFft, axis=1)
+                    ByTmp = irfft(ByFft, axis=1)
+
+
+                if nfourier_y >= 0:
+                    BxFft = rfft(BxTmp, axis=0)
+                    ByFft = rfft(ByTmp, axis=0)
+                
+                    BxFft[nfourier_y+1:,:] = 0.
+                    ByFft[nfourier_y+1:,:] = 0.
+
+                    BxTmp = irfft(BxFft, axis=0)
+                    ByTmp = irfft(ByFft, axis=0)
+                
+                
+                Bx_arr = self.da1.getVecArray(self.Bx)
+                By_arr = self.da1.getVecArray(self.By)
+                
+                Bx_arr[:,:] = BxTmp[xs:xe, ys:ye]
+                By_arr[:,:] = ByTmp[xs:xe, ys:ye]
+
+        
         x_arr = self.da5.getVecArray(self.x)
         x_arr[xs:xe, ys:ye, 0] = Vx_arr[xs:xe, ys:ye]
         x_arr[xs:xe, ys:ye, 1] = Vy_arr[xs:xe, ys:ye]

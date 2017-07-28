@@ -348,10 +348,11 @@ class petscMHD2D(object):
             # Fourier Filtering
             from scipy.fftpack import rfft, irfft
             
-            nfourier = cfg['initial_data']['nfourier_Bx']
+            nfourier_x = cfg['initial_data']['nfourier_Bx']
+            nfourier_y = cfg['initial_data']['nfourier_By']
               
-            if nfourier >= 0:
-                print("Fourier Filtering Bx")
+            if nfourier_x >= 0 or nfourier_y >= 0:
+                print("Fourier Filtering B")
                 
                 # obtain whole Bx vector everywhere
                 scatter, Xglobal = PETSc.Scatter.toAll(self.Bx)
@@ -361,24 +362,10 @@ class petscMHD2D(object):
                 
                 petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
                 
-                Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                BxTmp = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
                 
                 scatter.destroy()
                 Xglobal.destroy()
-                
-                # compute FFT, cut, compute inverse FFT
-                Xfft = rfft(Xinit, axis=1)
-                
-                Xfft[:,nfourier+1:] = 0.
-                
-                Bx_arr = self.da1.getVecArray(self.Bx)
-                Bx_arr[:,:] = irfft(Xfft, axis=1)[xs:xe, ys:ye]
-                
-            
-            nfourier = cfg['initial_data']['nfourier_By']
-              
-            if nfourier >= 0:
-                print("Fourier Filtering By")
                 
                 # obtain whole By vector everywhere
                 scatter, Xglobal = PETSc.Scatter.toAll(self.By)
@@ -388,18 +375,40 @@ class petscMHD2D(object):
                 
                 petsc_indices = self.da1.getAO().app2petsc(np.arange(self.nx*self.ny, dtype=np.int32))
                 
-                Xinit = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
+                ByTmp = Xglobal.getValues(petsc_indices).copy().reshape((self.ny, self.nx)).T
                 
                 scatter.destroy()
                 Xglobal.destroy()
                 
-                # compute FFT, cut, compute inverse FFT
-                Xfft = rfft(Xinit, axis=0)
                 
-                Xfft[nfourier+1:,:] = 0.
+                if nfourier_x >= 0:
+                    # compute FFT, cut, compute inverse FFT
+                    BxFft = rfft(BxTmp, axis=1)
+                    ByFft = rfft(ByTmp, axis=1)
                 
+                    BxFft[:,nfourier_x+1:] = 0.
+                    ByFft[:,nfourier_x+1:] = 0.
+                    
+                    BxTmp = irfft(BxFft, axis=1)
+                    ByTmp = irfft(ByFft, axis=1)
+
+
+                if nfourier_y >= 0:
+                    BxFft = rfft(BxTmp, axis=0)
+                    ByFft = rfft(ByTmp, axis=0)
+                
+                    BxFft[nfourier_y+1:,:] = 0.
+                    ByFft[nfourier_y+1:,:] = 0.
+
+                    BxTmp = irfft(BxFft, axis=0)
+                    ByTmp = irfft(ByFft, axis=0)
+                
+                
+                Bx_arr = self.da1.getVecArray(self.Bx)
                 By_arr = self.da1.getVecArray(self.By)
-                By_arr[:,:] = irfft(Xfft, axis=0)[xs:xe, ys:ye]
+                
+                Bx_arr[:,:] = BxTmp[xs:xe, ys:ye]
+                By_arr[:,:] = ByTmp[xs:xe, ys:ye]
                 
             
             Bx_arr = self.da1.getVecArray(self.Bx)
