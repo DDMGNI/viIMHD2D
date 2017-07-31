@@ -69,6 +69,7 @@ class Config(ConfigObj):
             OptDB.setValue('ksp_monitor', '')
         
         if self['solver']['petsc_pc_type'] == 'lu':
+            OptDB.setValue('pc_factor_mat_solver_package', self['solver']['petsc_lu_package'])
             OptDB.setValue('pc_factor_solver_package', self['solver']['petsc_lu_package'])
             
         elif self['solver']['petsc_pc_type'] == 'asm':
