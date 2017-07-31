@@ -2,7 +2,7 @@
 #
 #$ -cwd
 #
-#$ -l h_rt=12:00:00
+#$ -l h_rt=2:00:00
 #
 #$ -P  tokp
 #$ -pe impi_hydra 16
@@ -44,4 +44,4 @@ export RUN_DIR=/u/mkraus/Codes/viIMHD2D
 export PYTHONPATH=$RUN_DIR/vi:$PYTHONPATH
 cd $RUN_DIR
 
-mpiexec -perhost 16 -l -n 16 python3.3 petsc_mhd2d_nonlinear_newton_snes.py runs/$RUNID.cfg 
+mpiexec -perhost 16 -l -n 16 python3.3 ideal_mhd2d_nonlinear_newton_snes_gmres.py runs/$RUNID.cfg 
