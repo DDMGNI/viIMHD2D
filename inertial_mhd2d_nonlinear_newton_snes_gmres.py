@@ -230,6 +230,7 @@ class petscMHD2D(object):
         self.snes.setFunction(self.petsc_function.snes_mult, self.f)
         self.snes.setJacobian(self.updateJacobian, self.J)
         self.snes.setFromOptions()
+        self.snes.getKSP().setInitialGuessNonzero(True)
 #         self.snes.getKSP().getPC().setReusePreconditioner(True)
         
         
