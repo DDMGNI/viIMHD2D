@@ -154,7 +154,7 @@ class PlotMHD2D(object):
             axes_ByTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_ByTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
 
-            pcms_By = axes_ByTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.ByTrace, cmap=cmap, norm=norm)
+            pcms_By = axes_ByTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.ByTrace, cmap=cmap, norm=norm)
             axes_ByTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_ByTrace.set_ylim((self.x[0], self.x[-1]))
             figure_ByTrace.savefig(self.prefix + str('_ByTrace.png'), dpi=100)
@@ -171,7 +171,7 @@ class PlotMHD2D(object):
             axes_VyTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_VyTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
             
-            pcms_Vy = axes_VyTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.VyTrace, cmap=cmap, norm=norm)
+            pcms_Vy = axes_VyTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.VyTrace, cmap=cmap, norm=norm)
             axes_VyTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_VyTrace.set_ylim((self.x[0], self.x[-1]))
             figure_VyTrace.savefig(self.prefix + str('_VyTrace.png'), dpi=100)
