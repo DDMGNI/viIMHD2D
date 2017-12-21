@@ -29,7 +29,8 @@ class Diagnostics(object):
             self.inertial_mhd = False
         
         
-        self.tGrid = self.hdf5['t'][:,0]
+        self.tGrid = self.hdf5['t'][:].flatten()
+        
         self.xGrid = self.hdf5['x'][:]
         self.yGrid = self.hdf5['y'][:]
         
@@ -50,7 +51,7 @@ class Diagnostics(object):
         self.hx = self.xGrid[1] - self.xGrid[0]
         self.hy = self.yGrid[1] - self.yGrid[0]
         
-        self.tMin = self.tGrid[ 1]
+        self.tMin = self.tGrid[ 0]
         self.tMax = self.tGrid[-1]
         self.xMin = self.xGrid[ 0]
         self.xMax = self.xGrid[-1]
@@ -110,6 +111,8 @@ class Diagnostics(object):
         self.L1_velocity = 0.0
         self.L2_magnetic = 0.0
         self.L2_velocity = 0.0
+        self.L2_A        = 0.0
+        self.L2_X        = 0.0
         
         self.E0       = 0.0
         self.H0       = 0.0
@@ -119,6 +122,8 @@ class Diagnostics(object):
         self.L1_velocity_0 = 0.0
         self.L2_magnetic_0 = 0.0
         self.L2_velocity_0 = 0.0
+        self.L2_A_0        = 0.0
+        self.L2_X_0        = 0.0
         
         self.E_error  = 0.0
         self.H_error  = 0.0
@@ -128,10 +133,14 @@ class Diagnostics(object):
         self.L1_velocity_error = 0.0
         self.L2_magnetic_error = 0.0
         self.L2_velocity_error = 0.0
+        self.L2_A_error        = 0.0
+        self.L2_X_error        = 0.0
         
         self.plot_energy   = False
         self.plot_helicity = False
         self.plot_magnetic = False
+        self.plot_L2_A = False
+        self.plot_L2_X = False
         
         self.read_from_hdf5(0)
         self.update_invariants(0)
@@ -148,7 +157,7 @@ class Diagnostics(object):
             self.Bix = self.hdf5['Bix'][iTime,:,:].T
             self.Biy = self.hdf5['Biy'][iTime,:,:].T
         
-        self.P  = self.hdf5['P'][iTime,:,:].T
+#        self.P  = self.hdf5['P'][iTime,:,:].T
         
         self.B = np.sqrt( self.Bx**2 + self.By**2 )
         self.V = np.sqrt( self.Vx**2 + self.Vy**2 )
@@ -182,7 +191,7 @@ class Diagnostics(object):
                 self.A[ix,iy] = self.A[ix,iyp] - self.hy * self.Bx[ix,iy]  
 #                self.A[ix,iy] = self.A[ix,iyp] - self.hy * (self.Bx[ix,iym] + 4.*self.Bx[ix,iy] + self.Bx[ix,iyp])/6.
             
-        self.A -= self.A.mean()
+#         self.A -= self.A.mean()
 #         self.A -= self.A.min()
         
         
@@ -205,7 +214,7 @@ class Diagnostics(object):
                     
                     self.Ai[ix,iy] = self.Ai[ix,iyp] - self.hy * self.Bix[ix,iy]  
                 
-            self.Ai -= self.Ai.mean()
+#             self.Ai -= self.Ai.mean()
         
         
         # reconstruction of current density
@@ -222,11 +231,14 @@ class Diagnostics(object):
         if self.inertial_mhd:
             self.E_magnetic = 0.5 * (self.Bx*self.Bix + self.By*self.Biy).sum() * self.hx * self.hy
             self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
-            self.helicity = (self.Bix * self.Vx + self.Biy * self.Vy).sum() * self.hx * self.hy
+            self.helicity   = (self.Bix * self.Vx + self.Biy * self.Vy).sum() * self.hx * self.hy
+            self.L2_X       = 0.5 * (self.Ai**2).sum() * self.hx * self.hy
+            self.magnetic   = self.Ai.sum() * self.hx * self.hy
         else:
             self.E_magnetic = 0.5 * (self.Bx**2 + self.By**2).sum() * self.hx * self.hy
             self.E_velocity = 0.5 * (self.Vx**2 + self.Vy**2).sum() * self.hx * self.hy
-            self.helicity = (self.Bx * self.Vx + self.By * self.Vy).sum() * self.hx * self.hy
+            self.helicity   = (self.Bx * self.Vx + self.By * self.Vy).sum() * self.hx * self.hy
+            self.magnetic   = self.A.sum() * self.hx * self.hy
         
         
         self.L1_magnetic = self.B.sum() * self.hx * self.hy
@@ -234,9 +246,10 @@ class Diagnostics(object):
         
         self.L2_magnetic = 0.5 * (self.B**2).sum() * self.hx * self.hy
         self.L2_velocity = 0.5 * (self.V**2).sum() * self.hx * self.hy
+
+        self.L2_A        = 0.5 * (self.A**2).sum() * self.hx * self.hy
         
         self.energy   = self.E_magnetic + self.E_velocity 
-        self.magnetic = self.A.sum() * self.hx * self.hy
 
         
         if iTime == 0:
@@ -244,23 +257,27 @@ class Diagnostics(object):
             self.H0 = self.helicity
             self.M0 = self.magnetic
             
-#            if self.E0 == 0:
-            if np.abs(self.E0) < 1E-15:
-                self.plot_energy = True
-            
-#            if self.H0 == 0:
-            if np.abs(self.H0) < 1E-15:
-                self.plot_helicity = True
-            
-#            if self.M0 == 0:
-            if np.abs(self.M0) < 1E-15:
-                self.plot_magnetic = True
-            
-            
             self.L1_magnetic_0 = self.L1_magnetic
             self.L1_velocity_0 = self.L1_velocity 
             self.L2_magnetic_0 = self.L2_magnetic
             self.L2_velocity_0 = self.L2_velocity
+            self.L2_A_0        = self.L2_A
+            self.L2_X_0        = self.L2_X
+            
+            if np.abs(self.E0) < 1E-15:
+                self.plot_energy = True
+            
+            if np.abs(self.H0) < 1E-15:
+                self.plot_helicity = True
+            
+            if np.abs(self.M0) < 1E-15:
+                self.plot_magnetic = True
+            
+            if np.abs(self.L2_A_0) < 1E-15:
+                self.plot_L2_A = True
+            
+            if np.abs(self.L2_X_0) < 1E-15:
+                self.plot_L2_X = True
         
             self.E_error  = 0.0
             self.H_error  = 0.0
@@ -287,6 +304,15 @@ class Diagnostics(object):
             else:
                 self.M_error = (self.magnetic - self.M0) / self.M0
             
+            if self.plot_L2_A:
+                self.L2_A_error = (self.L2_A)
+            else:
+                self.L2_A_error = (self.L2_A - self.L2_A_0) / self.L2_A_0
+            
+            if self.plot_L2_X:
+                self.L2_X_error = (self.L2_X)
+            else:
+                self.L2_X_error = (self.L2_X - self.L2_X_0) / self.L2_X_0
             
             self.L1_magnetic_error = (self.L1_magnetic - self.L1_magnetic_0) #/ self.L1_magnetic_0
             self.L1_velocity_error = (self.L1_velocity - self.L1_velocity_0) #/ self.L1_velocity_0

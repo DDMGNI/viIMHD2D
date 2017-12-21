@@ -49,6 +49,7 @@ class PlotEnergy(object):
         self.energy      = np.zeros(self.ntMax+1)
         self.helicity    = np.zeros(self.ntMax+1)
         self.magnetic    = np.zeros(self.ntMax+1)
+        self.potential   = np.zeros(self.ntMax+1)
         
         
         print("")
@@ -73,9 +74,20 @@ class PlotEnergy(object):
             else:
                 self.magnetic[i] = self.diagnostics.M_error
             
+            if self.diagnostics.inertial_mhd:
+                if self.diagnostics.plot_L2_X:
+                    self.potential[i] = self.diagnostics.L2_X
+                else:
+                    self.potential[i] = self.diagnostics.L2_X_error
+            else:
+                if self.diagnostics.plot_L2_A:
+                    self.potential[i] = self.diagnostics.L2_A
+                else:
+                    self.potential[i] = self.diagnostics.L2_A_error
+            
         
         # set up tick formatter
-        majorFormatter = ScalarFormatter(useOffset=False)
+        majorFormatter = ScalarFormatter(useOffset=False, useMathText=True)
         ## -> limit to 1.1f precision
         majorFormatter.set_powerlimits((-1,+1))
         majorFormatter.set_scientific(True)
@@ -86,7 +98,7 @@ class PlotEnergy(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.25)
         
         axesE = plt.subplot(1,1,1)
         axesE.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.energy[0:ntMax+1:self.nPlot])
@@ -95,10 +107,11 @@ class PlotEnergy(object):
         axesE.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
         
         if self.diagnostics.plot_energy:
-            axesE.set_ylabel('$E$', labelpad=15, fontsize=26)
+            axesE.set_ylabel('$E (t)$', labelpad=15, fontsize=26)
         else:
-            axesE.set_ylabel('$(E-E_0) / E_0$', labelpad=15, fontsize=26)
+            axesE.set_ylabel('$(E (t) - E (0)) / E (0)$', labelpad=15, fontsize=26)
         
+        axesE.yaxis.set_label_coords(-0.075, 0.5)
         axesE.yaxis.set_major_formatter(majorFormatter)
         
         for tick in axesE.xaxis.get_major_ticks():
@@ -119,7 +132,7 @@ class PlotEnergy(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.25)
         
         axesH = plt.subplot(1,1,1)
         axesH.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.helicity[0:ntMax+1:self.nPlot])
@@ -128,9 +141,11 @@ class PlotEnergy(object):
         axesH.set_xlabel('$t$', labelpad=15, fontsize=26)
         
         if self.diagnostics.plot_helicity:
-            axesH.set_ylabel('$H_{c}$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$C_{\mathrm{CH}} (t)$', labelpad=15, fontsize=24)
+            axesH.yaxis.set_label_coords(-0.075, 0.5)
         else:
-            axesH.set_ylabel('$(H_{c}-H_{c,0}) / H_{c,0}$', labelpad=15, fontsize=26)
+            axesH.set_ylabel('$(C_{\mathrm{CH}} (t) - C_{\mathrm{CH}} (0)) / C_{\mathrm{CH}} (0)$', labelpad=15, fontsize=24)
+            axesH.yaxis.set_label_coords(-0.075, 0.38)
         
         axesH.yaxis.set_major_formatter(majorFormatter)
         
@@ -153,7 +168,7 @@ class PlotEnergy(object):
         
         # set up plot margins
         plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.93, bottom=0.25)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.25)
         
         axesM = plt.subplot(1,1,1)
         axesM.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.magnetic[0:ntMax+1:self.nPlot])
@@ -161,10 +176,12 @@ class PlotEnergy(object):
         axesM.set_xlabel('$t$', labelpad=15, fontsize=26)
         axesM.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
         
-        if self.diagnostics.plot_helicity:
-            axesM.set_ylabel('$H_{m}$', labelpad=15, fontsize=26)
+        if self.diagnostics.plot_magnetic:
+            axesM.set_ylabel('$C_{\mathrm{MH}} (t)$', labelpad=15, fontsize=24)
+            axesM.yaxis.set_label_coords(-0.075, 0.5)
         else:
-            axesM.set_ylabel('$(H_{m}-H_{m,0}) / H_{m,0}$', labelpad=15, fontsize=26)
+            axesM.set_ylabel('$(C_{\mathrm{MH}} (t) - C_{\mathrm{MH}} (0)) / C_{\mathrm{MH}} (0)$', labelpad=15, fontsize=24)
+            axesM.yaxis.set_label_coords(-0.075, 0.38)
         
         axesM.yaxis.set_major_formatter(majorFormatter)
         
@@ -178,6 +195,50 @@ class PlotEnergy(object):
         filename = self.prefix + str('_m_helicity_%06d' % self.ntMax) + '.png'
         plt.savefig(filename, dpi=300)
         filename = self.prefix + str('_m_helicity_%06d' % self.ntMax) + '.pdf'
+        plt.savefig(filename)
+        
+        
+        # set up figure for potential plot
+        self.figure4 = plt.figure(num=4, figsize=(16,4))
+        
+        # set up plot margins
+        plt.subplots_adjust(hspace=0.25, wspace=0.2)
+        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.25)
+        
+        axesL = plt.subplot(1,1,1)
+        axesL.plot(self.diagnostics.tGrid[0:ntMax+1:self.nPlot], self.potential[0:ntMax+1:self.nPlot])
+        
+        axesL.set_xlabel('$t$', labelpad=15, fontsize=26)
+        axesL.set_xlim(self.diagnostics.tGrid[0], self.diagnostics.tGrid[ntMax])
+        
+        
+        if self.diagnostics.inertial_mhd:
+            if self.diagnostics.plot_L2_X:
+                axesL.set_ylabel('$C_{L^2} (t)$', labelpad=15, fontsize=24)
+                axesL.yaxis.set_label_coords(-0.075, 0.5)
+            else:
+                axesL.set_ylabel('$(C_{L^2} (t) - C_{L^2} (0)) / C_{L^2} (0)$', labelpad=15, fontsize=24)
+                axesL.yaxis.set_label_coords(-0.075, 0.4)
+        else:
+            if self.diagnostics.plot_L2_A:
+                axesL.set_ylabel('$C_{L^2} (t)$', labelpad=15, fontsize=24)
+                axesL.yaxis.set_label_coords(-0.075, 0.5)
+            else:
+                axesL.set_ylabel('$(C_{L^2} (t) - C_{L^2} (0)) / C_{L^2} (0)$', labelpad=15, fontsize=24)
+                axesL.yaxis.set_label_coords(-0.075, 0.4)
+        
+        axesL.yaxis.set_major_formatter(majorFormatter)
+        
+        for tick in axesL.xaxis.get_major_ticks():
+            tick.set_pad(12)
+        for tick in axesL.yaxis.get_major_ticks():
+            tick.set_pad(8)
+                
+        plt.draw()
+        
+        filename = self.prefix + str('_l2_psi_%06d' % self.ntMax) + '.png'
+        plt.savefig(filename, dpi=300)
+        filename = self.prefix + str('_l2_psi_%06d' % self.ntMax) + '.pdf'
         plt.savefig(filename)
         
         

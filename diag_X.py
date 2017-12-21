@@ -15,6 +15,7 @@ matplotlib.use('AGG')
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter
 
 
@@ -31,8 +32,52 @@ class PlotMHD2D(object):
         Constructor
         '''
         
+        
+        _Paired_data = {'blue': [(0.0, 0.89019608497619629,
+            0.89019608497619629), (0.090909090909090912, 0.70588237047195435,
+    0.70588237047195435), (0.18181818181818182, 0.54117649793624878,
+    0.54117649793624878), (0.27272727272727271, 0.17254902422428131,
+    0.17254902422428131), (0.36363636363636365, 0.60000002384185791,
+    0.60000002384185791), (0.45454545454545453, 0.10980392247438431,
+    0.10980392247438431), (0.54545454545454541, 0.43529412150382996,
+    0.43529412150382996), (0.63636363636363635, 0.0, 0.0),
+    (0.72727272727272729, 0.83921569585800171, 0.83921569585800171),
+    (0.81818181818181823, 0.60392159223556519, 0.60392159223556519),
+    (0.90909090909090906, 0.60000002384185791, 0.60000002384185791), (1.0,
+    0.15686275064945221, 0.15686275064945221)],
+
+    'green': [(0.0, 0.80784314870834351, 0.80784314870834351),
+    (0.090909090909090912, 0.47058823704719543, 0.47058823704719543),
+    (0.18181818181818182, 0.87450981140136719, 0.87450981140136719),
+    (0.27272727272727271, 0.62745100259780884, 0.62745100259780884),
+    (0.36363636363636365, 0.60392159223556519, 0.60392159223556519),
+    (0.45454545454545453, 0.10196078568696976, 0.10196078568696976),
+    (0.54545454545454541, 0.74901962280273438, 0.74901962280273438),
+    (0.63636363636363635, 0.49803921580314636, 0.49803921580314636),
+    (0.72727272727272729, 0.69803923368453979, 0.69803923368453979),
+    (0.81818181818181823, 0.23921568691730499, 0.23921568691730499),
+    (0.90909090909090906, 1.0, 1.0), (1.0, 0.3490196168422699,
+    0.3490196168422699)],
+
+    'red': [(0.0, 0.65098041296005249, 0.65098041296005249),
+    (0.090909090909090912, 0.12156862765550613, 0.12156862765550613),
+    (0.18181818181818182, 0.69803923368453979, 0.69803923368453979),
+    (0.27272727272727271, 0.20000000298023224, 0.20000000298023224),
+    (0.36363636363636365, 0.9843137264251709, 0.9843137264251709),
+    (0.45454545454545453, 0.89019608497619629, 0.89019608497619629),
+    (0.54545454545454541, 0.99215686321258545, 0.99215686321258545),
+    (0.63636363636363635, 1.0, 1.0), (0.72727272727272729,
+    0.7921568751335144, 0.7921568751335144), (0.81818181818181823,
+    0.41568627953529358, 0.41568627953529358), (0.90909090909090906,
+    1.0, 1.0), (1.0, 0.69411766529083252, 0.69411766529083252)]}
+        
+        
+        paired_linear = LinearSegmentedColormap('PairedLin', _Paired_data, 256)
+        plt.register_cmap(cmap=paired_linear)
+        
+        
 #        matplotlib.rc('text', usetex=True)
-        matplotlib.rc('font', family='sans-serif', size='28')
+#         matplotlib.rc('font', family='sans-serif', size='28')
         
         self.prefix = filename
         
@@ -68,19 +113,24 @@ class PlotMHD2D(object):
         self.ypc[:] -= 0.5 * self.diagnostics.hy
         
         self.A       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
+        self.Ai      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.PB      = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         
         
+        self.read_data()
+        self.update_boundaries()
+        
         # set up figure/window size
-        self.figure = plt.figure(num=None, figsize=(10,10))
+        self.figure, self.axes = plt.subplots(num=None, figsize=(10,10))
+        self.figure.tight_layout()
         
         # set up plot margins
-        plt.subplots_adjust(hspace=0.25, wspace=0.2)
-        plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
+#         plt.subplots_adjust(hspace=0.25, wspace=0.2)
+#         plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
         
         # set up plot title
-        self.title = self.figure.text(0.5, 0.95, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
+#         self.title = self.figure.text(0.5, 0.95, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
@@ -96,15 +146,15 @@ class PlotMHD2D(object):
         self.update_boundaries()
         
         # create current density plot
-#        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
-        self.pcm_J = self.axes.pcolormesh(self.xpc, self.ypc, self.J.T, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
+#        self.conts = self.axes.contourf(self.x, self.y, self.Ai.T, 51, cmap=plt.get_cmap('Paired'))
+        self.pcm_J = self.axes.pcolormesh(self.xpc, self.ypc, self.Ai.T, cmap='PairedLin')
         self.axes.set_xlim((self.x[0],self.x[-1])) 
         self.axes.set_ylim((self.y[0],self.y[-1])) 
         
-        for tick in self.axes.xaxis.get_major_ticks():
-            tick.set_pad(12)
-        for tick in self.axes.yaxis.get_major_ticks():
-            tick.set_pad(8)
+#         for tick in self.axes.xaxis.get_major_ticks():
+#             tick.set_pad(12)
+#         for tick in self.axes.yaxis.get_major_ticks():
+#             tick.set_pad(8)
         
         
         # plot
@@ -117,6 +167,10 @@ class PlotMHD2D(object):
         self.A[  -1, 0:-1] = self.diagnostics.A[0,:]
         self.A[   :,   -1] = self.A[:,0]
         
+        self.Ai[0:-1, 0:-1] = -self.diagnostics.Ai[:,:]
+        self.Ai[  -1, 0:-1] = -self.diagnostics.Ai[0,:]
+        self.Ai[   :,   -1] = self.Ai[:,0]
+        
         self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
         self.J[  -1, 0:-1] = self.diagnostics.J[0,:]
         self.J[   :,   -1] = self.J[:,0]
@@ -126,9 +180,23 @@ class PlotMHD2D(object):
         self.PB[   :,   -1] = self.PB[:,0]
         
     
-    
     def update_boundaries(self):
         
+        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
+        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
+        Adif = Amax - Amin
+        
+        self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
+        self.ANorm  = colors.Normalize(vmin=Amin + 0.01 * Adif, vmax=Amax - 0.01 * Adif)
+        
+        if self.diagnostics.inertial_mhd:
+            Aimin = min(self.diagnostics.Ai.min(), -self.diagnostics.Ai.max())
+            Aimax = max(self.diagnostics.Ai.max(), -self.diagnostics.Ai.min())
+            Aidif = Aimax - Aimin
+            
+            self.AiTicks = np.linspace(Aimin + 0.01 * Aidif, Aimax - 0.01 * Aidif, 31)
+            self.AiNorm  = colors.Normalize(vmin=Aimin + 0.01 * Aidif, vmax=Aimax - 0.01 * Aidif)
+
         Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
         Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
         Jdiff = (Jmax - Jmin)
@@ -158,8 +226,17 @@ class PlotMHD2D(object):
         Adiff = Amax - Amin
         
         self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
-#        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31)
         self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
+    
+    
+        Ai = -self.diagnostics.Ai
+    
+        Aimin = min(Ai.min(), -Ai.max())
+        Aimax = max(Ai.max(), -Ai.min())
+        Aidiff = Aimax - Aimin
+        
+        self.Ainorm = colors.Normalize(vmin=Aimin - 0.01*Aidiff, vmax=Aimax + 0.01*Aidiff)
+        self.AiTicks = np.linspace(Aimin + 0.01 * Aidiff, Aimax - 0.01 * Aidiff, 51, endpoint=True)
     
     
     def update(self):
@@ -172,21 +249,21 @@ class PlotMHD2D(object):
 #        for coll in self.conts.collections:
 #            self.axes.collections.remove(coll)
          
-#        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
+#        self.conts = self.axes.contourf(self.x, self.y, self.Ai.T, 51, cmap=plt.get_cmap('Paired'))
         
-        self.pcm_J.set_array(self.J.T.ravel())
+        self.pcm_J.set_array(self.Ai.T.ravel())
         
         plt.draw()
         
-        filename = self.prefix + str('_Jpcm_%06d' % self.iTime) + '.png'
-        plt.savefig(filename, dpi=300)
-#         filename = self.prefix + str('_J_%06d' % self.iTime) + '.pdf'
-#         plt.savefig(filename)
+        filename = self.prefix + str('_X_%06d' % self.iTime) + '.png'
+        plt.savefig(filename, dpi=100)
+#        filename = self.prefix + str('_X_%06d' % self.iTime) + '.pdf'
+#        plt.savefig(filename)
     
     
     def add_timepoint(self):
         self.iTime += 1
-        self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+#         self.title.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
         
     
 

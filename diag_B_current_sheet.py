@@ -50,22 +50,11 @@ class PlotMHD2D(object):
         self.x = np.zeros(diagnostics.nx+1)
         self.y = np.zeros(diagnostics.ny+1)
         
-        self.xpc = np.zeros(diagnostics.nx+2)
-        self.ypc = np.zeros(diagnostics.ny+2)
-        
         self.x[0:-1] = self.diagnostics.xGrid
         self.x[  -1] = self.x[-2] + self.diagnostics.hx
         
         self.y[0:-1] = self.diagnostics.yGrid
         self.y[  -1] = self.y[-2] + self.diagnostics.hy
-        
-        self.xpc[0:-1] = self.x
-        self.xpc[  -1] = self.xpc[-2] + self.diagnostics.hx
-        self.xpc[:] -= 0.5 * self.diagnostics.hx
-        
-        self.ypc[0:-1] = self.y
-        self.ypc[  -1] = self.ypc[-2] + self.diagnostics.hy
-        self.ypc[:] -= 0.5 * self.diagnostics.hy
         
         self.A       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
         self.J       = np.zeros((diagnostics.nx+1, diagnostics.ny+1))
@@ -95,11 +84,10 @@ class PlotMHD2D(object):
         self.add_timepoint()
         self.update_boundaries()
         
-        # create current density plot
-        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
-#         self.pcm_J = self.axes.pcolormesh(self.xpc, self.ypc, self.J.T, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
-        self.axes.set_xlim((self.x[0],self.x[-1])) 
-        self.axes.set_ylim((self.y[0],self.y[-1])) 
+        # create contour plot
+        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
+#        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
+#        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
         
         for tick in self.axes.xaxis.get_major_ticks():
             tick.set_pad(12)
@@ -159,7 +147,7 @@ class PlotMHD2D(object):
         
         self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
 #        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31)
-        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
+        self.ATicks = np.linspace(Amin + 0.02 * Adiff, Amax - 0.02 * Adiff, 51, endpoint=True)
     
     
     def update(self):
@@ -171,17 +159,17 @@ class PlotMHD2D(object):
 
         for coll in self.conts.collections:
             self.axes.collections.remove(coll)
-         
-        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm, cmap=plt.get_cmap('viridis'))
         
-#         self.pcm_J.set_array(self.J.T.ravel())
+        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
+#        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
+#        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
         
         plt.draw()
         
-        filename = self.prefix + str('_J_%06d' % self.iTime) + '.png'
-        plt.savefig(filename, dpi=300)
-#         filename = self.prefix + str('_J_%06d' % self.iTime) + '.pdf'
-#         plt.savefig(filename)
+#        filename = self.prefix + str('_B_%06d' % self.iTime) + '.png'
+#        plt.savefig(filename, dpi=300)
+        filename = self.prefix + str('_B_%06d' % self.iTime) + '.pdf'
+        plt.savefig(filename)
     
     
     def add_timepoint(self):
