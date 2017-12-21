@@ -112,8 +112,8 @@ class PlotMHD2D(object):
     
     def update_boundaries(self):
         
-        Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
-        Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
+        Jmin = min(np.array(self.diagnostics.J).min(), -np.array(self.diagnostics.J).max())
+        Jmax = min(np.array(self.diagnostics.J).max(), -np.array(self.diagnostics.J).min())
         Jdiff = (Jmax - Jmin)
         
         if Jmin == Jmax:
@@ -124,8 +124,8 @@ class PlotMHD2D(object):
         self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
         
         
-        PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-        PBmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        PBmin = min(np.array(self.diagnostics.e_magnetic).min(), -np.array(self.diagnostics.e_magnetic).max())
+        PBmax = min(np.array(self.diagnostics.e_magnetic).max(), -np.array(self.diagnostics.e_magnetic).min())
         PBdiff = (PBmax - PBmin)
         
         if PBmin == PBmax:
@@ -136,8 +136,8 @@ class PlotMHD2D(object):
         self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
 
 
-        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
-        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
+        Amin = min(np.array(self.diagnostics.A).min(), -np.array(self.diagnostics.A).max())
+        Amax = max(np.array(self.diagnostics.A).max(), -np.array(self.diagnostics.A).min())
         Adiff = Amax - Amin
         
 #        Amin += 0.71 * Adiff
