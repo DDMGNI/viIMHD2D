@@ -8,4 +8,4 @@ petscMHD2D.o*
 petscMHD2D.po*
 vi/*.c
 vi/*.so
-*/build/
+build
