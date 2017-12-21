@@ -15,7 +15,8 @@ matplotlib.use('AGG')
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
-from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter
+from matplotlib.colors import BoundaryNorm
+from matplotlib.ticker import MaxNLocator, MultipleLocator, FormatStrFormatter, ScalarFormatter
 
 
 from imhd.diagnostics import Diagnostics 
@@ -52,18 +53,10 @@ class PlotMHD2D(object):
         self.y = np.zeros(diagnostics.ny+1)
         
         self.x[0:-1] = self.diagnostics.xGrid
-        self.x[  -1] = self.x[-2] + self.diagnostics.hx
+        self.x[  -1] = self.diagnostics.xGrid[-1] + self.diagnostics.hx
         
         self.y[0:-1] = self.diagnostics.yGrid
-        self.y[  -1] = self.y[-2] + self.diagnostics.hy
-        
-        
-        self.xpc = np.zeros(diagnostics.nx+2)
-        
-        self.xpc[0:-1] = self.x
-        self.xpc[  -1] = self.xpc[-2] + self.diagnostics.hx
-        self.xpc[:] -= 0.5 * self.diagnostics.hx
-
+        self.y[  -1] = self.diagnostics.yGrid[-1] + self.diagnostics.hy
         
         self.By      = np.zeros((diagnostics.nx+1))
         self.Vy      = np.zeros((diagnostics.nx+1))
@@ -79,9 +72,6 @@ class PlotMHD2D(object):
 
         # set up figure/window for By
         self.figure_By = plt.figure(num=1, figsize=(10,5))
-        
-        # set up plot margins
-        plt.subplots_adjust(hspace=0.25, wspace=0.2)
         plt.subplots_adjust(left=0.15, right=0.95, top=0.85, bottom=0.2)
         
         # set up plot title
@@ -101,9 +91,6 @@ class PlotMHD2D(object):
 
         # set up figure/window for Vy
         self.figure_Vy = plt.figure(num=2, figsize=(10,5))
-        
-        # set up plot margins
-        plt.subplots_adjust(hspace=0.25, wspace=0.2)
         plt.subplots_adjust(left=0.15, right=0.95, top=0.85, bottom=0.2)
         
         # set up plot title
@@ -157,21 +144,34 @@ class PlotMHD2D(object):
 
         if self.iTime == self.ntMax:
             # create ByTrace figure
+            levels = MaxNLocator(nbins=20).tick_values(self.ByTrace.min(), self.ByTrace.max())
+            cmap = plt.get_cmap('viridis')
+            norm = BoundaryNorm(levels, ncolors=cmap.N)
+            
             figure_ByTrace, axes_ByTrace = plt.subplots(num=3, figsize=(16,10))
+            plt.subplots_adjust(left=0.1, right=0.98, top=0.98, bottom=0.1)
+            
             axes_ByTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_ByTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
-            figure_ByTrace.tight_layout()
-            pcms_By = axes_ByTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.ByTrace, cmap=plt.get_cmap('viridis'))
+
+            pcms_By = axes_ByTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.ByTrace, cmap=cmap, norm=norm)
             axes_ByTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_ByTrace.set_ylim((self.x[0], self.x[-1]))
             figure_ByTrace.savefig(self.prefix + str('_ByTrace.png'), dpi=100)
     
+    
             # create VyTrace figure
+            levels = MaxNLocator(nbins=20).tick_values(self.VyTrace.min(), self.VyTrace.max())
+            cmap = plt.get_cmap('viridis')
+            norm = BoundaryNorm(levels, ncolors=cmap.N)
+            
             figure_VyTrace, axes_VyTrace = plt.subplots(num=3, figsize=(16,10))
+            plt.subplots_adjust(left=0.1, right=0.98, top=0.98, bottom=0.1)
+            
             axes_VyTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_VyTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
-            figure_VyTrace.tight_layout()
-            pcms_Vy = axes_VyTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.VyTrace, cmap=plt.get_cmap('viridis'))
+            
+            pcms_Vy = axes_VyTrace.pcolormesh(self.diagnostics.tGrid, self.x, self.VyTrace, cmap=cmap, norm=norm)
             axes_VyTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_VyTrace.set_ylim((self.x[0], self.x[-1]))
             figure_VyTrace.savefig(self.prefix + str('_VyTrace.png'), dpi=100)
