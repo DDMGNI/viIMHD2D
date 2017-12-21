@@ -78,7 +78,7 @@ class Config(ConfigObj):
             OptDB.setValue('sub_ksp_type', 'preonly')
             OptDB.setValue('sub_pc_type', 'lu')
             OptDB.setValue('sub_pc_factor_mat_solver_package', self['solver']['petsc_lu_package'])
-        
+            OptDB.setValue('sub_pc_factor_solver_package', self['solver']['petsc_lu_package'])
     
 
 if __name__ == '__main__':
