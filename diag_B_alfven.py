@@ -35,6 +35,7 @@ class PlotMHD2D(object):
 #        matplotlib.rc('text', usetex=True)
         matplotlib.rc('font', family='sans-serif', size='22')
         matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+        matplotlib.rcParams['grid.linestyle'] = "dotted"
         
         self.prefix = filename
         
@@ -84,6 +85,9 @@ class PlotMHD2D(object):
         self.axes_By.set_xlim(self.x[0], self.x[-1])
         self.axes_By.set_ylim(np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).max())
         self.axes_By.yaxis.set_major_formatter(majorFormatter)
+
+        # add grid
+        plt.grid()
         
         # create plot
         self.plot_By, = self.axes_By.plot(self.x, self.By)
@@ -103,6 +107,9 @@ class PlotMHD2D(object):
         self.axes_Vy.set_xlim(self.x[0], self.x[-1])
         self.axes_Vy.set_ylim(np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).max())
         self.axes_Vy.yaxis.set_major_formatter(majorFormatter)
+        
+        # add grid
+        plt.grid()
         
         # create plot
         self.plot_Vy, = self.axes_Vy.plot(self.x, self.Vy)
@@ -144,34 +151,36 @@ class PlotMHD2D(object):
 
         if self.iTime == self.ntMax:
             # create ByTrace figure
-            levels = MaxNLocator(nbins=20).tick_values(self.ByTrace.min(), self.ByTrace.max())
-            cmap = plt.get_cmap('viridis')
-            norm = BoundaryNorm(levels, ncolors=cmap.N)
+            Bmin = self.ByTrace.min()
+            Bmax = self.ByTrace.max()
+            dB = 0.1 * (Bmax - Bmin)
+            Bnorm = colors.Normalize(vmin=Bmin-dB, vmax=Bmax+dB)
             
             figure_ByTrace, axes_ByTrace = plt.subplots(num=3, figsize=(16,10))
-            plt.subplots_adjust(left=0.1, right=0.98, top=0.98, bottom=0.1)
+            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
             
             axes_ByTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_ByTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
 
-            pcms_By = axes_ByTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.ByTrace, cmap=cmap, norm=norm)
+            pcms_By = axes_ByTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.ByTrace, cmap=plt.get_cmap('viridis'), norm=Bnorm)
             axes_ByTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_ByTrace.set_ylim((self.x[0], self.x[-1]))
             figure_ByTrace.savefig(self.prefix + str('_ByTrace.png'), dpi=100)
     
     
             # create VyTrace figure
-            levels = MaxNLocator(nbins=20).tick_values(self.VyTrace.min(), self.VyTrace.max())
-            cmap = plt.get_cmap('viridis')
-            norm = BoundaryNorm(levels, ncolors=cmap.N)
+            Vmin = self.VyTrace.min()
+            Vmax = self.VyTrace.max()
+            dV = 0.1 * (Vmax - Vmin)
+            Vnorm = colors.Normalize(vmin=Vmin-dV, vmax=Vmax+dV)
             
             figure_VyTrace, axes_VyTrace = plt.subplots(num=3, figsize=(16,10))
-            plt.subplots_adjust(left=0.1, right=0.98, top=0.98, bottom=0.1)
+            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
             
             axes_VyTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_VyTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
             
-            pcms_Vy = axes_VyTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.VyTrace, cmap=cmap, norm=norm)
+            pcms_Vy = axes_VyTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.VyTrace, cmap=plt.get_cmap('viridis'), norm=Vnorm)
             axes_VyTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_VyTrace.set_ylim((self.x[0], self.x[-1]))
             figure_VyTrace.savefig(self.prefix + str('_VyTrace.png'), dpi=100)
