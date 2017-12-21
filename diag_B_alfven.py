@@ -51,11 +51,14 @@ class PlotMHD2D(object):
         
         
         self.t  = np.array(self.diagnostics.tGrid)
-        self.x  = np.array(self.diagnostics.xGrid) + 0.5 * self.diagnostics.hx
-        self.y  = np.array(self.diagnostics.yGrid) + 0.5 * self.diagnostics.hy
+
+        self.x       = np.zeros(diagnostics.nx+2)
+        self.x[1:-1] = np.array(self.diagnostics.xGrid) + 0.5 * self.diagnostics.hx
+        self.x[   0] = self.x[ 1] - self.diagnostics.hx
+        self.x[  -1] = self.x[-2] + self.diagnostics.hx
         
-        self.By = np.zeros(diagnostics.nx)
-        self.Vy = np.zeros(diagnostics.nx)
+        self.By = np.zeros(diagnostics.nx+2)
+        self.Vy = np.zeros(diagnostics.nx+2)
         
         self.xTrace  = np.zeros(diagnostics.nx+1)
         self.ByTrace = np.zeros((diagnostics.nx+1, diagnostics.nt+1))
@@ -82,7 +85,7 @@ class PlotMHD2D(object):
         self.axes_By = plt.subplot(1,1,1)
         self.axes_By.set_xlabel('$x$', labelpad=15, fontsize=24)
         self.axes_By.set_ylabel('$B_y(x)$', labelpad=15, fontsize=24)
-        self.axes_By.set_xlim(self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1])
+        self.axes_By.set_xlim(self.diagnostics.xMin, self.diagnostics.xMax)
         self.axes_By.set_ylim(np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).max())
         self.axes_By.yaxis.set_major_formatter(majorFormatter)
 
@@ -104,7 +107,7 @@ class PlotMHD2D(object):
         self.axes_Vy = plt.subplot(1,1,1)
         self.axes_Vy.set_xlabel('$x$', labelpad=15, fontsize=24)
         self.axes_Vy.set_ylabel('$V_y(x)$', labelpad=15, fontsize=24)
-        self.axes_Vy.set_xlim(self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1])
+        self.axes_Vy.set_xlim(self.diagnostics.xMin, self.diagnostics.xMax)
         self.axes_Vy.set_ylim(np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).max())
         self.axes_Vy.yaxis.set_major_formatter(majorFormatter)
         
@@ -125,14 +128,16 @@ class PlotMHD2D(object):
     
     def read_data(self):
         
-        self.By[:] = self.diagnostics.By[:,self.diagnostics.ny//2]
-        self.Vy[:] = self.diagnostics.Vy[:,self.diagnostics.ny//2]
+        self.By[1:-1] = self.diagnostics.By[ :,self.diagnostics.ny//2]
+        self.By[   0] = self.diagnostics.By[-1,self.diagnostics.ny//2]
+        self.By[  -1] = self.diagnostics.By[ 0,self.diagnostics.ny//2]
         
-        self.ByTrace[0:-1,self.iTime] = self.By
-        self.ByTrace[  -1,self.iTime] = self.By[0]
+        self.Vy[1:-1] = self.diagnostics.Vy[ :,self.diagnostics.ny//2]
+        self.Vy[   0] = self.diagnostics.Vy[-1,self.diagnostics.ny//2]
+        self.Vy[  -1] = self.diagnostics.Vy[ 0,self.diagnostics.ny//2]
         
-        self.VyTrace[0:-1,self.iTime] = self.Vy
-        self.VyTrace[  -1,self.iTime] = self.Vy[0]
+        self.ByTrace[:, self.iTime] = self.By[1:]
+        self.VyTrace[:, self.iTime] = self.Vy[1:]
     
     
     def update(self):

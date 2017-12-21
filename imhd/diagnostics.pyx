@@ -136,9 +136,9 @@ cdef class Diagnostics(object):
         self.tMin = self.tGrid[ 0]
         self.tMax = self.tGrid[-1]
         self.xMin = self.xGrid[ 0]
-        self.xMax = self.xGrid[-1]
+        self.xMax = self.xGrid[-1] + self.hx
         self.yMin = self.yGrid[ 0]
-        self.yMax = self.yGrid[-1]
+        self.yMax = self.yGrid[-1] + self.hy
         
         
         print("nt = %i (%i)" % (self.nt, len(self.tGrid)) )
