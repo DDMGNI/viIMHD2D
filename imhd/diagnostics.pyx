@@ -244,13 +244,15 @@ cdef class Diagnostics(object):
         cdef double t = 0 # temporary
         cdef double e = 0 # error
         
-        for i in range(X.shape[0]):
-            for j in range(X.shape[1]):
+        for j in range(self.ny):
+            for i in range(self.nx):
                 e = e + X[i,j]
                 t = r
                 r = t + e
                 e = e + (t - r)
             
+#        r = np.array(X).sum()
+        
         return r
     
 		
@@ -260,12 +262,14 @@ cdef class Diagnostics(object):
         cdef double t = 0 # temporary
         cdef double e = 0 # error
     
-        for i in range(X.shape[0]):
-            for j in range(X.shape[1]):
+        for j in range(self.ny):
+            for i in range(self.nx):
                 e = e + X[i,j] * Y[i,j]
                 t = r
                 r = t + e
                 e = e + (t - r)
+        
+#        r = (np.array(X)*np.array(Y)).sum()
         
         return r
     
@@ -275,14 +279,16 @@ cdef class Diagnostics(object):
         cdef double r = 0 # result
         cdef double t = 0 # temporary
         cdef double e = 0 # error
-    
-        for i in range(X.shape[0]):
-            for j in range(X.shape[1]):
+        
+        for j in range(self.ny):
+            for i in range(self.nx):
                 e = e + X[i,j]**2
                 t = r
                 r = t + e
                 e = e + (t - r)
         
+#        r = (np.array(X)**2).sum()
+    
         return r
     
     
@@ -355,6 +361,7 @@ cdef class Diagnostics(object):
             
 #         self.A -= self.A.mean()
 #         self.A -= self.A.min()
+        self.remove_average(self.A)
         
         
         # reconstruction of generalised vector potential
@@ -377,6 +384,7 @@ cdef class Diagnostics(object):
                     self.Ai[ix,iy] = self.Ai[ix,iyp] - self.hy * self.Bix[ix,iy]  
                 
 #             self.Ai -= self.Ai.mean()
+            self.remove_average(self.Ai)
         
         
         # reconstruction of current density
