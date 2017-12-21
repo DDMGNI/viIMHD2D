@@ -50,19 +50,19 @@ class PlotMHD2D(object):
         self.diagnostics = diagnostics
         
         
-        self.x = np.zeros(diagnostics.nx+1)
-        self.y = np.zeros(diagnostics.ny+1)
+        self.t  = np.array(self.diagnostics.tGrid)
+        self.x  = np.array(self.diagnostics.xGrid) + 0.5 * self.diagnostics.hx
+        self.y  = np.array(self.diagnostics.yGrid) + 0.5 * self.diagnostics.hy
         
-        self.x[0:-1] = self.diagnostics.xGrid
-        self.x[  -1] = self.diagnostics.xGrid[-1] + self.diagnostics.hx
+        self.By = np.zeros(diagnostics.nx)
+        self.Vy = np.zeros(diagnostics.nx)
         
-        self.y[0:-1] = self.diagnostics.yGrid
-        self.y[  -1] = self.diagnostics.yGrid[-1] + self.diagnostics.hy
-        
-        self.By      = np.zeros((diagnostics.nx+1))
-        self.Vy      = np.zeros((diagnostics.nx+1))
+        self.xTrace  = np.zeros(diagnostics.nx+1)
         self.ByTrace = np.zeros((diagnostics.nx+1, diagnostics.nt+1))
         self.VyTrace = np.zeros((diagnostics.nx+1, diagnostics.nt+1))
+        
+        self.xTrace[0:-1] = self.diagnostics.xGrid
+        self.xTrace[  -1] = self.diagnostics.xGrid[-1] + self.diagnostics.hx
         
         
         # set up tick formatter
@@ -82,7 +82,7 @@ class PlotMHD2D(object):
         self.axes_By = plt.subplot(1,1,1)
         self.axes_By.set_xlabel('$x$', labelpad=15, fontsize=24)
         self.axes_By.set_ylabel('$B_y(x)$', labelpad=15, fontsize=24)
-        self.axes_By.set_xlim(self.x[0], self.x[-1])
+        self.axes_By.set_xlim(self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1])
         self.axes_By.set_ylim(np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.By[:,self.diagnostics.ny//2]).max())
         self.axes_By.yaxis.set_major_formatter(majorFormatter)
 
@@ -104,7 +104,7 @@ class PlotMHD2D(object):
         self.axes_Vy = plt.subplot(1,1,1)
         self.axes_Vy.set_xlabel('$x$', labelpad=15, fontsize=24)
         self.axes_Vy.set_ylabel('$V_y(x)$', labelpad=15, fontsize=24)
-        self.axes_Vy.set_xlim(self.x[0], self.x[-1])
+        self.axes_Vy.set_xlim(self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1])
         self.axes_Vy.set_ylim(np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).min(), np.array(self.diagnostics.Vy[:,self.diagnostics.ny//2]).max())
         self.axes_Vy.yaxis.set_major_formatter(majorFormatter)
         
@@ -125,14 +125,14 @@ class PlotMHD2D(object):
     
     def read_data(self):
         
-        self.By[0:-1] = self.diagnostics.By[:,self.diagnostics.ny//2]
-        self.By[  -1] = self.By[0]
+        self.By[:] = self.diagnostics.By[:,self.diagnostics.ny//2]
+        self.Vy[:] = self.diagnostics.Vy[:,self.diagnostics.ny//2]
         
-        self.Vy[0:-1] = self.diagnostics.Vy[:,self.diagnostics.ny//2]
-        self.Vy[  -1] = self.Vy[0]
+        self.ByTrace[0:-1,self.iTime] = self.By
+        self.ByTrace[  -1,self.iTime] = self.By[0]
         
-        self.ByTrace[:,self.iTime] = self.By
-        self.VyTrace[:,self.iTime] = self.Vy
+        self.VyTrace[0:-1,self.iTime] = self.Vy
+        self.VyTrace[  -1,self.iTime] = self.Vy[0]
     
     
     def update(self):
@@ -153,8 +153,7 @@ class PlotMHD2D(object):
             # create ByTrace figure
             Bmin = self.ByTrace.min()
             Bmax = self.ByTrace.max()
-            dB = 0.1 * (Bmax - Bmin)
-            Bnorm = colors.Normalize(vmin=Bmin-dB, vmax=Bmax+dB)
+            Bnorm = colors.Normalize(vmin=Bmin, vmax=Bmax)
             
             figure_ByTrace, axes_ByTrace = plt.subplots(num=3, figsize=(16,10))
             plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
@@ -162,17 +161,16 @@ class PlotMHD2D(object):
             axes_ByTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_ByTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
 
-            pcms_By = axes_ByTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.ByTrace, cmap=plt.get_cmap('viridis'), norm=Bnorm)
+            pcms_By = axes_ByTrace.pcolormesh(self.t, self.xTrace, self.ByTrace, cmap=plt.get_cmap('viridis'), norm=Bnorm)
             axes_ByTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
-            axes_ByTrace.set_ylim((self.x[0], self.x[-1]))
+            axes_ByTrace.set_ylim((self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1]))
             figure_ByTrace.savefig(self.prefix + str('_ByTrace.png'), dpi=100)
     
     
             # create VyTrace figure
             Vmin = self.VyTrace.min()
             Vmax = self.VyTrace.max()
-            dV = 0.1 * (Vmax - Vmin)
-            Vnorm = colors.Normalize(vmin=Vmin-dV, vmax=Vmax+dV)
+            Vnorm = colors.Normalize(vmin=Vmin, vmax=Vmax)
             
             figure_VyTrace, axes_VyTrace = plt.subplots(num=3, figsize=(16,10))
             plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
@@ -180,9 +178,9 @@ class PlotMHD2D(object):
             axes_VyTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_VyTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
             
-            pcms_Vy = axes_VyTrace.pcolormesh(np.array(self.diagnostics.tGrid), self.x, self.VyTrace, cmap=plt.get_cmap('viridis'), norm=Vnorm)
+            pcms_Vy = axes_VyTrace.pcolormesh(self.t, self.xTrace, self.VyTrace, cmap=plt.get_cmap('viridis'), norm=Vnorm)
             axes_VyTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
-            axes_VyTrace.set_ylim((self.x[0], self.x[-1]))
+            axes_VyTrace.set_ylim((self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1]))
             figure_VyTrace.savefig(self.prefix + str('_VyTrace.png'), dpi=100)
     
     
