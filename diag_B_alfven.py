@@ -15,8 +15,8 @@ matplotlib.use('AGG')
 
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
-from matplotlib.colors import BoundaryNorm
-from matplotlib.ticker import MaxNLocator, MultipleLocator, FormatStrFormatter, ScalarFormatter
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter, ScalarFormatter
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 from imhd.diagnostics import Diagnostics 
@@ -156,36 +156,39 @@ class PlotMHD2D(object):
 
         if self.iTime == self.ntMax:
             # create ByTrace figure
-            Bmin = self.ByTrace.min()
-            Bmax = self.ByTrace.max()
-            Bnorm = colors.Normalize(vmin=Bmin, vmax=Bmax)
-            
             figure_ByTrace, axes_ByTrace = plt.subplots(num=3, figsize=(16,10))
-            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
+            plt.subplots_adjust(left=0.1, right=0.88, top=0.95, bottom=0.1)
             
             axes_ByTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_ByTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
 
-            pcms_By = axes_ByTrace.pcolormesh(self.t, self.xTrace, self.ByTrace, cmap=plt.get_cmap('viridis'), norm=Bnorm)
+            pcms_By = axes_ByTrace.pcolormesh(self.t, self.xTrace, self.ByTrace, cmap=plt.get_cmap('viridis'))
             axes_ByTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_ByTrace.set_ylim((self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1]))
+
+            divider_By = make_axes_locatable(axes_ByTrace)
+            cax_By = divider_By.append_axes('right', size='5%', pad=0.1)
+            figure_ByTrace.colorbar(pcms_By, cax=cax_By, orientation='vertical')
+
             figure_ByTrace.savefig(self.prefix + str('_ByTrace.png'), dpi=100)
+        
     
     
             # create VyTrace figure
-            Vmin = self.VyTrace.min()
-            Vmax = self.VyTrace.max()
-            Vnorm = colors.Normalize(vmin=Vmin, vmax=Vmax)
-            
-            figure_VyTrace, axes_VyTrace = plt.subplots(num=3, figsize=(16,10))
-            plt.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.1)
+            figure_VyTrace, axes_VyTrace = plt.subplots(num=4, figsize=(16,10))
+            plt.subplots_adjust(left=0.1, right=0.88, top=0.95, bottom=0.1)
             
             axes_VyTrace.set_xlabel('$t$', labelpad=15, fontsize=24)
             axes_VyTrace.set_ylabel('$x$', labelpad=15, fontsize=24)
             
-            pcms_Vy = axes_VyTrace.pcolormesh(self.t, self.xTrace, self.VyTrace, cmap=plt.get_cmap('viridis'), norm=Vnorm)
+            pcms_Vy = axes_VyTrace.pcolormesh(self.t, self.xTrace, self.VyTrace, cmap=plt.get_cmap('viridis'))
             axes_VyTrace.set_xlim((self.diagnostics.tGrid[0], self.diagnostics.tGrid[-1]))
             axes_VyTrace.set_ylim((self.diagnostics.xGrid[0], self.diagnostics.xGrid[-1]))
+
+            divider_Vy = make_axes_locatable(axes_VyTrace)
+            cax_Vy = divider_Vy.append_axes('right', size='5%', pad=0.1)
+            figure_VyTrace.colorbar(pcms_Vy, cax=cax_Vy, orientation='vertical')
+
             figure_VyTrace.savefig(self.prefix + str('_VyTrace.png'), dpi=100)
     
     
