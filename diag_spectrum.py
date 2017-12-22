@@ -64,6 +64,30 @@ class PlotMHD2D(object):
         self.VxSpectrum = np.zeros((diagnostics.nx, diagnostics.ny))
         self.VySpectrum = np.zeros((diagnostics.nx, diagnostics.ny))
         
+        self.BxPhase    = np.zeros((diagnostics.nx, diagnostics.ny))
+        self.ByPhase    = np.zeros((diagnostics.nx, diagnostics.ny))
+        self.VxPhase    = np.zeros((diagnostics.nx, diagnostics.ny))
+        self.VyPhase    = np.zeros((diagnostics.nx, diagnostics.ny))
+
+
+        # compute initial phase
+        
+        self.Bx[:,:] = self.diagnostics.Bx
+        self.By[:,:] = self.diagnostics.By
+        self.Vx[:,:] = self.diagnostics.Vx
+        self.Vy[:,:] = self.diagnostics.Vy
+        
+        BxFft = fftshift(fft2(self.Bx))
+        ByFft = fftshift(fft2(self.By))
+        VxFft = fftshift(fft2(self.Vx))
+        VyFft = fftshift(fft2(self.Vy))
+        
+        self.BxPhase0 = np.angle(BxFft)
+        self.ByPhase0 = np.angle(ByFft)
+        self.VxPhase0 = np.angle(VxFft)
+        self.VyPhase0 = np.angle(VyFft)
+
+        
         self.read_data()
         
         
@@ -159,6 +183,99 @@ class PlotMHD2D(object):
         self.figure_Vy.colorbar(self.plot_Vy, cax=cax_Vy, orientation='vertical')        
 
         
+        
+        # set up figure/window for Bx
+        self.figure_phase_Bx = plt.figure(num=1, figsize=(12,10))
+        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
+        
+        # set up plot title
+        self.title_phase_Bx = self.figure_phase_Bx.text(0.5, 0.93, 't = 0.0', horizontalalignment='center', fontsize=30)
+
+        # create axes
+        self.axes_phase_Bx = plt.subplot(1,1,1)
+        self.axes_phase_Bx.set_xlabel('$k_x$', labelpad=15, fontsize=24)
+        self.axes_phase_Bx.set_ylabel('$k_y$', labelpad=15, fontsize=24)
+        self.axes_phase_Bx.set_xlim(self.kx[0], self.kx[-1])
+        self.axes_phase_Bx.set_ylim(self.ky[0], self.ky[-1])
+
+        # create plot
+        self.plot_phase_Bx = self.axes_phase_Bx.pcolormesh(self.kx, self.ky, self.BxPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.BxPhase.min(), vmax=self.BxPhase.max())
+        
+        # add colorbar
+        divider = make_axes_locatable(self.axes_phase_Bx)
+        cax_phase_Bx = divider.append_axes('right', size='5%', pad=0.1)
+        self.figure_phase_Bx.colorbar(self.plot_phase_Bx, cax=cax_phase_Bx, orientation='vertical')        
+
+        
+        # set up figure/window for By
+        self.figure_phase_By = plt.figure(num=2, figsize=(12,10))
+        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
+        
+        # set up plot title
+        self.title_phase_By = self.figure_phase_By.text(0.5, 0.93, 't = 0.0', horizontalalignment='center', fontsize=30)
+
+        # create axes
+        self.axes_phase_By = plt.subplot(1,1,1)
+        self.axes_phase_By.set_xlabel('$k_x$', labelpad=15, fontsize=24)
+        self.axes_phase_By.set_ylabel('$k_y$', labelpad=15, fontsize=24)
+        self.axes_phase_By.set_xlim(self.kx[0], self.kx[-1])
+        self.axes_phase_By.set_ylim(self.ky[0], self.ky[-1])
+
+        # create plot
+        self.plot_phase_By = self.axes_phase_By.pcolormesh(self.kx, self.ky, self.ByPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.ByPhase.min(), vmax=self.ByPhase.max())
+        
+        # add colorbar
+        divider = make_axes_locatable(self.axes_phase_By)
+        cax_phase_By = divider.append_axes('right', size='5%', pad=0.1)
+        self.figure_phase_By.colorbar(self.plot_phase_By, cax=cax_phase_By, orientation='vertical')        
+
+        
+        # set up figure/window for Vx
+        self.figure_phase_Vx = plt.figure(num=3, figsize=(12,10))
+        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
+        
+        # set up plot title
+        self.title_phase_Vx = self.figure_phase_Vx.text(0.5, 0.93, 't = 0.0', horizontalalignment='center', fontsize=30)
+
+        # create axes
+        self.axes_phase_Vx = plt.subplot(1,1,1)
+        self.axes_phase_Vx.set_xlabel('$k_x$', labelpad=15, fontsize=24)
+        self.axes_phase_Vx.set_ylabel('$k_y$', labelpad=15, fontsize=24)
+        self.axes_phase_Vx.set_xlim(self.kx[0], self.kx[-1])
+        self.axes_phase_Vx.set_ylim(self.ky[0], self.ky[-1])
+
+        # create plot
+        self.plot_phase_Vx = self.axes_phase_Vx.pcolormesh(self.kx, self.ky, self.VxPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.VxPhase.min(), vmax=self.VxPhase.max())
+        
+        # add colorbar
+        divider = make_axes_locatable(self.axes_phase_Vx)
+        cax_phase_Vx = divider.append_axes('right', size='5%', pad=0.1)
+        self.figure_phase_Vx.colorbar(self.plot_phase_Vx, cax=cax_phase_Vx, orientation='vertical')        
+
+        
+        # set up figure/window for Vy
+        self.figure_phase_Vy = plt.figure(num=4, figsize=(12,10))
+        plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
+        
+        # set up plot title
+        self.title_phase_Vy = self.figure_phase_Vy.text(0.5, 0.93, 't = 0.0', horizontalalignment='center', fontsize=30)
+
+        # create axes
+        self.axes_phase_Vy = plt.subplot(1,1,1)
+        self.axes_phase_Vy.set_xlabel('$k_x$', labelpad=15, fontsize=24)
+        self.axes_phase_Vy.set_ylabel('$k_y$', labelpad=15, fontsize=24)
+        self.axes_phase_Vy.set_xlim(self.kx[0], self.kx[-1])
+        self.axes_phase_Vy.set_ylim(self.ky[0], self.ky[-1])
+
+        # create plot
+        self.plot_phase_Vy = self.axes_phase_Vy.pcolormesh(self.kx, self.ky, self.VyPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.VyPhase.min(), vmax=self.VyPhase.max())
+        
+        # add colorbar
+        divider = make_axes_locatable(self.axes_phase_Vy)
+        cax_phase_Vy = divider.append_axes('right', size='5%', pad=0.1)
+        self.figure_phase_Vy.colorbar(self.plot_phase_Vy, cax=cax_phase_Vy, orientation='vertical')        
+
+        
         # add data for zero timepoint and compute boundaries
         self.add_timepoint()
         
@@ -174,10 +291,20 @@ class PlotMHD2D(object):
         self.Vx[:,:] = self.diagnostics.Vx
         self.Vy[:,:] = self.diagnostics.Vy
         
-        self.BxSpectrum[:,:] = np.abs(fftshift(fft2(self.Bx)))
-        self.BySpectrum[:,:] = np.abs(fftshift(fft2(self.By)))
-        self.VxSpectrum[:,:] = np.abs(fftshift(fft2(self.Vx)))
-        self.VySpectrum[:,:] = np.abs(fftshift(fft2(self.Vy)))
+        BxFft = fftshift(fft2(self.Bx))
+        ByFft = fftshift(fft2(self.By))
+        VxFft = fftshift(fft2(self.Vx))
+        VyFft = fftshift(fft2(self.Vy))
+        
+        self.BxSpectrum[:,:] = np.abs(BxFft)
+        self.BySpectrum[:,:] = np.abs(ByFft)
+        self.VxSpectrum[:,:] = np.abs(VxFft)
+        self.VySpectrum[:,:] = np.abs(VyFft)
+        
+        self.BxPhase[:,:] = np.angle(BxFft) - self.BxPhase0
+        self.ByPhase[:,:] = np.angle(ByFft) - self.ByPhase0
+        self.VxPhase[:,:] = np.angle(VxFft) - self.VxPhase0
+        self.VyPhase[:,:] = np.angle(VyFft) - self.VyPhase0
         
     
     
@@ -193,10 +320,20 @@ class PlotMHD2D(object):
         self.plot_Vx.set_array(self.VxSpectrum.T.ravel())
         self.plot_Vy.set_array(self.VySpectrum.T.ravel())
         
+        self.plot_phase_Bx.set_array(self.BxPhase.T.ravel())
+        self.plot_phase_By.set_array(self.ByPhase.T.ravel())
+        self.plot_phase_Vx.set_array(self.VxPhase.T.ravel())
+        self.plot_phase_Vy.set_array(self.VyPhase.T.ravel())
+        
         self.figure_Bx.savefig(self.prefix + str('_spectrum_Bx_%06d' % self.iTime) + '.png', dpi=100)
         self.figure_By.savefig(self.prefix + str('_spectrum_By_%06d' % self.iTime) + '.png', dpi=100)
         self.figure_Vx.savefig(self.prefix + str('_spectrum_Vx_%06d' % self.iTime) + '.png', dpi=100)
         self.figure_Vy.savefig(self.prefix + str('_spectrum_Vy_%06d' % self.iTime) + '.png', dpi=100)
+        
+        self.figure_phase_Bx.savefig(self.prefix + str('_phase_Bx_%06d' % self.iTime) + '.png', dpi=100)
+        self.figure_phase_By.savefig(self.prefix + str('_phase_By_%06d' % self.iTime) + '.png', dpi=100)
+        self.figure_phase_Vx.savefig(self.prefix + str('_phase_Vx_%06d' % self.iTime) + '.png', dpi=100)
+        self.figure_phase_Vy.savefig(self.prefix + str('_phase_Vy_%06d' % self.iTime) + '.png', dpi=100)
         
 
     
@@ -207,6 +344,10 @@ class PlotMHD2D(object):
         self.title_By.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
         self.title_Vx.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
         self.title_Vy.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+        self.title_phase_Bx.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+        self.title_phase_By.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+        self.title_phase_Vx.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
+        self.title_phase_Vy.set_text('t = %1.2f' % (self.diagnostics.tGrid[self.iTime]))
     
 
 
