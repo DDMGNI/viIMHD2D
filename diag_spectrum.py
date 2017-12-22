@@ -106,7 +106,7 @@ class PlotMHD2D(object):
         self.axes_Bx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Bx = self.axes_Bx.pcolormesh(self.kx, self.ky, self.BxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.BxSpectrum.max())
+        self.plot_Bx = self.axes_Bx.pcolormesh(self.kx, self.ky, self.BxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=self.BxSpectrum.min(), vmax=self.BxSpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Bx)
@@ -129,7 +129,7 @@ class PlotMHD2D(object):
         self.axes_By.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_By = self.axes_By.pcolormesh(self.kx, self.ky, self.BySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.BySpectrum.max())
+        self.plot_By = self.axes_By.pcolormesh(self.kx, self.ky, self.BySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=self.BySpectrum.min(), vmax=self.BySpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_By)
@@ -152,7 +152,7 @@ class PlotMHD2D(object):
         self.axes_Vx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Vx = self.axes_Vx.pcolormesh(self.kx, self.ky, self.VxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.VxSpectrum.max())
+        self.plot_Vx = self.axes_Vx.pcolormesh(self.kx, self.ky, self.VxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=self.VxSpectrum.min(), vmax=self.VxSpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Vx)
@@ -175,7 +175,7 @@ class PlotMHD2D(object):
         self.axes_Vy.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Vy = self.axes_Vy.pcolormesh(self.kx, self.ky, self.VySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.VySpectrum.max())
+        self.plot_Vy = self.axes_Vy.pcolormesh(self.kx, self.ky, self.VySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=self.VySpectrum.min(), vmax=self.VySpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Vy)
@@ -199,7 +199,7 @@ class PlotMHD2D(object):
         self.axes_phase_Bx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_phase_Bx = self.axes_phase_Bx.pcolormesh(self.kx, self.ky, self.BxPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.BxPhase.min(), vmax=self.BxPhase.max())
+        self.plot_phase_Bx = self.axes_phase_Bx.pcolormesh(self.kx, self.ky, self.BxPhase.T, cmap=plt.get_cmap('viridis'), vmin=-2.*np.pi, vmax=+2.*np.pi)
         
         # add colorbar
         divider = make_axes_locatable(self.axes_phase_Bx)
@@ -222,7 +222,7 @@ class PlotMHD2D(object):
         self.axes_phase_By.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_phase_By = self.axes_phase_By.pcolormesh(self.kx, self.ky, self.ByPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.ByPhase.min(), vmax=self.ByPhase.max())
+        self.plot_phase_By = self.axes_phase_By.pcolormesh(self.kx, self.ky, self.ByPhase.T, cmap=plt.get_cmap('viridis'), vmin=-2.*np.pi, vmax=+2.*np.pi)
         
         # add colorbar
         divider = make_axes_locatable(self.axes_phase_By)
@@ -245,7 +245,7 @@ class PlotMHD2D(object):
         self.axes_phase_Vx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_phase_Vx = self.axes_phase_Vx.pcolormesh(self.kx, self.ky, self.VxPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.VxPhase.min(), vmax=self.VxPhase.max())
+        self.plot_phase_Vx = self.axes_phase_Vx.pcolormesh(self.kx, self.ky, self.VxPhase.T, cmap=plt.get_cmap('viridis'), vmin=-2.*np.pi, vmax=+2.*np.pi)
         
         # add colorbar
         divider = make_axes_locatable(self.axes_phase_Vx)
@@ -268,7 +268,7 @@ class PlotMHD2D(object):
         self.axes_phase_Vy.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_phase_Vy = self.axes_phase_Vy.pcolormesh(self.kx, self.ky, self.VyPhase.T, cmap=plt.get_cmap('viridis'), vmin=self.VyPhase.min(), vmax=self.VyPhase.max())
+        self.plot_phase_Vy = self.axes_phase_Vy.pcolormesh(self.kx, self.ky, self.VyPhase.T, cmap=plt.get_cmap('viridis'), vmin=-2.*np.pi, vmax=+2.*np.pi)
         
         # add colorbar
         divider = make_axes_locatable(self.axes_phase_Vy)
@@ -301,10 +301,10 @@ class PlotMHD2D(object):
         self.VxSpectrum[:,:] = np.abs(VxFft)
         self.VySpectrum[:,:] = np.abs(VyFft)
         
-        self.BxPhase[:,:] = np.angle(BxFft) - self.BxPhase0
-        self.ByPhase[:,:] = np.angle(ByFft) - self.ByPhase0
-        self.VxPhase[:,:] = np.angle(VxFft) - self.VxPhase0
-        self.VyPhase[:,:] = np.angle(VyFft) - self.VyPhase0
+        self.BxPhase[:,:] = np.angle(BxFft)# - self.BxPhase0
+        self.ByPhase[:,:] = np.angle(ByFft)# - self.ByPhase0
+        self.VxPhase[:,:] = np.angle(VxFft)# - self.VxPhase0
+        self.VyPhase[:,:] = np.angle(VyFft)# - self.VyPhase0
         
     
     
