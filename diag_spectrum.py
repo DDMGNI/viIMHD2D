@@ -185,7 +185,7 @@ class PlotMHD2D(object):
         
         
         # set up figure/window for Bx
-        self.figure_phase_Bx = plt.figure(num=1, figsize=(12,10))
+        self.figure_phase_Bx = plt.figure(num=5, figsize=(12,10))
         plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
         
         # set up plot title
@@ -208,7 +208,7 @@ class PlotMHD2D(object):
 
         
         # set up figure/window for By
-        self.figure_phase_By = plt.figure(num=2, figsize=(12,10))
+        self.figure_phase_By = plt.figure(num=6, figsize=(12,10))
         plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
         
         # set up plot title
@@ -231,7 +231,7 @@ class PlotMHD2D(object):
 
         
         # set up figure/window for Vx
-        self.figure_phase_Vx = plt.figure(num=3, figsize=(12,10))
+        self.figure_phase_Vx = plt.figure(num=7, figsize=(12,10))
         plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
         
         # set up plot title
@@ -254,7 +254,7 @@ class PlotMHD2D(object):
 
         
         # set up figure/window for Vy
-        self.figure_phase_Vy = plt.figure(num=4, figsize=(12,10))
+        self.figure_phase_Vy = plt.figure(num=8, figsize=(12,10))
         plt.subplots_adjust(left=0.15, right=0.85, top=0.9, bottom=0.12)
         
         # set up plot title
@@ -301,10 +301,10 @@ class PlotMHD2D(object):
         self.VxSpectrum[:,:] = np.abs(VxFft)
         self.VySpectrum[:,:] = np.abs(VyFft)
         
-        self.BxPhase[:,:] = np.angle(BxFft)# - self.BxPhase0
-        self.ByPhase[:,:] = np.angle(ByFft)# - self.ByPhase0
-        self.VxPhase[:,:] = np.angle(VxFft)# - self.VxPhase0
-        self.VyPhase[:,:] = np.angle(VyFft)# - self.VyPhase0
+        self.BxPhase[:,:] = np.angle(BxFft) - self.BxPhase0
+        self.ByPhase[:,:] = np.angle(ByFft) - self.ByPhase0
+        self.VxPhase[:,:] = np.angle(VxFft) - self.VxPhase0
+        self.VyPhase[:,:] = np.angle(VyFft) - self.VyPhase0
         
     
     
