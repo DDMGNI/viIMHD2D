@@ -64,6 +64,8 @@ class PlotMHD2D(object):
         self.VxSpectrum = np.zeros((diagnostics.nx, diagnostics.ny))
         self.VySpectrum = np.zeros((diagnostics.nx, diagnostics.ny))
         
+        self.read_data()
+        
         
         # set up figure/window for Bx
         self.figure_Bx = plt.figure(num=1, figsize=(12,10))
@@ -80,7 +82,7 @@ class PlotMHD2D(object):
         self.axes_Bx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Bx = self.axes_Bx.pcolormesh(self.kx, self.ky, self.BxSpectrum.T)
+        self.plot_Bx = self.axes_Bx.pcolormesh(self.kx, self.ky, self.BxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.BxSpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Bx)
@@ -103,7 +105,7 @@ class PlotMHD2D(object):
         self.axes_By.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_By = self.axes_By.pcolormesh(self.kx, self.ky, self.BySpectrum.T)
+        self.plot_By = self.axes_By.pcolormesh(self.kx, self.ky, self.BySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.BySpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_By)
@@ -126,7 +128,7 @@ class PlotMHD2D(object):
         self.axes_Vx.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Vx = self.axes_Vx.pcolormesh(self.kx, self.ky, self.VxSpectrum.T)
+        self.plot_Vx = self.axes_Vx.pcolormesh(self.kx, self.ky, self.VxSpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.VxSpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Vx)
@@ -149,7 +151,7 @@ class PlotMHD2D(object):
         self.axes_Vy.set_ylim(self.ky[0], self.ky[-1])
 
         # create plot
-        self.plot_Vy = self.axes_Vy.pcolormesh(self.kx, self.ky, self.VySpectrum.T)
+        self.plot_Vy = self.axes_Vy.pcolormesh(self.kx, self.ky, self.VySpectrum.T, cmap=plt.get_cmap('viridis'), vmin=0, vmax=self.VySpectrum.max())
         
         # add colorbar
         divider = make_axes_locatable(self.axes_Vy)
