@@ -96,30 +96,21 @@ cdef class Diagnostics(object):
     
     
     
-    def __init__(self):
-        print("Hello 0")
-        pass
-    
-    
     def __init__(self, hdf5_file):
         '''
         Constructor
         '''
 
-        print("Hello 1")
         self.hdf5 = h5py.File(hdf5_file, 'r')
         
-        print("Hello 2")
         assert self.hdf5 != None
         
-        print("Hello 3")
         if 'Bix' in self.hdf5 and 'Biy' in self.hdf5: 
             self.inertial_mhd = True
         else:
             self.inertial_mhd = False
         
         
-        print("Hello 4")
         self.tGrid = self.hdf5['t'][:].flatten()
         
         self.xGrid = self.hdf5['x'][:]
@@ -251,7 +242,7 @@ cdef class Diagnostics(object):
                 r = t + e
                 e = e + (t - r)
             
-#        r = np.array(X).sum()
+        r = np.array(X).sum()
         
         return r
     
@@ -269,7 +260,7 @@ cdef class Diagnostics(object):
                 r = t + e
                 e = e + (t - r)
         
-#        r = (np.array(X)*np.array(Y)).sum()
+        r = (np.array(X)*np.array(Y)).sum()
         
         return r
     
@@ -287,7 +278,7 @@ cdef class Diagnostics(object):
                 r = t + e
                 e = e + (t - r)
         
-#        r = (np.array(X)**2).sum()
+        r = (np.array(X)**2).sum()
     
         return r
     
@@ -308,12 +299,13 @@ cdef class Diagnostics(object):
             for j in range(X.shape[1]):
                 x += X[i,j]
                 
-        a = x / (X.shape[0] * X.shape[1])
+        a = x / self.n 
+        a = (np.array(X)).sum() / self.n
         
         for i in range(X.shape[0]):
             for j in range(X.shape[1]):
                 X[i,j] -= a
-		
+
         
     def read_from_hdf5(self, iTime):
         self.Bx = self.hdf5['Bx'][iTime,:,:].T
