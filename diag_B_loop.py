@@ -26,7 +26,7 @@ class PlotMHD2D(object):
     classdocs
     '''
 
-    def __init__(self, diagnostics, filename, ntMax=0, nPlot=1, write=False):
+    def __init__(self, diagnostics, filename, ntMax=0, nPlot=1, plotRef=False, write=False):
         '''
         Constructor
         '''
@@ -83,12 +83,18 @@ class PlotMHD2D(object):
         
         # add data for zero timepoint and compute boundaries
         self.add_timepoint()
+        self.read_data()
         self.update_boundaries()
         
         self.dx = self.diagnostics.nx//8
         self.dy = self.diagnostics.ny//8
         
+        self.A0 = self.A.copy()
+        
         # create contour plot
+        if plotRef:
+            self.conts_ref = self.axes.contour(self.x[self.dx:-self.dx], self.y[self.dy:-self.dy], self.A.T[self.dy:-self.dy, self.dx:-self.dx], self.ATicks, extend='neither', colors='r', linestyles='dashed')
+            
         self.conts = self.axes.contour(self.x[self.dx:-self.dx], self.y[self.dy:-self.dy], self.A.T[self.dy:-self.dy, self.dx:-self.dx], self.ATicks, extend='neither', colors='b')
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
@@ -187,7 +193,7 @@ class Plot(object):
     '''
 
 
-    def __init__(self, hdf5_file, nPlot=1, ntMax=0):
+    def __init__(self, hdf5_file, nPlot=1, ntMax=0, plotRef=False):
         '''
         Constructor
         '''
@@ -199,7 +205,7 @@ class Plot(object):
         else:
             self.nt = self.diagnostics.nt
         
-        self.plot = PlotMHD2D(self.diagnostics, args.hdf5_file.replace(".hdf5", ""), self.nt, nPlot)
+        self.plot = PlotMHD2D(self.diagnostics, args.hdf5_file.replace(".hdf5", ""), self.nt, nPlot, plotRef)
         
     
     def update(self, itime):
@@ -228,6 +234,8 @@ if __name__ == '__main__':
                         help='plot every i\'th frame')
     parser.add_argument('-ntmax', metavar='i', type=int, default=0,
                         help='limit to i points in time')
+    parser.add_argument('-ref', action='store_true', required=False,
+                        help='plot reference solution')
     
     args = parser.parse_args()
     
@@ -236,7 +244,7 @@ if __name__ == '__main__':
     print("Replay run with " + args.hdf5_file)
     print
     
-    pyvp = Plot(args.hdf5_file, ntMax=args.ntmax, nPlot=args.np)
+    pyvp = Plot(args.hdf5_file, ntMax=args.ntmax, nPlot=args.np, plotRef=args.ref)
     pyvp.run()
     
     print
