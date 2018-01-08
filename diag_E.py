@@ -246,7 +246,7 @@ class PlotEnergy(object):
     
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Vlasov-Poisson Solver in 1D')
+    parser = argparse.ArgumentParser(description='Ideal MHD Solver in 2D :: Conservation Law Diagnostics')
     
     parser.add_argument('hdf5_file', metavar='<run.hdf5>', type=str,
                         help='Run HDF5 File')
