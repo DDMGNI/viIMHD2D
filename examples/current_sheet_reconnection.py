@@ -3,7 +3,7 @@ import numpy as np
 
 u0 = 1E-3
 B0 = 1.29
-p0 = 0.1
+p0 = 1.0
 
 
 def magnetic_x(x, y, Lx, Ly):
