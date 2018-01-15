@@ -11,29 +11,24 @@ vx = u0 * np.cos(th)
 vy = u0 * np.sin(th)
 
 
-def magnetic_potential(x, y):
+def magnetic_x(x, y, hx, hy):
     r = np.sqrt(x**2 + y**2)
     
     if r < R0:
-        A = A0 * (R0 - r)
+        B = - A0 * y / r
     else:
-        A = 0.
-    
-    return A
-
-
-def magnetic_x(x, y, hx, hy):
-    A1 = magnetic_potential(x, y-0.5*hy)
-    A2 = magnetic_potential(x, y+0.5*hy)
-    B  = + (A2 - A1) / hy
+        B = 0.
     
     return B
     
 
 def magnetic_y(x, y, hx, hy):
-    A1 = magnetic_potential(x-0.5*hx, y)
-    A2 = magnetic_potential(x+0.5*hx, y)
-    B  = - (A2 - A1) / hx
+    r = np.sqrt(x**2 + y**2)
+    
+    if r < R0 and r > 0:
+        B = + A0 * x / r
+    else:
+        B = 0.
     
     return B
 

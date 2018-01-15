@@ -38,23 +38,23 @@ def magnetic_potential(x, y):
     return A
 
 
-def magnetic_x(x, y, Lx, Ly):
+def magnetic_x(x, y, hx, hy):
     A1 = magnetic_potential(x, y-0.5*hy)
     A2 = magnetic_potential(x, y+0.5*hy)
     
     return + (A2 - A1) / hy
 
-def magnetic_y(x, y, Lx, Ly):
+def magnetic_y(x, y, hx, hy):
     A1 = magnetic_potential(x-0.5*hx, y)
     A2 = magnetic_potential(x+0.5*hx, y)
     
     return - (A2 - A1) / hx
 
-def velocity_x(x, y, Lx, Ly):
+def velocity_x(x, y, hx, hy):
     return vx
 
-def velocity_y(x, y, Lx, Ly):
+def velocity_y(x, y, hx, hy):
     return vy
 
-def pressure(x, y, Lx, Ly):
+def pressure(x, y, hx, hy):
     return p0

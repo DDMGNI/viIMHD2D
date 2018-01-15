@@ -9,17 +9,17 @@ Bx0 = B0
 By0 = B0
 
 
-def magnetic_x(x, y, Lx, Ly):
+def magnetic_x(x, y, hx, hy):
     return Bx0
 
-def magnetic_y(x, y, Lx, Ly):
+def magnetic_y(x, y, hx, hy):
     return By0 * np.sin(np.pi * x)
 
-def velocity_x(x, y, Lx, Ly):
+def velocity_x(x, y, hx, hy):
     return 0.
 
-def velocity_y(x, y, Lx, Ly):
+def velocity_y(x, y, hx, hy):
     return u0 * np.sin(np.pi * x)
 
-def pressure(x, y, Lx, Ly):
+def pressure(x, y, hx, hy):
     return p0

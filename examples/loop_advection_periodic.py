@@ -14,17 +14,17 @@ vy = u0 * np.sin(th)
 def magnetic_potential(x, y):
     return A0 * np.exp(np.cos(np.pi*x) + np.cos(np.pi*y))
 
-def magnetic_x(x, y, Lx, Ly):
+def magnetic_x(x, y, hx, hy):
     return - A0 * np.pi * np.sin(np.pi*y) * np.exp(np.cos(np.pi*x) + np.cos(np.pi*y))
 
-def magnetic_y(x, y, Lx, Ly):
+def magnetic_y(x, y, hx, hy):
     return + A0 * np.pi * np.sin(np.pi*x) * np.exp(np.cos(np.pi*x) + np.cos(np.pi*y))
     
-def velocity_x(x, y, Lx, Ly):
+def velocity_x(x, y, hx, hy):
     return vx
 
-def velocity_y(x, y, Lx, Ly):
+def velocity_y(x, y, hx, hy):
     return vy
 
-def pressure(x, y, Lx, Ly):
+def pressure(x, y, hx, hy):
     return p0

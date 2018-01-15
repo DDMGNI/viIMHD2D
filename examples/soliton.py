@@ -12,19 +12,19 @@ sigma   = 0.25
 xcenter = 1.0
 
 
-def magnetic_x(x, y, Lx, Ly):
+def magnetic_x(x, y, hx, hy):
     return Bx0
 
-def magnetic_y(x, y, Lx, Ly):
+def magnetic_y(x, y, hx, hy):
     return By0 * gaussian(x)
 
-def velocity_x(x, y, Lx, Ly):
+def velocity_x(x, y, hx, hy):
     return u0
 
-def velocity_y(x, y, Lx, Ly):
+def velocity_y(x, y, hx, hy):
     return u0
 
-def pressure(x, y, Lx, Ly):
+def pressure(x, y, hx, hy):
     return p0
 
 

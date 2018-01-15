@@ -23,85 +23,85 @@ k = 2.
 
 ## Wave
 #
-#def magnetic_x(x, y, Lx, Ly):
+#def magnetic_x(x, y, hx, hy):
 #    return Bx0
 #
-#def magnetic_y(x, y, Lx, Ly):
+#def magnetic_y(x, y, hx, hy):
 #    return By0 * np.cos(np.pi*x)
 #
-#def velocity_x(x, y, Lx, Ly):
+#def velocity_x(x, y, hx, hy):
 #    return 0.0
 #
-#def velocity_y(x, y, Lx, Ly):
+#def velocity_y(x, y, hx, hy):
 #    return va * np.cos(np.pi * x)
 
 
 ## Current Sheet in x
 #
-#def magnetic_x(x, y, Lx, Ly):
+#def magnetic_x(x, y, hx, hy):
 #    return 0.0
 #
-#def magnetic_y(x, y, Lx, Ly):
+#def magnetic_y(x, y, hx, hy):
 #    if x1 <= x and x <= x2:
 #        return - B0
 #    else:
 #        return + B0
 ##    return np.tanh(c*(x-x1)) - np.tanh(c*(x-x2))
 #
-#def velocity_x(x, y, Lx, Ly):
+#def velocity_x(x, y, hx, hy):
 #    return u0 * np.sin(np.pi * y)
 #
-#def velocity_y(x, y, Lx, Ly):
+#def velocity_y(x, y, hx, hy):
 #    return 0.0
 
 
 # Current Sheet in y
 
-#def magnetic_x(x, y, Lx, Ly):
+#def magnetic_x(x, y, hx, hy):
 #    if x1 <= y and y <= x2:
 #        return - B0
 #    else:
 #        return + B0
 #
-#def magnetic_y(x, y, Lx, Ly):
+#def magnetic_y(x, y, hx, hy):
 #    return 0.0
 #
-#def velocity_x(x, y, Lx, Ly):
+#def velocity_x(x, y, hx, hy):
 #    return 0.0
 #
-#def velocity_y(x, y, Lx, Ly):
+#def velocity_y(x, y, hx, hy):
 #    return u0 * np.sin(np.pi * x)
 
 
 # Stationary
 
-#def magnetic_x(x, y, Lx, Ly):
+#def magnetic_x(x, y, hx, hy):
 #    return + B0
 #
-#def magnetic_y(x, y, Lx, Ly):
+#def magnetic_y(x, y, hx, hy):
 #    return - B0
 #
-#def velocity_x(x, y, Lx, Ly):
+#def velocity_x(x, y, hx, hy):
 #    return - u0
 #
-#def velocity_y(x, y, Lx, Ly):
+#def velocity_y(x, y, hx, hy):
 #    return + u0
 
 
 # Advection Loop
 
-#def magnetic_x(x, y, Lx, Ly):
+#def magnetic_x(x, y, hx, hy):
 #    return - A0 * y / np.sqrt(x**2 + y**2) 
 #
-#def magnetic_y(x, y, Lx, Ly):
+#def magnetic_y(x, y, hx, hy):
 #    return + A0 * x / np.sqrt(x**2 + y**2) 
 #
-#def velocity_x(x, y, Lx, Ly):
+#def velocity_x(x, y, hx, hy):
 #    return u0 * np.cos(th)
 #
-#def velocity_y(x, y, Lx, Ly):
+#def velocity_y(x, y, hx, hy):
 #    return u0 * np.sin(th)
 
 
-def pressure(x, y, Lx, Ly):
+def pressure(x, y, hx, hy):
     return p0
