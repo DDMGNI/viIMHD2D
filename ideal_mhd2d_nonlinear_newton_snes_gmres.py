@@ -289,33 +289,33 @@ class petscMHD2D(object):
         yc_arr = self.da1.getVecArray(self.ycoords)
         
         if cfg['initial_data']['magnetic_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
+            init_data = __import__("examples." + cfg['initial_data']['magnetic_python'], globals(), locals(), ['magnetic_x', 'magnetic_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
-                    By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
+                    Bx_arr[i,j] = init_data.magnetic_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, self.hx, self.hy)
+                    By_arr[i,j] = init_data.magnetic_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], self.hx, self.hy)
         
         else:
-            Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
-            By_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']            
+            Bx_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']
+            By_arr[xs:xe, ys:ye] = cfg['initial_data']['magnetic']
             
             
         if cfg['initial_data']['velocity_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity_x', 'velocity_y'], 0)
+            init_data = __import__("examples." + cfg['initial_data']['velocity_python'], globals(), locals(), ['velocity_x', 'velocity_y'], 0)
             
             for i in range(xs, xe):
                 for j in range(ys, ye):
-                    Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, Lx, Ly) 
-                    Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], Lx, Ly) 
+                    Vx_arr[i,j] = init_data.velocity_x(xc_arr[i,j], yc_arr[i,j] + 0.5 * self.hy, self.hx, self.hy)
+                    Vy_arr[i,j] = init_data.velocity_y(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j], self.hx, self.hy)
         
         else:
-            Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
-            Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']            
+            Vx_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']
+            Vy_arr[xs:xe, ys:ye] = cfg['initial_data']['velocity']
             
         
         if cfg['initial_data']['pressure_python'] != None:
-            init_data = __import__("runs." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
+            init_data = __import__("examples." + cfg['initial_data']['pressure_python'], globals(), locals(), ['pressure', ''], 0)
         
         
             # Fourier Filtering
@@ -404,12 +404,12 @@ class petscMHD2D(object):
         
         for i in range(xs, xe):
             for j in range(ys, ye):
-                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, Lx, Ly)
-#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+                P_arr[i,j] = init_data.pressure(xc_arr[i,j] + 0.5 * self.hx, yc_arr[i,j] + 0.5 * self.hy, self.hx, self.hy)
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, self.hx, self.hy) \
 #                           + 0.5 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
-#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, self.hx, self.hy) \
 #                           + 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2)
-#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, Lx, Ly) \
+#                P_arr[i,j] = init_data.pressure(coords[i,j][0] + 0.5 * self.hx, coords[i,j][1] + 0.5 * self.hy, self.hx, self.hy) \
 #                           + 0.5 * (0.25 * (Vx_arr[i,j] + Vx_arr[i+1,j])**2 + 0.25 * (Vy_arr[i,j] + Vy_arr[i,j+1])**2) \
 #                           - 1.0 * (0.25 * (Bx_arr[i,j] + Bx_arr[i+1,j])**2 + 0.25 * (By_arr[i,j] + By_arr[i,j+1])**2)
         
