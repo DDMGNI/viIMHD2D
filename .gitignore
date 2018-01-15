@@ -4,8 +4,7 @@
 *.pyc
 *.c
 *.so
-petscMHD2D.o*
-petscMHD2D.po*
-vi/*.c
-vi/*.so
 build
+.ipynb_checkpoints
+.project
+.pydevproject
