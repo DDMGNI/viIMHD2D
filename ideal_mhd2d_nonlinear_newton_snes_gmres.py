@@ -15,29 +15,13 @@ import numpy as np
 
 from config import Config
 
-#import PETSc_MHD_NL_Jacobian_Matrix
-
-#from PETSc_MHD_NL_Jacobian_Matrix5d_dofs import PETScJacobian
-#from PETSc_MHD_NL_Function               import PETScFunction
-
-#from PETSc_MHD_NL_SG_Jacobian_Matrix5d import PETScJacobian
-#from PETSc_MHD_NL_SG_Function          import PETScFunction
-
-#from PETSc_MHD_NL_FV_Jacobian_Matrix5d import PETScJacobian
-#from PETSc_MHD_NL_FV_Function          import PETScFunction
-
-#from PETSc_MHD_NL_FVD_Jacobian_Matrix5d import PETScJacobian
-#from PETSc_MHD_NL_FVD_Function          import PETScFunction
-
-
-# Discrete Euler-Poincaré Reduction by Gawlik
-# from imhd.integrators.Ideal_MHD_NL_EPG_Jacobian import PETScJacobian
-# from imhd.integrators.Ideal_MHD_NL_EPG_Function import PETScFunction
-
 # Formal Lagrangian Variational Integrator with Finite Difference Exterior Calculus
-from imhd.integrators.Ideal_MHD_NL_Jacobian import PETScJacobian
-from imhd.integrators.Ideal_MHD_NL_Function import PETScFunction
-from imhd.integrators.Ideal_MHD_NL_Matrix   import PETScMatrix
+from imhd.integrators.Ideal_MHD_Nonlinear import PETScFunction
+# from imhd.integrators.Ideal_MHD_Linear    import PETScMatrix
+
+
+# Discrete Euler-Poincaré Reduction by Gawlik et al.
+# from imhd.integrators.Ideal_MHD_EPG_Nonlinear import PETScFunction
 
 
 
@@ -237,12 +221,8 @@ class petscMHD2D(object):
         
         
         # create Matrix object
-        self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
+#         self.petsc_matrix   = PETScMatrix  (self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
         self.petsc_function = PETScFunction(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta)
-        
-#        self.petsc_jacobian_4d = PETSc_MHD_NL_Jacobian_Matrix.PETScJacobian(self.da1, self.da5, nx, ny, self.ht, self.hx, self.hy)
-        
         
         # initialise matrix
         self.A = self.da5.createMat()
@@ -419,8 +399,7 @@ class petscMHD2D(object):
         x_arr[xs:xe, ys:ye, 4] = P_arr [xs:xe, ys:ye]
         
         # update solution history
-        self.petsc_matrix.update_history(self.x)
-        self.petsc_jacobian.update_history(self.x)
+#         self.petsc_matrix.update_history(self.x)
         self.petsc_function.update_history(self.x)
         
         
@@ -465,12 +444,12 @@ class petscMHD2D(object):
     
     
     def updateJacobian(self, snes, X, J, P):
-        self.petsc_jacobian.update_previous(X)
-        self.petsc_jacobian.formMat(J)
+        self.petsc_function.update_previous(X)
+        self.petsc_function.formMat(J)
  
 #         if self.update_jacobian:
-#             self.petsc_jacobian.update_previous(X)
-#             self.petsc_jacobian.formMat(J)
+#             self.petsc_function.update_previous(X)
+#             self.petsc_function.formMat(J)
 #             self.update_jacobian = False
 #         else:
 #             return PETSc.Mat().Structure.SAME_PRECONDITIONER
@@ -502,8 +481,7 @@ class petscMHD2D(object):
                 
             
             # update history
-            self.petsc_matrix.update_history(self.x)
-            self.petsc_jacobian.update_history(self.x)
+#             self.petsc_matrix.update_history(self.x)
             self.petsc_function.update_history(self.x)
             
             # save to hdf5 file
@@ -511,63 +489,63 @@ class petscMHD2D(object):
                 self.save_to_hdf5()
             
     
-    def calculate_initial_guess(self):
-        
-        self.ksp = PETSc.KSP().create()
-        self.ksp.setFromOptions()
-        self.ksp.setOperators(self.A)
-        self.ksp.setType('gmres')
-        self.ksp.getPC().setType('asm')
-#         self.ksp.getPC().setType('none')
-#         self.ksp.setType('preonly')
-#         self.ksp.getPC().setType('lu')
-# #        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
-#         self.ksp.getPC().setFactorSolverPackage('mumps')
-        
-        # build matrix
-        self.petsc_matrix.formMat(self.A)
-        
-        # build RHS
-        self.petsc_matrix.formRHS(self.b)
-        
-        # solve
-        self.ksp.solve(self.b, self.x)
-        
-        # destroy
-        self.ksp.destroy()
+#     def calculate_initial_guess(self):
+#         
+#         self.ksp = PETSc.KSP().create()
+#         self.ksp.setFromOptions()
+#         self.ksp.setOperators(self.A)
+#         self.ksp.setType('gmres')
+#         self.ksp.getPC().setType('asm')
+# #         self.ksp.getPC().setType('none')
+# #         self.ksp.setType('preonly')
+# #         self.ksp.getPC().setType('lu')
+# # #        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
+# #         self.ksp.getPC().setFactorSolverPackage('mumps')
+#         
+#         # build matrix
+#         self.petsc_matrix.formMat(self.A)
+#         
+#         # build RHS
+#         self.petsc_matrix.formRHS(self.b)
+#         
+#         # solve
+#         self.ksp.solve(self.b, self.x)
+#         
+#         # destroy
+#         self.ksp.destroy()
         
         
             
-    def rk4(self, X, Y, fac=1.0):
-        
-        self.da5.globalToLocal(X, self.localX0)
-        x0  = self.da5.getVecArray(self.localX0)[...]
-        x1 = self.da5.getVecArray(self.X1)[...]
-        self.petsc_function.timestep(x0, x1)
-        
-        self.da5.globalToLocal(self.X1, self.localX1)
-        x1 = self.da5.getVecArray(self.localX1)[...]
-        x2 = self.da5.getVecArray(self.X2)[...]
-        self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x1, x2)
-        
-        self.da5.globalToLocal(self.X2, self.localX2)
-        x2 = self.da5.getVecArray(self.localX2)[...]
-        x3 = self.da5.getVecArray(self.X3)[...]
-        self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x2, x3)
-        
-        self.da5.globalToLocal(self.X3, self.localX3)
-        x3 = self.da5.getVecArray(self.localX3)[...]
-        x4 = self.da5.getVecArray(self.X4)[...]
-        self.petsc_function.timestep(x0 + 1.0 * fac * self.ht * x3, x4)
-        
-        y  = self.da5.getVecArray(Y)[...]
-        x0 = self.da5.getVecArray(X)[...]
-        x1 = self.da5.getVecArray(self.X1)[...]
-        x2 = self.da5.getVecArray(self.X2)[...]
-        x3 = self.da5.getVecArray(self.X3)[...]
-        x4 = self.da5.getVecArray(self.X4)[...]
-        
-        y[:,:,:] = x0 + fac * self.ht * (x1 + 2.*x2 + 2.*x3 + x4) / 6.
+#     def rk4(self, X, Y, fac=1.0):
+#         
+#         self.da5.globalToLocal(X, self.localX0)
+#         x0  = self.da5.getVecArray(self.localX0)[...]
+#         x1 = self.da5.getVecArray(self.X1)[...]
+#         self.petsc_function.timestep(x0, x1)
+#         
+#         self.da5.globalToLocal(self.X1, self.localX1)
+#         x1 = self.da5.getVecArray(self.localX1)[...]
+#         x2 = self.da5.getVecArray(self.X2)[...]
+#         self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x1, x2)
+#         
+#         self.da5.globalToLocal(self.X2, self.localX2)
+#         x2 = self.da5.getVecArray(self.localX2)[...]
+#         x3 = self.da5.getVecArray(self.X3)[...]
+#         self.petsc_function.timestep(x0 + 0.5 * fac * self.ht * x2, x3)
+#         
+#         self.da5.globalToLocal(self.X3, self.localX3)
+#         x3 = self.da5.getVecArray(self.localX3)[...]
+#         x4 = self.da5.getVecArray(self.X4)[...]
+#         self.petsc_function.timestep(x0 + 1.0 * fac * self.ht * x3, x4)
+#         
+#         y  = self.da5.getVecArray(Y)[...]
+#         x0 = self.da5.getVecArray(X)[...]
+#         x1 = self.da5.getVecArray(self.X1)[...]
+#         x2 = self.da5.getVecArray(self.X2)[...]
+#         x3 = self.da5.getVecArray(self.X3)[...]
+#         x4 = self.da5.getVecArray(self.X4)[...]
+#         
+#         y[:,:,:] = x0 + fac * self.ht * (x1 + 2.*x2 + 2.*x3 + x4) / 6.
 
 
     
@@ -616,10 +594,10 @@ class petscMHD2D(object):
 #        self.calculate_initial_guess()
         
         # update previous iteration
-        self.petsc_jacobian.update_previous(self.x)
+        self.petsc_function.update_previous(self.x)
         
         # calculate jacobian
-        self.petsc_jacobian.formMat(self.J)
+        self.petsc_function.formMat(self.J)
         
         # create working vectors
         Jx  = self.da5.createGlobalVec()
