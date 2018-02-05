@@ -274,7 +274,7 @@ cdef class PETScFunction(object):
         cdef double[:,:] Vy_ave  = 0.5 * (Vyp  + Vyh )
         cdef double[:,:] Bx_ave  = 0.5 * (Bxp  + Bxh )
         cdef double[:,:] By_ave  = 0.5 * (Byp  + Byh )
-        cdef double[:,:] Bix_ave = 0.5 * (Bxp  + Bxh )
+        cdef double[:,:] Bix_ave = 0.5 * (Bixp + Bixh)
         cdef double[:,:] Biy_ave = 0.5 * (Biyp + Biyh)
 
         cdef double[:,:] A_arr
