@@ -14,8 +14,7 @@ from petsc4py cimport PETSc
 
 from petsc4py.PETSc cimport Mat, Vec
 
-from imhd.integrators.MHD_Derivatives import  MHD_Derivatives
-from imhd.integrators.MHD_Derivatives cimport MHD_Derivatives
+from imhd.integrators.MHD_Derivatives import MHD_Derivatives
 
 
 

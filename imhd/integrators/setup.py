@@ -61,11 +61,9 @@ LIBRARY_DIRS += ['/opt/local/lib']
 
 
 extension_list = ["MHD_Derivatives",
-                  "Ideal_MHD_NL_Matrix",
-                  "Ideal_MHD_NL_Function",
-                  "Ideal_MHD_NL_Jacobian",
-                  "Ideal_MHD_NL_EPG_Function",
-                  "Ideal_MHD_NL_EPG_Jacobian",
+                  "Ideal_MHD_Linear",
+                  "Ideal_MHD_Nonlinear",
+                  "Ideal_MHD_EPG_Nonlinear",
                   "Inertial_MHD_Linear",
                   "Inertial_MHD_Nonlinear"]
 

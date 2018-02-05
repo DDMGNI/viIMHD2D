@@ -14,7 +14,7 @@ from imhd.integrators.MHD_Derivatives cimport MHD_Derivatives
 
 
 
-cdef class PETScJacobian(object):
+cdef class PETScMatrix(object):
     '''
     
     '''
@@ -41,7 +41,7 @@ cdef class PETScJacobian(object):
     
     
     cdef object da1                 # distributed array controller for 1D data
-    cdef object da5                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
+    cdef object da7                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
     
     cdef Vec Xh                 # last time step of V, B, p
     cdef Vec Xp                 # last iteration of V, B, p
@@ -53,10 +53,8 @@ cdef class PETScJacobian(object):
     cdef MHD_Derivatives derivatives
     
     
-    cdef double muu (self, double[:,:] A, int i, int j)
-    cdef double dt  (self, double[:,:] A, int i, int j)
-    cdef double dt_x(self, double[:,:] A, int i, int j)
-    cdef double dt_y(self, double[:,:] A, int i, int j)
+    cdef double muu(self, double[:,:] A, int i, int j)
+    cdef double dt (self, double[:,:] A, int i, int j)
 
     cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j)
 
@@ -69,3 +67,6 @@ cdef class PETScJacobian(object):
     cdef double phix_uy(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
     cdef double phiy_ux(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
     cdef double phiy_uy(self, double[:,:] A, double[:,:] F, int i, int j, double sign)
+
+
+
