@@ -676,10 +676,10 @@ class petscMHD2D(object):
     #                 print("  Euler Solver:      %5i iterations" % (neuler) )
     #                 print("  Faraday Solver:    %5i iterations" % (nfaraday) )
     #                 print("  Poisson Solver:    %5i iterations" % (npoisson) )
-                    print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E" % (n, norm1) )
+                    print("  Nonlinear Solver:  %5i iterations,   funcnorm = %24.16E,   rel = %24.16E,   suc = %24.16E" % (n, norm1, abs(norm1/normi), abs(norm1-norm0)) )
                 
                 # check breakout criteria
-                if norm1 < self.atol or abs((norm1-norm0)/normi) < self.rtol or abs(norm1-norm0) < self.stol:
+                if norm1 < self.atol or abs(norm1/normi) < self.rtol or abs(norm1-norm0) < self.stol:
                     break
                     
             
