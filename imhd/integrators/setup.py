@@ -14,6 +14,7 @@ LIBRARY_DIRS = []
 LIBRARIES    = []
 CARGS        = ['-O3', '-axavx', '-march=corei7-avx', '-std=c99', '-Wno-unused-function', '-Wno-unneeded-internal-declaration']
 LARGS        = []
+MACROS       = []
 
 # PETSc
 PETSC_DIR  = os.environ['PETSC_DIR']
@@ -46,10 +47,10 @@ if isdir(IMPI_DIR):
     LIBRARY_DIRS += [join(IMPI_DIR, 'lib')]
 
 # OpenMPI
-if isdir('/opt/local/include/openmpi-gcc5'):
-    INCLUDE_DIRS += ['/opt/local/include/openmpi-gcc5']
-if isdir('/opt/local/lib/openmpi-gcc5'):
-    LIBRARY_DIRS += ['/opt/local/lib/openmpi-gcc5']
+if isdir('/opt/local/include/openmpi-gcc6'):
+    INCLUDE_DIRS += ['/opt/local/include/openmpi-gcc6']
+if isdir('/opt/local/lib/openmpi-gcc6'):
+    LIBRARY_DIRS += ['/opt/local/lib/openmpi-gcc6']
 
 # MPI library
 LIBRARIES    += ['mpi']
@@ -59,89 +60,26 @@ INCLUDE_DIRS += ['/opt/local/include']
 LIBRARY_DIRS += ['/opt/local/lib']
 
 
+extension_list = ["MHD_Derivatives",
+                  "Ideal_MHD_NL_Matrix",
+                  "Ideal_MHD_NL_Function",
+                  "Ideal_MHD_NL_Jacobian",
+                  "Ideal_MHD_NL_EPG_Function",
+                  "Ideal_MHD_NL_EPG_Jacobian",
+                  "Inertial_MHD_Linear",
+                  "Inertial_MHD_Nonlinear"]
+
 ext_modules = [
-        Extension("MHD_Derivatives",
-                  sources=["MHD_Derivatives.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
+        Extension(ext,
+                  sources=[ext + ".pyx"],
+                  include_dirs=INCLUDE_DIRS,
                   libraries=LIBRARIES,
                   library_dirs=LIBRARY_DIRS,
                   runtime_library_dirs=LIBRARY_DIRS,
                   extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Ideal_MHD_NL_Matrix",
-                  sources=["Ideal_MHD_NL_Matrix.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Ideal_MHD_NL_Function",
-                  sources=["Ideal_MHD_NL_Function.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Ideal_MHD_NL_Jacobian",
-                  sources=["Ideal_MHD_NL_Jacobian.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Ideal_MHD_NL_EPG_Function",
-                  sources=["Ideal_MHD_NL_EPG_Function.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Ideal_MHD_NL_EPG_Jacobian",
-                  sources=["Ideal_MHD_NL_EPG_Jacobian.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Inertial_MHD_NL_Matrix",
-                  sources=["Inertial_MHD_NL_Matrix.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Inertial_MHD_NL_Function",
-                  sources=["Inertial_MHD_NL_Function.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-        Extension("Inertial_MHD_NL_Jacobian",
-                  sources=["Inertial_MHD_NL_Jacobian.pyx"],
-                  include_dirs=INCLUDE_DIRS + [os.curdir],
-                  libraries=LIBRARIES,
-                  library_dirs=LIBRARY_DIRS,
-                  runtime_library_dirs=LIBRARY_DIRS,
-                  extra_compile_args=CARGS,
-                  extra_link_args=LARGS
-                 ),
-              ]
+                  extra_link_args=LARGS,
+                  define_macros=MACROS
+                 ) for ext in extension_list]
                 
 setup(
     name = 'PETSc Ideal and Inertial MHD Solver',

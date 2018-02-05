@@ -817,8 +817,17 @@ cdef class MHD_Derivatives(object):
     
     
     @cython.boundscheck(False)
-    cdef double dt(self, double[:,:] x,
-                               int i, int j):
+    cdef double dt(self, double[:,:] x, int i, int j):
+        '''
+        Time Derivative
+        '''
+        
+        return x[i, j] * self.ht_inv
+    
+    
+    
+    @cython.boundscheck(False)
+    cdef double dt_x(self, double[:,:] x, int i, int j):
         '''
         Time Derivative
         '''
@@ -826,30 +835,28 @@ cdef class MHD_Derivatives(object):
         cdef double result
         
         result = ( \
-                   + 1. * x[i-1, j-1] \
-                   + 2. * x[i-1, j  ] \
-                   + 1. * x[i-1, j+1] \
-                   + 2. * x[i,   j-1] \
-                   + 4. * x[i,   j  ] \
-                   + 2. * x[i,   j+1] \
-                   + 1. * x[i+1, j-1] \
-                   + 2. * x[i+1, j  ] \
-                   + 1. * x[i+1, j+1] \
-                 ) * self.ht_inv / 16.
-        
+                     + 1. * x[i,   j-1] \
+                     + 2. * x[i,   j  ] \
+                     + 1. * x[i,   j+1] \
+                 ) * 0.25 * self.ht_inv
+                 
         return result
-
-
+    
+    
+    
     @cython.boundscheck(False)
-    cdef double dt_diag(self, double[:,:] x,
-                                    int i, int j):
+    cdef double dt_y(self, double[:,:] x, int i, int j):
         '''
         Time Derivative
         '''
         
         cdef double result
         
-        result = 0.25 * x[i, j] * self.ht_inv
+        result = ( \
+                     + 1. * x[i-1, j  ] \
+                     + 2. * x[i,   j  ] \
+                     + 1. * x[i+1, j  ] \
+                 ) * 0.25 * self.ht_inv
         
         return result
 

@@ -14,18 +14,19 @@ from imhd.integrators.MHD_Derivatives cimport MHD_Derivatives
 
 
 
-cdef class PETScJacobian(object):
+cdef class PETScFunction(object):
     '''
     
     '''
     
-    cdef int  nx        # no of grid points in x
-    cdef int  ny        # no of grid points in y
+    cdef int  nx          # no of grid points in x
+    cdef int  ny          # no of grid points in y
     
     cdef double ht        # step size in time
     cdef double hx        # step size in x
     cdef double hy        # step size in y
     
+    cdef double ht_inv
     cdef double fac_dt
     cdef double fac_dx
     cdef double fac_dy
@@ -40,16 +41,19 @@ cdef class PETScJacobian(object):
     cdef double eta
     cdef double de
     
+    cdef object da1             # distributed array controller for 1D data
+    cdef object da7             # distributed array controller for 5D data (velocity, magnetic field, pressure)
     
-    cdef object da1                 # distributed array controller for 1D data
-    cdef object da7                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
-    
+    cdef Vec divV
+    cdef Vec V
     cdef Vec Xh                 # last time step of V, B, p
     cdef Vec Xp                 # last iteration of V, B, p
     
+    cdef Vec localV
+    cdef Vec localB
+    cdef Vec localX
     cdef Vec localXh            # 
     cdef Vec localXp            # 
-    
     
     cdef MHD_Derivatives derivatives
     

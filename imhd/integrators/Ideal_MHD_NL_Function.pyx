@@ -117,10 +117,8 @@ cdef class PETScFunction(object):
                 jy = j-ys
                 
                 # V_x
-#                y[iy, jy, 0] = self.dt_x(Vx,  ix, jx) \
-#                             - self.dt_x(Vxh, ix, jx) \
-                y[iy, jy, 0] = self.dt(Vx,  ix, jx) \
-                             - self.dt(Vxh, ix, jx) \
+                y[iy, jy, 0] = self.derivatives.dt(Vx,  ix, jx) \
+                             - self.derivatives.dt(Vxh, ix, jx) \
                              + self.derivatives.psix(Vx_ave,  Vy_ave,  Vx_ave,  Vy_ave,  ix, jx) \
                              - self.derivatives.psix(Bx_ave,  By_ave,  Bx_ave,  By_ave,  ix, jx) \
                              + self.derivatives.divx_sg(P,  ix, jx) \
@@ -136,10 +134,8 @@ cdef class PETScFunction(object):
 #                             + 1.0 * self.derivatives.divx_sg(P,  ix, jx)
                 
                 # V_y
-#                y[iy, jy, 1] = self.dt_y(Vy,  ix, jx) \
-#                             - self.dt_y(Vyh, ix, jx) \
-                y[iy, jy, 1] = self.dt(Vy,  ix, jx) \
-                             - self.dt(Vyh, ix, jx) \
+                y[iy, jy, 1] = self.derivatives.dt(Vy,  ix, jx) \
+                             - self.derivatives.dt(Vyh, ix, jx) \
                              + self.derivatives.psiy(Vx_ave, Vy_ave, Vx_ave,  Vy_ave, ix, jx) \
                              - self.derivatives.psiy(Bx_ave, By_ave, Bx_ave,  By_ave, ix, jx) \
                              + self.derivatives.divy_sg(P,  ix, jx) \
@@ -155,10 +151,8 @@ cdef class PETScFunction(object):
 #                             + 1.0 * self.derivatives.divy_sg(P,  ix, jx)
                               
                 # B_x
-#                y[iy, jy, 2] = self.dt_x(Bx,  ix, jx) \
-#                             - self.dt_x(Bxh, ix, jx) \
-                y[iy, jy, 2] = self.dt(Bx,  ix, jx) \
-                             - self.dt(Bxh, ix, jx) \
+                y[iy, jy, 2] = self.derivatives.dt(Bx,  ix, jx) \
+                             - self.derivatives.dt(Bxh, ix, jx) \
                              + self.derivatives.phix(Vx_ave,  By_ave,  ix, jx) \
                              - self.derivatives.phix(Bx_ave,  Vy_ave,  ix, jx)
 #                             + 0.5 * self.derivatives.phix(Vx , By,  ix, jx) \
@@ -169,10 +163,8 @@ cdef class PETScFunction(object):
 #                             - self.derivatives.phix(Bx_ave,  Vyh,  ix, jx)
                     
                 # B_y
-#                y[iy, jy, 3] = self.dt_y(By,  ix, jx) \
-#                             - self.dt_y(Byh, ix, jx) \
-                y[iy, jy, 3] = self.dt(By,  ix, jx) \
-                             - self.dt(Byh, ix, jx) \
+                y[iy, jy, 3] = self.derivatives.dt(By,  ix, jx) \
+                             - self.derivatives.dt(Byh, ix, jx) \
                              + self.derivatives.phiy(Vx_ave,  By_ave,  ix, jx) \
                              - self.derivatives.phiy(Bx_ave,  Vy_ave,  ix, jx)
 #                             + 0.5 * self.derivatives.phiy(Vx , By,  ix, jx) \
@@ -247,49 +239,3 @@ cdef class PETScFunction(object):
                 # P
                 y[iy, jy, 4] = P[ix,jx]
                              
-        
-
-
-    @cython.boundscheck(False)
-    cdef double dt(self, double[:,:] x, int i, int j):
-        '''
-        Time Derivative
-        '''
-        
-        return x[i, j] * self.ht_inv
-    
-    
-    
-    @cython.boundscheck(False)
-    cdef double dt_x(self, double[:,:] x, int i, int j):
-        '''
-        Time Derivative
-        '''
-        
-        cdef double result
-        
-        result = ( \
-                     + 1. * x[i,   j-1] \
-                     + 2. * x[i,   j  ] \
-                     + 1. * x[i,   j+1] \
-                 ) * 0.25 * self.ht_inv
-                 
-        return result
-    
-    
-    
-    @cython.boundscheck(False)
-    cdef double dt_y(self, double[:,:] x, int i, int j):
-        '''
-        Time Derivative
-        '''
-        
-        cdef double result
-        
-        result = ( \
-                     + 1. * x[i-1, j  ] \
-                     + 2. * x[i,   j  ] \
-                     + 1. * x[i+1, j  ] \
-                 ) * 0.25 * self.ht_inv
-        
-        return result

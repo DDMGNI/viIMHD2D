@@ -16,10 +16,9 @@ import h5py
 
 from config import Config
 
-from imhd.integrators.Inertial_MHD_NL_Jacobian import PETScJacobian
-from imhd.integrators.Inertial_MHD_NL_Function import PETScFunction
-from imhd.integrators.Inertial_MHD_NL_Matrix   import PETScMatrix
-from imhd.integrators.MHD_Derivatives          import MHD_Derivatives
+from imhd.integrators.Inertial_MHD_Nonlinear import PETScFunction
+from imhd.integrators.Inertial_MHD_Linear    import PETScMatrix
+from imhd.integrators.MHD_Derivatives        import MHD_Derivatives
 
 
 class petscMHD2D(object):
@@ -211,7 +210,6 @@ class petscMHD2D(object):
         
         # create Matrix object
         self.petsc_matrix   = PETScMatrix  (self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
-        self.petsc_jacobian = PETScJacobian(self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
         self.petsc_function = PETScFunction(self.da1, self.da7, nx, ny, self.ht, self.hx, self.hy, mu, nu, eta, de)
         
         # initialise matrix
@@ -471,7 +469,6 @@ class petscMHD2D(object):
         
         # update solution history
         self.petsc_matrix.update_history(self.x)
-        self.petsc_jacobian.update_history(self.x)
         self.petsc_function.update_history(self.x)
         
         
@@ -541,8 +538,8 @@ class petscMHD2D(object):
     
     
     def updateJacobian(self, snes, X, J, P):
-        self.petsc_jacobian.update_previous(X)
-        self.petsc_jacobian.formMat(J)
+        self.petsc_function.update_previous(X)
+        self.petsc_function.formMat(J)
  
 #         if self.update_jacobian:
 #             self.petsc_jacobian.update_previous(X)
@@ -579,7 +576,6 @@ class petscMHD2D(object):
             
             # update history
             self.petsc_matrix.update_history(self.x)
-            self.petsc_jacobian.update_history(self.x)
             self.petsc_function.update_history(self.x)
             
             # save to hdf5 file
@@ -696,10 +692,10 @@ class petscMHD2D(object):
 #        self.calculate_initial_guess()
          
         # update previous iteration
-        self.petsc_jacobian.update_previous(self.x)
+        self.petsc_function.update_previous(self.x)
          
         # calculate jacobian
-        self.petsc_jacobian.formMat(self.J)
+        self.petsc_function.formMat(self.J)
          
         # create working vectors
         Jx  = self.da7.createGlobalVec()

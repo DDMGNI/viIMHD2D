@@ -42,7 +42,7 @@ cdef class PETScMatrix(object):
     
     
     cdef object da1                 # distributed array controller for 1D data
-    cdef object da5                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
+    cdef object da7                 # distributed array controller for 5D data (velocity, magnetic field, pressure)
     
     cdef Vec Xh                 # last time step of V, B, p
     cdef Vec Xp                 # last iteration of V, B, p

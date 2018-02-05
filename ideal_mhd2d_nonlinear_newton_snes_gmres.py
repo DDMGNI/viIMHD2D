@@ -486,7 +486,7 @@ class petscMHD2D(object):
                 self.time.setValue(0, self.ht*itime)
             
             # calculate initial guess
-            self.calculate_initial_guess()
+#             self.calculate_initial_guess()
             
             # update Jacobian
             self.update_jacobian = True
@@ -517,12 +517,13 @@ class petscMHD2D(object):
         self.ksp.setFromOptions()
         self.ksp.setOperators(self.A)
         self.ksp.setType('gmres')
-        self.ksp.getPC().setType('none')
+        self.ksp.getPC().setType('asm')
+#         self.ksp.getPC().setType('none')
 #         self.ksp.setType('preonly')
 #         self.ksp.getPC().setType('lu')
 # #        self.ksp.getPC().setFactorSolverPackage('superlu_dist')
 #         self.ksp.getPC().setFactorSolverPackage('mumps')
-    
+        
         # build matrix
         self.petsc_matrix.formMat(self.A)
         

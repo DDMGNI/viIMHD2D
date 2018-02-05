@@ -27,97 +27,39 @@ cdef class MHD_Derivatives(object):
     cdef double hy_inv2
     
     
-        
-    cdef double dx(self, double[:,:] B,
-                               double[:,:] V,
-                               int i, int j)
-    
-    cdef double dy(self, double[:,:] B,
-                               double[:,:] V,
-                               int i, int j)
+    cdef double dx(self, double[:,:] B, double[:,:] V, int i, int j)
+    cdef double dy(self, double[:,:] B, double[:,:] V, int i, int j)
 
-    cdef double fdudx(self, double[:,:] F,
-                                  double[:,:] U,
-                                  int i, int j)
-
-    cdef double fdudy(self, double[:,:] F,
-                                  double[:,:] U,
-                                  int i, int j)
+    cdef double fdudx(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double fdudy(self, double[:,:] F, double[:,:] U, int i, int j)
     
-    cdef double fx_dx_ux(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
-    cdef double fx_dx_uy(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
-    cdef double fy_dy_ux(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
-    cdef double fy_dy_uy(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
-    cdef double dx_fx_uy(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
-    cdef double dy_fx_uy(self, double[:,:] F,
-                                     double[:,:] U,
-                                     int i, int j)
-    
+    cdef double fx_dx_ux(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double fx_dx_uy(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double fy_dy_ux(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double fy_dy_uy(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double dx_fx_uy(self, double[:,:] F, double[:,:] U, int i, int j)
+    cdef double dy_fx_uy(self, double[:,:] F, double[:,:] U, int i, int j)
 
-    cdef double gradx(self, double[:,:] x,
-                                  int i, int j)
-    
-    cdef double grady(self, double[:,:] x,
-                                  int i, int j)
-    
-    cdef double gradx_sg(self, double[:,:] x,
-                                     int i, int j)
+    cdef double gradx(self, double[:,:] x, int i, int j)
+    cdef double grady(self, double[:,:] x, int i, int j)
+    cdef double gradx_sg(self, double[:,:] x, int i, int j)
+    cdef double grady_sg(self, double[:,:] x, int i, int j)
+    cdef double gradx_fv(self, double[:,:] x, int i, int j)
+    cdef double grady_fv(self, double[:,:] x, int i, int j)
+    cdef double gradx_simple(self, double[:,:] x, int i, int j)
+    cdef double grady_simple(self, double[:,:] x, int i, int j)
 
-    cdef double grady_sg(self, double[:,:] x,
-                                     int i, int j)
+    cdef double divx(self, double[:,:] x, int i, int j)
+    cdef double divy(self, double[:,:] x, int i, int j)
+    cdef double divx_sg(self, double[:,:] x, int i, int j)
+    cdef double divy_sg(self, double[:,:] x, int i, int j)
 
-    cdef double gradx_fv(self, double[:,:] x,
-                                     int i, int j)
-    
-    cdef double grady_fv(self, double[:,:] x,
-                                     int i, int j)
+    cdef double laplace(self, double[:,:] x, int i, int j)
+    cdef double laplace_fd(self, double[:,:] x, int i, int j)
 
-    cdef double gradx_simple(self, double[:,:] x,
-                                         int i, int j)
-    
-    cdef double grady_simple(self, double[:,:] x,
-                                         int i, int j)
-
-    cdef double divx(self, double[:,:] x,
-                                 int i, int j)
-    
-    cdef double divy(self, double[:,:] x,
-                                 int i, int j)
-
-    cdef double divx_sg(self, double[:,:] x,
-                                    int i, int j)
-
-    cdef double divy_sg(self, double[:,:] x,
-                                    int i, int j)
-
-    cdef double laplace(self, double[:,:] x,
-                                    int i, int j)
-
-    cdef double laplace_fd(self, double[:,:] x,
-                                       int i, int j)
-
-
-    cdef double dt(self, double[:,:] x,
-                               int i, int j)
-    
-    cdef double dt_diag(self, double[:,:] x,
-                                    int i, int j)
-
+    cdef double dt(self, double[:,:] x, int i, int j)
+    cdef double dt_x(self, double[:,:] x, int i, int j)
+    cdef double dt_y(self, double[:,:] x, int i, int j)
 
     cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j)
 

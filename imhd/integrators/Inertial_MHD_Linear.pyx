@@ -24,7 +24,7 @@ cdef class PETScMatrix(object):
     
     '''
     
-    def __init__(self, object da1, object da5,
+    def __init__(self, object da1, object da7,
                  int nx, int ny,
                  double ht, double hx, double hy,
                  double mu, double nu, double eta, double de):
@@ -34,7 +34,7 @@ cdef class PETScMatrix(object):
         
         # distributed array
         self.da1 = da1
-        self.da5 = da5
+        self.da7 = da7
         
         # grid size
         self.nx = nx
@@ -61,10 +61,10 @@ cdef class PETScMatrix(object):
         self.de  = de
         
         # create history vectors
-        self.Xh = self.da5.createGlobalVec()
+        self.Xh = self.da7.createGlobalVec()
         
         # create local vectors
-        self.localXh = da5.createLocalVec()
+        self.localXh = da7.createLocalVec()
         
         # create derivatives object
         self.derivatives = MHD_Derivatives(nx, ny, ht, hx, hy)
@@ -81,9 +81,9 @@ cdef class PETScMatrix(object):
         
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        self.da5.globalToLocal(self.Xh, self.localXh)
+        self.da7.globalToLocal(self.Xh, self.localXh)
         
-        xh = self.da5.getVecArray(self.localXh)
+        xh = self.da7.getVecArray(self.localXh)
         
         cdef double[:,:] Vxh = xh[...][:,:,0]
         cdef double[:,:] Vyh = xh[...][:,:,1]
@@ -427,11 +427,11 @@ cdef class PETScMatrix(object):
         
         (xs, xe), (ys, ye) = self.da1.getRanges()
         
-        cdef np.ndarray[double, ndim=3] y = self.da5.getVecArray(B)[...]
+        cdef np.ndarray[double, ndim=3] y = self.da7.getVecArray(B)[...]
 
-        self.da5.globalToLocal(self.Xh, self.localXh)
+        self.da7.globalToLocal(self.Xh, self.localXh)
         
-        xh = self.da5.getVecArray(self.localXh)
+        xh = self.da7.getVecArray(self.localXh)
         
         cdef double[:,:] Vxh = xh[...][:,:,0]
         cdef double[:,:] Vyh = xh[...][:,:,1]

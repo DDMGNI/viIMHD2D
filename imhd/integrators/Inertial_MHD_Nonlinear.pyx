@@ -12,14 +12,14 @@ cimport numpy as np
 from petsc4py import  PETSc
 from petsc4py cimport PETSc
 
-from petsc4py.PETSc cimport Mat, Vec
+from petsc4py.PETSc cimport SNES, Mat, Vec
 
 from imhd.integrators.MHD_Derivatives import  MHD_Derivatives
 from imhd.integrators.MHD_Derivatives cimport MHD_Derivatives
 
 
 
-cdef class PETScJacobian(object):
+cdef class PETScFunction(object):
     '''
     
     '''
@@ -46,6 +46,7 @@ cdef class PETScJacobian(object):
         self.hy = hy
         
         # factors of derivatives
+        self.ht_inv = 1. / self.ht
         self.fac_dt = 1.0 / 4. / self.ht
         
         self.fac_grdx  = 1.0 / 4. / self.hx
@@ -53,6 +54,7 @@ cdef class PETScJacobian(object):
         
         self.fac_divx  = 0.5 / self.hx
         self.fac_divy  = 0.5 / self.hy
+        
         
         # friction, viscosity, resistivity, electron skin depth
         self.mu  = mu
@@ -65,6 +67,7 @@ cdef class PETScJacobian(object):
         self.Xp = self.da7.createGlobalVec()
         
         # create local vectors
+        self.localX  = da7.createLocalVec()
         self.localXh = da7.createLocalVec()
         self.localXp = da7.createLocalVec()
         
@@ -80,6 +83,166 @@ cdef class PETScJacobian(object):
         X.copy(self.Xp)
         
     
+    def mult(self, Mat mat, Vec X, Vec Y):
+        self.matrix_mult(X, Y)
+        
+    def snes_mult(self, SNES snes, Vec X, Vec Y):
+        self.matrix_mult(X, Y)
+        
+    
+    @cython.boundscheck(False)
+    def matrix_mult(self, Vec X, Vec Y):
+        cdef int i, j
+        cdef int ix, iy, jx, jy
+        cdef int xe, xs, ye, ys
+        
+        (xs, xe), (ys, ye) = self.da1.getRanges()
+        
+        self.da7.globalToLocal(X,       self.localX)
+        self.da7.globalToLocal(self.Xh, self.localXh)
+        
+        cdef np.ndarray[double, ndim=3] x  = self.da7.getVecArray(self.localX) [...]
+        cdef np.ndarray[double, ndim=3] xh = self.da7.getVecArray(self.localXh)[...]
+        
+        cdef np.ndarray[double, ndim=3] y = self.da7.getVecArray(Y)[...]
+
+        cdef np.ndarray[double, ndim=2] Vx  =  x [:,:,0]
+        cdef np.ndarray[double, ndim=2] Vy   = x [:,:,1]
+        cdef np.ndarray[double, ndim=2] Bx   = x [:,:,2]
+        cdef np.ndarray[double, ndim=2] By   = x [:,:,3]
+        cdef np.ndarray[double, ndim=2] Bix  = x [:,:,4]
+        cdef np.ndarray[double, ndim=2] Biy  = x [:,:,5]
+        cdef np.ndarray[double, ndim=2] P    = x [:,:,6]
+        
+        cdef np.ndarray[double, ndim=2] Vxh  = xh[:,:,0]
+        cdef np.ndarray[double, ndim=2] Vyh  = xh[:,:,1]
+        cdef np.ndarray[double, ndim=2] Bxh  = xh[:,:,2]
+        cdef np.ndarray[double, ndim=2] Byh  = xh[:,:,3]
+        cdef np.ndarray[double, ndim=2] Bixh = xh[:,:,4]
+        cdef np.ndarray[double, ndim=2] Biyh = xh[:,:,5]
+        cdef np.ndarray[double, ndim=2] Ph   = xh[:,:,6]
+        
+        cdef double[:,:] Vx_ave  = 0.5 * (Vx  + Vxh )
+        cdef double[:,:] Vy_ave  = 0.5 * (Vy  + Vyh )
+        cdef double[:,:] Bx_ave  = 0.5 * (Bx  + Bxh )
+        cdef double[:,:] By_ave  = 0.5 * (By  + Byh )
+        cdef double[:,:] Bix_ave = 0.5 * (Bix + Bixh)
+        cdef double[:,:] Biy_ave = 0.5 * (Biy + Biyh)
+        cdef double[:,:] P_ave   = 0.5 * (P   + Ph  )
+
+        
+        for i in range(xs, xe):
+            ix = i-xs+2
+            iy = i-xs
+            
+            for j in range(ys, ye):
+                jx = j-ys+2
+                jy = j-ys
+                
+                # V_x
+                y[iy, jy, 0] = self.derivatives.dt(Vx,  ix, jx) \
+                             - self.derivatives.dt(Vxh, ix, jx) \
+                             + self.derivatives.psix(Vx_ave,  Vy_ave,  Vx_ave, Vy_ave, ix, jx) \
+                             - self.derivatives.psix(Bix_ave, Biy_ave, Bx_ave, By_ave, ix, jx) \
+                             + self.derivatives.divx_sg(P,  ix, jx) \
+                             + 0.5 * self.mu * Vx [ix,jx] \
+                             + 0.5 * self.mu * Vxh[ix,jx]
+                
+                # V_y
+                y[iy, jy, 1] = self.derivatives.dt(Vy,  ix, jx) \
+                             - self.derivatives.dt(Vyh, ix, jx) \
+                             + self.derivatives.psiy(Vx_ave,  Vy_ave,  Vx_ave, Vy_ave, ix, jx) \
+                             - self.derivatives.psiy(Bix_ave, Biy_ave, Bx_ave, By_ave, ix, jx) \
+                             + self.derivatives.divy_sg(P,  ix, jx) \
+                             + 0.5 * self.mu * Vy [ix,jx] \
+                             + 0.5 * self.mu * Vyh[ix,jx]
+                
+                # B_x
+                y[iy, jy, 2] = Bix[ix, jx] \
+                             - self.derivatives.Bix(Bx, By, ix, jx, self.de)
+                
+                # B_y
+                y[iy, jy, 3] = Biy[ix, jx] \
+                             - self.derivatives.Biy(Bx, By, ix, jx, self.de)
+                
+                # Bi_x
+                y[iy, jy, 4] = self.derivatives.dt(Bix,  ix, jx) \
+                             - self.derivatives.dt(Bixh, ix, jx) \
+                             + self.derivatives.phix(Vx_ave,  Biy_ave, ix, jx) \
+                             - self.derivatives.phix(Bix_ave, Vy_ave,  ix, jx)
+                
+                # Bi_y
+                y[iy, jy, 5] = self.derivatives.dt(Biy,  ix, jx) \
+                             - self.derivatives.dt(Biyh, ix, jx) \
+                             + self.derivatives.phiy(Vx_ave,  Biy_ave, ix, jx) \
+                             - self.derivatives.phiy(Bix_ave, Vy_ave,  ix, jx)
+                
+                # P
+                y[iy, jy, 6] = self.derivatives.gradx_simple(Vx_ave, ix, jx) \
+                             + self.derivatives.grady_simple(Vy_ave, ix, jx)
+                
+
+
+    @cython.boundscheck(False)
+    def timestep(self, np.ndarray[double, ndim=3] x,
+                       np.ndarray[double, ndim=3] y):
+        
+        cdef int i, j
+        cdef int ix, iy, jx, jy
+        cdef int xe, xs, ye, ys
+        
+        (xs, xe), (ys, ye) = self.da1.getRanges()
+        
+        cdef double[:,:] Vx  = x[:,:,0]
+        cdef double[:,:] Vy  = x[:,:,1]
+        cdef double[:,:] Bx  = x[:,:,2]
+        cdef double[:,:] By  = x[:,:,3]
+        cdef double[:,:] Bix = x[:,:,4]
+        cdef double[:,:] Biy = x[:,:,5]
+        cdef double[:,:] P   = x[:,:,6]
+
+        
+        for i in range(xs, xe):
+            ix = i-xs+2
+            iy = i-xs
+            
+            for j in range(ys, ye):
+                jx = j-ys+2
+                jy = j-ys
+                
+                # V_x
+                y[iy, jy, 0] = \
+                             + self.derivatives.psix(Vx,  Vy,  Vx, Vy, ix, jx) \
+                             - self.derivatives.psix(Bix, Biy, Bx, By, ix, jx) \
+                             + self.derivatives.divx_sg(P, ix, jx)
+                
+                # V_y
+                y[iy, jy, 1] = \
+                             + self.derivatives.psiy(Vx,  Vy,  Vx, Vy, ix, jx) \
+                             - self.derivatives.psiy(Bix, Biy, Bx, By, ix, jx) \
+                             + self.derivatives.divy_sg(P, ix, jx)
+                              
+                # B_x
+                y[iy, jy, 2] = Bx[ix,jx]
+                
+                # B_y
+                y[iy, jy, 3] = By[ix,jx]
+                
+                # Bi_x
+                y[iy, jy, 4] = \
+                             + self.derivatives.phix(Vx, Biy, ix, jx) \
+                             - self.derivatives.phix(Bix, Vy, ix, jx)
+                    
+                # Bi_y
+                y[iy, jy, 5] = \
+                             + self.derivatives.phiy(Vx, Biy, ix, jx) \
+                             - self.derivatives.phiy(Bix, Vy, ix, jx)
+                
+                # P
+                y[iy, jy, 6] = P[ix,jx]
+                             
+
+
     @cython.boundscheck(False)
     def formMat(self, Mat A, Mat P = None):
         cdef np.int64_t i, j, ia, ja, ix, jx
@@ -870,3 +1033,4 @@ cdef class PETScJacobian(object):
         A[3, 2] += ( Fx[i+1, j-1] + Fx[i+1, j  ] ) * fac
 
 
+        

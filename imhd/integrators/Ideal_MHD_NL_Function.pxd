@@ -46,9 +46,3 @@ cdef class PETScFunction(object):
     cdef Vec localXh
     
     cdef MHD_Derivatives derivatives
-    
-    
-    cdef double dt(self, double[:,:] x, int i, int j)
-    cdef double dt_x(self, double[:,:] x, int i, int j)
-    cdef double dt_y(self, double[:,:] x, int i, int j)
-
