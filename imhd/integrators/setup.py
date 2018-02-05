@@ -65,7 +65,10 @@ extension_list = ["MHD_Derivatives",
                   "Ideal_MHD_Nonlinear",
                   "Ideal_MHD_EPG_Nonlinear",
                   "Inertial_MHD_Linear",
-                  "Inertial_MHD_Nonlinear"]
+                  "Inertial_MHD_Nonlinear",
+                  "Inertial_MHD_Euler",
+                  "Inertial_MHD_Faraday",
+                  "Inertial_MHD_Poisson"]
 
 ext_modules = [
         Extension(ext,
