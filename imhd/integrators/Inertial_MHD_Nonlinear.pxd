@@ -58,11 +58,8 @@ cdef class PETScFunction(object):
     cdef MHD_Derivatives derivatives
     
     
-    cdef double muu (self, double[:,:] A, int i, int j)
-    cdef double dt  (self, double[:,:] A, int i, int j)
-    cdef double dt_x(self, double[:,:] A, int i, int j)
-    cdef double dt_y(self, double[:,:] A, int i, int j)
-
+    cdef double muu(self, double[:,:] A, int i, int j)
+    cdef double dt(self, double[:,:] A, int i, int j)
     cdef double rot(self, double[:,:] Ux, double[:,:] Uy, int i, int j)
 
     cdef double psix_ux(self, double[:,:] A, double[:,:] Vx, double[:,:] Vy, int i, int j, double sign)

@@ -756,43 +756,10 @@ cdef class PETScFunction(object):
                                  int i, int j):
         
         # (i,   j  )
-        A[2,2] += 4. * self.fac_dt
+        A[2,2] += self.ht_inv
         
     
     
-    @cython.boundscheck(False)
-    cdef double dt_x(self, double[:,:] A,
-                                 int i, int j):
-        
-        # (i,   j-1)
-        A[2,1] += 1. * self.fac_dt
-        
-        # (i,   j  )
-        A[2,2] += 2. * self.fac_dt
-        
-        # (i,   j+1)
-        A[2,3] += 1. * self.fac_dt
-        
-    
-    
-    @cython.boundscheck(False)
-    cdef double dt_y(self, double[:,:] A,
-                                 int i, int j):
-        
-        # (i-1, j  )
-        A[1,2] += 1. * self.fac_dt
-        
-        # (i,   j  )
-        A[2,2] += 2. * self.fac_dt
-        
-        # (i+1, j  )
-        A[3,2] += 1. * self.fac_dt
-        
-    
-    
-
-
-
     @cython.boundscheck(False)
     cdef double rot(self, double[:,:] Ux,
                                 double[:,:] Uy,
