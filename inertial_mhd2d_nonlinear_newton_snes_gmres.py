@@ -123,7 +123,7 @@ class petscMHD2D(object):
                                     stencil_type='box')
         
         
-        # create DA (dof = 5 for Bx, By, Vx, Vy, P)
+        # create DA (dof = 7 for Vx, Vy, Bx, By, Bix, Biy, P)
         self.da7 = PETSc.DA().create(dim=2, dof=7,
                                      sizes=[nx, ny],
                                      proc_sizes=[PETSc.DECIDE, PETSc.DECIDE],
