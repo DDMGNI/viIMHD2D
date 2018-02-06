@@ -41,6 +41,9 @@ class petscMHD2D(object):
         cfg = Config(cfgfile)
         self.cfg = cfg
         cfg.set_petsc_options()
+
+        OptDB = PETSc.Options()
+        OptDB.setValue('snes_force_iteration', True)
         
         # timestep setup
         self.ht    = cfg['grid']['ht']              # timestep size
@@ -271,6 +274,8 @@ class petscMHD2D(object):
         self.snes_faraday.getKSP().setType('gmres')
         self.snes_faraday.getKSP().getPC().setType('asm')
         
+        OptDB.setValue('snes_lag_preconditioner', -1)
+
         # create linear solver for Poisson equation
         self.snes_poisson = PETSc.SNES().create()
         self.snes_poisson.setType('ksponly')
@@ -278,7 +283,8 @@ class petscMHD2D(object):
         self.snes_poisson.setJacobian(self.updateJacobianPoisson, self.JP)
         self.snes_poisson.setFromOptions()
         self.snes_poisson.getKSP().setType('cg')
-        self.snes_poisson.getKSP().getPC().setType('hypre')
+#        self.snes_poisson.getKSP().getPC().setType('hypre')
+        self.snes_poisson.getKSP().getPC().setType('lu')
         
         
         # set initial data
