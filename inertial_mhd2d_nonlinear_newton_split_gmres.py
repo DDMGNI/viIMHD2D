@@ -44,6 +44,12 @@ class petscMHD2D(object):
 
         OptDB = PETSc.Options()
         OptDB.setValue('snes_force_iteration', True)
+        OptDB.setValue('pc_fieldsplit_type', 'additive')
+        OptDB.setValue('pc_fieldsplit_detect_saddle_point', True)
+        OptDB.setValue('fieldsplit_0_ksp_type', 'preonly')
+        OptDB.setValue('fieldsplit_0_pc_type', 'lu')
+        OptDB.setValue('fieldsplit_1_ksp_type', 'preonly')
+        OptDB.setValue('fieldsplit_1_pc_type', 'jacobi')
         
         # timestep setup
         self.ht    = cfg['grid']['ht']              # timestep size
@@ -263,7 +269,7 @@ class petscMHD2D(object):
         self.snes_euler.setJacobian(self.updateJacobianEuler, self.JE)
         self.snes_euler.setFromOptions()
         self.snes_euler.getKSP().setType('gmres')
-        self.snes_euler.getKSP().getPC().setType('asm')
+        self.snes_euler.getKSP().getPC().setType('fieldsplit')
         
         # create nonlinear solver for Faraday equation
         self.snes_faraday = PETSc.SNES().create()
