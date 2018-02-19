@@ -69,7 +69,7 @@ class PlotMHD2D(object):
         plt.subplots_adjust(left=0.1, right=0.95, top=0.9, bottom=0.1)
         
         # set up plot title
-        self.title = self.figure.text(0.5, 0.95, 't = 0.0' % (diagnostics.tGrid[self.iTime]), horizontalalignment='center', fontsize=30) 
+        self.title = self.figure.text(0.5, 0.95, 't = 0.0', horizontalalignment='center', fontsize=30) 
         
         # set up tick formatter
         majorFormatter = ScalarFormatter(useOffset=False)
@@ -117,8 +117,8 @@ class PlotMHD2D(object):
     
     def update_boundaries(self):
         
-        Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
-        Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
+        Jmin = min(np.array(self.diagnostics.J).min(), -np.array(self.diagnostics.J).max())
+        Jmax = min(np.array(self.diagnostics.J).max(), -np.array(self.diagnostics.J).min())
         Jdiff = (Jmax - Jmin)
         
         if Jmin == Jmax:
@@ -129,8 +129,8 @@ class PlotMHD2D(object):
         self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
         
         
-        PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-        PBmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        PBmin = min(np.array(self.diagnostics.e_magnetic).min(), -np.array(self.diagnostics.e_magnetic).max())
+        PBmax = min(np.array(self.diagnostics.e_magnetic).max(), -np.array(self.diagnostics.e_magnetic).min())
         PBdiff = (PBmax - PBmin)
         
         if PBmin == PBmax:
@@ -141,8 +141,8 @@ class PlotMHD2D(object):
         self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
 
 
-        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
-        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
+        Amin = min(np.array(self.diagnostics.A).min(), -np.array(self.diagnostics.A).max())
+        Amax = max(np.array(self.diagnostics.A).max(), -np.array(self.diagnostics.A).min())
         Adiff = Amax - Amin
         
         self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
