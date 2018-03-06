@@ -167,8 +167,8 @@ class PlotMHD2D(object):
         self.A[  -1, 0:-1] = self.diagnostics.A[0,:]
         self.A[   :,   -1] = self.A[:,0]
         
-        self.Ai[0:-1, 0:-1] = -self.diagnostics.Ai[:,:]
-        self.Ai[  -1, 0:-1] = -self.diagnostics.Ai[0,:]
+        self.Ai[0:-1, 0:-1] = -np.array(self.diagnostics.Ai[:,:])
+        self.Ai[  -1, 0:-1] = -np.array(self.diagnostics.Ai[0,:])
         self.Ai[   :,   -1] = self.Ai[:,0]
         
         self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
@@ -181,24 +181,25 @@ class PlotMHD2D(object):
         
     
     def update_boundaries(self):
+
+        Amin = min(np.array(self.diagnostics.A).min(), -np.array(self.diagnostics.A).max())
+        Amax = max(np.array(self.diagnostics.A).max(), -np.array(self.diagnostics.A).min())
+        Adiff = Amax - Amin
         
-        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
-        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
-        Adif = Amax - Amin
-        
-        self.ATicks = np.linspace(Amin + 0.01 * Adif, Amax - 0.01 * Adif, 31)
-        self.ANorm  = colors.Normalize(vmin=Amin + 0.01 * Adif, vmax=Amax - 0.01 * Adif)
+        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
+        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
+        self.ANorm  = colors.Normalize(vmin=Amin + 0.01 * Adiff, vmax=Amax - 0.01 * Adiff)
         
         if self.diagnostics.inertial_mhd:
-            Aimin = min(self.diagnostics.Ai.min(), -self.diagnostics.Ai.max())
-            Aimax = max(self.diagnostics.Ai.max(), -self.diagnostics.Ai.min())
+            Aimin = min(np.array(self.diagnostics.Ai).min(), -np.array(self.diagnostics.Ai).max())
+            Aimax = max(np.array(self.diagnostics.Ai).max(), -np.array(self.diagnostics.Ai).min())
             Aidif = Aimax - Aimin
             
             self.AiTicks = np.linspace(Aimin + 0.01 * Aidif, Aimax - 0.01 * Aidif, 31)
             self.AiNorm  = colors.Normalize(vmin=Aimin + 0.01 * Aidif, vmax=Aimax - 0.01 * Aidif)
 
-        Jmin = min(self.diagnostics.J.min(), -self.diagnostics.J.max())
-        Jmax = min(self.diagnostics.J.max(), -self.diagnostics.J.min())
+        Jmin = min(np.array(self.diagnostics.J).min(), -np.array(self.diagnostics.J).max())
+        Jmax = min(np.array(self.diagnostics.J).max(), -np.array(self.diagnostics.J).min())
         Jdiff = (Jmax - Jmin)
         
         if Jmin == Jmax:
@@ -209,8 +210,8 @@ class PlotMHD2D(object):
         self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
         
         
-        PBmin = min(self.diagnostics.e_magnetic.min(), -self.diagnostics.e_magnetic.max())
-        PBmax = min(self.diagnostics.e_magnetic.max(), -self.diagnostics.e_magnetic.min())
+        PBmin = min(np.array(self.diagnostics.e_magnetic).min(), -np.array(self.diagnostics.e_magnetic).max())
+        PBmax = min(np.array(self.diagnostics.e_magnetic).max(), -np.array(self.diagnostics.e_magnetic).min())
         PBdiff = (PBmax - PBmin)
         
         if PBmin == PBmax:
@@ -221,15 +222,7 @@ class PlotMHD2D(object):
         self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
 
 
-        Amin = min(self.diagnostics.A.min(), -self.diagnostics.A.max())
-        Amax = max(self.diagnostics.A.max(), -self.diagnostics.A.min())
-        Adiff = Amax - Amin
-        
-        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
-        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 51, endpoint=True)
-    
-    
-        Ai = -self.diagnostics.Ai
+        Ai = -np.array(self.diagnostics.Ai)
     
         Aimin = min(Ai.min(), -Ai.max())
         Aimax = max(Ai.max(), -Ai.min())

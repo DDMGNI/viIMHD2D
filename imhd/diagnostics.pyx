@@ -351,9 +351,9 @@ cdef class Diagnostics(object):
                 self.A[ix,iy] = self.A[ix,iyp] - self.hy * self.Bx[ix,iy]  
 #                self.A[ix,iy] = self.A[ix,iyp] - self.hy * (self.Bx[ix,iym] + 4.*self.Bx[ix,iy] + self.Bx[ix,iyp])/6.
             
-#         self.A -= self.A.mean()
+#         self.A -= np.array(self.A).mean()
 #         self.A -= self.A.min()
-        self.remove_average(self.A)
+#         self.remove_average(self.A)
         
         
         # reconstruction of generalised vector potential
@@ -375,8 +375,9 @@ cdef class Diagnostics(object):
                     
                     self.Ai[ix,iy] = self.Ai[ix,iyp] - self.hy * self.Bix[ix,iy]  
                 
-#             self.Ai -= self.Ai.mean()
-            self.remove_average(self.Ai)
+            self.Ai -= np.array(self.Ai).max()
+#             self.Ai -= np.array(self.Ai).mean()
+#             self.remove_average(self.Ai)
         
         
         # reconstruction of current density

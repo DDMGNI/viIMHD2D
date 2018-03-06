@@ -33,6 +33,7 @@ class PlotMHD2D(object):
         
 #        matplotlib.rc('text', usetex=True)
         matplotlib.rc('font', family='sans-serif', size='28')
+        matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
         
         self.prefix = filename
         
@@ -85,7 +86,8 @@ class PlotMHD2D(object):
         self.update_boundaries()
         
         # create contour plot
-        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
+        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='min', colors='k')
+#        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], 20, norm=self.ANorm, extend='neither', color='k', linestyle='solid')
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
         
@@ -105,49 +107,21 @@ class PlotMHD2D(object):
         self.A[  -1, 0:-1] = self.diagnostics.A[0,:]
         self.A[   :,   -1] = self.A[:,0]
         
-        self.J[0:-1, 0:-1] = self.diagnostics.J[:,:]
-        self.J[  -1, 0:-1] = self.diagnostics.J[0,:]
-        self.J[   :,   -1] = self.J[:,0]
-        
-        self.PB[0:-1, 0:-1] = self.diagnostics.e_magnetic[:,:]
-        self.PB[  -1, 0:-1] = self.diagnostics.e_magnetic[0,:]
-        self.PB[   :,   -1] = self.PB[:,0]
-        
-    
     
     def update_boundaries(self):
         
-        Jmin = min(np.array(self.diagnostics.J).min(), -np.array(self.diagnostics.J).max())
-        Jmax = min(np.array(self.diagnostics.J).max(), -np.array(self.diagnostics.J).min())
-        Jdiff = (Jmax - Jmin)
-        
-        if Jmin == Jmax:
-            Jmin -= 1.
-            Jmax += 1.
-        
-        self.Jnorm = colors.Normalize(vmin=Jmin - 0.2*Jdiff, vmax=Jmax + 0.2*Jdiff)
-        self.JTicks = np.linspace(Jmin - 0.2*Jdiff, Jmax + 0.2*Jdiff, 51, endpoint=True)
-        
-        
-        PBmin = min(np.array(self.diagnostics.e_magnetic).min(), -np.array(self.diagnostics.e_magnetic).max())
-        PBmax = min(np.array(self.diagnostics.e_magnetic).max(), -np.array(self.diagnostics.e_magnetic).min())
-        PBdiff = (PBmax - PBmin)
-        
-        if PBmin == PBmax:
-            PBmin -= .1 * PBmin
-            PBmax += .1 * PBmax
-        
-        self.PBnorm = colors.Normalize(vmin=PBmin - 0.2*PBdiff, vmax=PBmax + 0.2*PBdiff)
-        self.PBTicks = np.linspace(PBmin - 0.2*PBdiff, PBmax + 0.2*PBdiff, 51, endpoint=True)
-
-
         Amin = min(np.array(self.diagnostics.A).min(), -np.array(self.diagnostics.A).max())
         Amax = max(np.array(self.diagnostics.A).max(), -np.array(self.diagnostics.A).min())
         Adiff = Amax - Amin
         
-        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
+#        self.Anorm = colors.Normalize(vmin=Amin - 0.2*Adiff, vmax=Amax + 0.2*Adiff)
+#        self.ANorm  = colors.Normalize(vmin=Amin - 0.1 * Adiff, vmax=Amax - 0.05 * Adiff)
 #        self.ATicks = np.linspace(Amin + 0.01 * Adiff, Amax - 0.01 * Adiff, 31)
-        self.ATicks = np.linspace(Amin + 0.02 * Adiff, Amax - 0.02 * Adiff, 51, endpoint=True)
+#        self.ATicks = np.linspace(Amin + 0.02 * Adiff, Amax - 0.02 * Adiff, 51, endpoint=True)
+        self.ATicks = np.linspace(-1.3543, -0.07, 17, endpoint=True)
+#        self.ATicks = np.linspace(-1.353, -0.07, 17, endpoint=True)
+#        self.ATicks = np.linspace(-0.872, -0.551, 17, endpoint=True)
+
     
     
     def update(self):
@@ -160,9 +134,11 @@ class PlotMHD2D(object):
         for coll in self.conts.collections:
             self.axes.collections.remove(coll)
         
-        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='neither', colors='b')
+        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], self.ATicks, extend='min', colors='k')
+#        self.conts = self.axes.contour(self.x[1:-1], self.y[1:-1], self.A.T[1:-1,1:-1], 20, norm=self.ANorm, extend='neither', color='k', linestyle='solid')
 #        self.conts = self.axes.contour(self.x, self.y, self.PB.T, levels=self.PBTicks, extend='neither')
 #        self.conts = self.axes.contourf(self.x, self.y, self.J.T, 51, norm=self.Jnorm)
+#        plt.clabel(self.conts, inline=1, fontsize=10)
         
         plt.draw()
         
